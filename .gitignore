@@ -1,0 +1,49 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Composer
+/vendor/
+
+# CodeIgniter writable data
+/writable/*
+!/writable/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backups
+*.sql
+*.sql.gz
+*.bak
+backups/
+
+# Secrets
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Runtime uploads
+uploads/
+storage/private/
+
+# Node - build tooling only
+node_modules/
+
+# Docker local overrides
+compose.override.yml
+docker-compose.override.yml
