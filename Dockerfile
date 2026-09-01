@@ -69,6 +69,12 @@ WORKDIR /var/www/html
 
 COPY --chown=www-data:www-data . /var/www/html
 
+# Test sources are required in the Docker build context for the
+# dedicated test stage, but must not remain in the runtime image.
+RUN rm -rf \
+        /var/www/html/tests \
+        /var/www/html/phpunit.dist.xml
+
 COPY --from=vendor \
     --chown=www-data:www-data \
     /build/vendor \
@@ -100,3 +106,41 @@ COPY docker/nginx/default.conf \
 COPY public /var/www/html/public
 
 EXPOSE 80
+
+
+# ============================================================
+# Automated test runtime
+# ============================================================
+
+FROM php-base AS test
+
+USER root
+
+COPY --from=composer:2 \
+    /usr/bin/composer \
+    /usr/local/bin/composer
+
+RUN apk add --no-cache git unzip
+
+WORKDIR /var/www/html
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --prefer-dist \
+    --no-interaction \
+    --no-progress
+
+COPY . /var/www/html
+
+RUN mkdir -p \
+        writable/cache \
+        writable/logs \
+        writable/session \
+        writable/uploads \
+        writable/debugbar \
+    && chown -R www-data:www-data writable
+
+USER www-data
+
+CMD ["php", "vendor/bin/phpunit"]
