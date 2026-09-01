@@ -1,0 +1,102 @@
+# syntax=docker/dockerfile:1
+
+# ============================================================
+# Base PHP
+# ============================================================
+
+FROM php:8.3-fpm-alpine AS php-base
+
+USER root
+
+RUN apk add --no-cache \
+        icu-libs \
+        oniguruma \
+        libzip \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        icu-dev \
+        oniguruma-dev \
+        libzip-dev \
+    && docker-php-ext-install -j1 \
+        intl \
+        mbstring \
+        mysqli \
+        pdo_mysql \
+        opcache \
+        zip \
+    && apk del .build-deps \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+COPY docker/php/opcache.ini \
+    "$PHP_INI_DIR/conf.d/99-opcache.ini"
+
+
+# ============================================================
+# Composer dependencies
+# ============================================================
+
+FROM php-base AS vendor
+
+USER root
+
+COPY --from=composer:2 \
+    /usr/bin/composer \
+    /usr/local/bin/composer
+
+RUN apk add --no-cache git unzip
+
+WORKDIR /build
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-interaction \
+    --no-progress \
+    --optimize-autoloader
+
+
+# ============================================================
+# CodeIgniter runtime
+# ============================================================
+
+FROM php-base AS app
+
+WORKDIR /var/www/html
+
+COPY --chown=www-data:www-data . /var/www/html
+
+COPY --from=vendor \
+    --chown=www-data:www-data \
+    /build/vendor \
+    /var/www/html/vendor
+
+RUN mkdir -p \
+        writable/cache \
+        writable/logs \
+        writable/session \
+        writable/uploads \
+    && chown -R www-data:www-data writable
+
+USER www-data
+
+EXPOSE 9000
+
+CMD ["php-fpm", "-F"]
+
+
+# ============================================================
+# Nginx
+# ============================================================
+
+FROM nginx:1.27-alpine AS web
+
+COPY docker/nginx/default.conf \
+    /etc/nginx/conf.d/default.conf
+
+COPY public /var/www/html/public
+
+EXPOSE 80

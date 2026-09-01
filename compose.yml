@@ -1,0 +1,110 @@
+name: haiti-civic-platform
+
+services:
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+    command:
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=50
+      - --performance-schema=OFF
+      - --skip-name-resolve
+
+    volumes:
+      - civic-db-data:/var/lib/mysql
+
+    networks:
+      - civic-internal
+
+    mem_limit: 384m
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "healthcheck.sh --connect --innodb_initialized"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+
+  app:
+    build:
+      context: .
+      target: app
+
+    restart: unless-stopped
+
+    environment:
+      CI_ENVIRONMENT: ${CI_ENVIRONMENT}
+
+      app.baseURL: ${APP_BASE_URL}
+
+      database.default.hostname: db
+      database.default.database: ${DB_DATABASE}
+      database.default.username: ${DB_USERNAME}
+      database.default.password: ${DB_PASSWORD}
+      database.default.DBDriver: MySQLi
+      database.default.port: "3306"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    volumes:
+      - civic-writable:/var/www/html/writable
+
+    networks:
+      - civic-internal
+
+    mem_limit: 320m
+
+
+  web:
+    build:
+      context: .
+      target: web
+
+    restart: unless-stopped
+
+    depends_on:
+      - app
+
+    ports:
+      - "127.0.0.1:${LOCAL_HTTP_PORT:-18090}:80"
+
+    networks:
+      - civic-internal
+
+    mem_limit: 64m
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/health"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+
+networks:
+  civic-internal:
+    driver: bridge
+
+
+volumes:
+  civic-db-data:
+  civic-writable:
