@@ -48,6 +48,9 @@ services:
     environment:
       CI_ENVIRONMENT: ${CI_ENVIRONMENT}
 
+      APP_KEY: ${APP_KEY}
+      NINU_HMAC_KEY: ${NINU_HMAC_KEY}
+
       app.baseURL: ${APP_BASE_URL}
 
       database.default.hostname: db
@@ -178,6 +181,9 @@ services:
 
     environment:
       CI_ENVIRONMENT: testing
+
+      APP_KEY: ${TEST_APP_KEY}
+      NINU_HMAC_KEY: ${TEST_NINU_HMAC_KEY}
 
       app.baseURL: http://localhost/
 

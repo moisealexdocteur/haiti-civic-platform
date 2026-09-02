@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Services\AuditService;
 use App\Services\AuthorizationService;
+use App\Services\IdentityCryptoService;
 use App\Services\OrganizationWriteService;
 use App\Services\RoleWriteService;
 use App\Services\TenantContext;
@@ -101,5 +102,20 @@ class Services extends BaseService
             static::tenantContext()
         );
     }
+
+    public static function identityCrypto(
+        bool $getShared = true
+    ) {
+        if ($getShared) {
+            return static::getSharedInstance(
+                'identityCrypto'
+            );
+        }
+
+        return new IdentityCryptoService(
+            static::tenantContext()
+        );
+    }
+
 
 }
