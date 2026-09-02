@@ -29,6 +29,9 @@ RUN apk add --no-cache \
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+COPY docker/php/uploads.ini \
+    "$PHP_INI_DIR/conf.d/98-uploads.ini"
+
 COPY docker/php/opcache.ini \
     "$PHP_INI_DIR/conf.d/99-opcache.ini"
 
