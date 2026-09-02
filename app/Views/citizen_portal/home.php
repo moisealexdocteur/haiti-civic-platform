@@ -31,9 +31,9 @@
                 <p class="lead"><?= esc(lang('CitizenPortal.homeLead')) ?></p>
 
                 <div class="trust-row">
-                    <span>✓ NINU/CIN chiffré</span>
-                    <span>✓ Données isolées</span>
-                    <span>✓ Vérification auditable</span>
+                    <span>✓ <?= esc(lang('CitizenPortal.trustEncrypted')) ?></span>
+                    <span>✓ <?= esc(lang('CitizenPortal.trustIsolated')) ?></span>
+                    <span>✓ <?= esc(lang('CitizenPortal.trustAuditable')) ?></span>
                 </div>
             </div>
 
