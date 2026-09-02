@@ -6,6 +6,8 @@
     <title><?= esc(lang('CitizenPortal.registerTitle')) ?> — <?= esc($tenant['name']) ?></title>
     <link rel="stylesheet" href="/assets/citizen-portal.css">
     <link rel="stylesheet" href="/assets/citizen-portal-submit.css">
+    <link rel="stylesheet" href="/assets/citizen-otp.css">
+    <script defer src="/assets/citizen-otp.js"></script>
 </head>
 <body>
     <main class="shell shell-narrow">
@@ -43,6 +45,7 @@
         </div>
 
         <form
+            id="citizen-registration-form"
             class="registration-card"
             aria-label="<?= esc(lang('CitizenPortal.registerTitle')) ?>"
             method="post"
@@ -66,7 +69,12 @@
                 <p class="field-help"><?= esc(lang('CitizenPortal.ninuHelp')) ?></p>
             </section>
 
-            <section class="form-section">
+            <section
+                class="form-section"
+                data-otp-root
+                data-request-url="/inscription/<?= esc($tenant['slug']) ?>/otp/demander?lang=<?= esc($locale) ?>"
+                data-verify-url="/inscription/<?= esc($tenant['slug']) ?>/otp/verifier?lang=<?= esc($locale) ?>"
+            >
                 <h2><?= esc(lang('CitizenPortal.contactSection')) ?></h2>
                 <label for="phone"><?= esc(lang('CitizenPortal.phoneLabel')) ?></label>
                 <input
@@ -78,6 +86,46 @@
                     placeholder="<?= esc(lang('CitizenPortal.phonePlaceholder')) ?>"
                     required
                 >
+                <p class="field-help"><?= esc(lang('CitizenPortal.phoneVerificationHelp')) ?></p>
+
+                <div class="otp-actions">
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-otp-request
+                    >
+                        <?= esc(lang('CitizenPortal.requestOtp')) ?>
+                    </button>
+                </div>
+
+                <div class="otp-code-panel" data-otp-code-panel hidden>
+                    <label for="otp_code"><?= esc(lang('CitizenPortal.otpCodeLabel')) ?></label>
+                    <div class="otp-code-row">
+                        <input
+                            id="otp_code"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="one-time-code"
+                            pattern="[0-9]{6}"
+                            maxlength="6"
+                            data-otp-code
+                        >
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-otp-verify
+                        >
+                            <?= esc(lang('CitizenPortal.verifyOtp')) ?>
+                        </button>
+                    </div>
+                </div>
+
+                <p
+                    class="otp-status"
+                    data-otp-status
+                    role="status"
+                    aria-live="polite"
+                ></p>
             </section>
 
             <section class="form-section">
