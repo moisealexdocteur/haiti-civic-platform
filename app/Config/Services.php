@@ -4,6 +4,9 @@ namespace Config;
 
 use App\Services\AuditService;
 use App\Services\AuthorizationService;
+use App\Services\CitizenIdentityWriteService;
+use App\Services\IdentityCryptoService;
+use App\Services\IdentityInputNormalizer;
 use App\Services\OrganizationWriteService;
 use App\Services\RoleWriteService;
 use App\Services\TenantContext;
@@ -98,6 +101,63 @@ class Services extends BaseService
         }
 
         return new TenantModuleWriteService(
+            static::tenantContext()
+        );
+    }
+
+    public static function identityCrypto(
+        bool $getShared = true
+    ) {
+        if ($getShared) {
+            return static::getSharedInstance(
+                'identityCrypto'
+            );
+        }
+
+        return new IdentityCryptoService(
+            static::tenantContext()
+        );
+    }
+
+
+    public static function identityInputNormalizer(
+        bool $getShared = true
+    ) {
+        if ($getShared) {
+            return static::getSharedInstance(
+                'identityInputNormalizer'
+            );
+        }
+
+        return new IdentityInputNormalizer();
+    }
+
+    public static function citizenIdentityWrites(
+        bool $getShared = true
+    ) {
+        if ($getShared) {
+            return static::getSharedInstance(
+                'citizenIdentityWrites'
+            );
+        }
+
+        return new CitizenIdentityWriteService(
+            static::tenantContext()
+        );
+    }
+
+
+
+    public static function verificationDocumentWrites(
+        bool $getShared = true
+    ) {
+        if ($getShared) {
+            return static::getSharedInstance(
+                'verificationDocumentWrites'
+            );
+        }
+
+        return new \App\Services\VerificationDocumentWriteService(
             static::tenantContext()
         );
     }
