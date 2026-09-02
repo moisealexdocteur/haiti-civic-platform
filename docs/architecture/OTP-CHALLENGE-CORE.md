@@ -114,3 +114,18 @@ L'abstraction déjà présente conserve l'ordre de préférence `WhatsApp -> SMS
 - absence de code et de téléphone dans les contextes d'audit du challenge.
 
 Les tests existants de `OtpChannelRouter` continuent à couvrir la préférence WhatsApp et le fallback SMS au niveau de l'abstraction de transport.
+
+## Validation VPS du coeur
+
+Validation réalisée le 2 septembre 2026 sur la branche `feature/otp-verification`, HEAD `8f5ecaaeed34fc98c19c0e619037926dc08411d8` :
+
+- lint des nouveaux fichiers : OK ;
+- migration `000700` appliquée uniquement sur la base TEST pendant la validation ;
+- tests ciblés OTP : `9 tests / 65 assertions` ;
+- table `otp_challenges` présente dans TEST ;
+- colonnes critiques confirmées, dont empreinte téléphone, digest code, tentatives, expiration, consommation, invalidation et verrouillage ;
+- résidus fixtures : `0 / 0` ;
+- MAIN non migré et inchangé : `1 identité / 3 documents / 3 événements` ;
+- `/health` : OK.
+
+La migration MAIN doit être réalisée séparément, avec sauvegarde préalable, après cette validation.
