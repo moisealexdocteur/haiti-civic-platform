@@ -112,7 +112,12 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       TEST_DATABASE: ${DB_DATABASE}_test
-      TEST_USERNAME: ${DB_USERNAME}
+
+      TEST_RUNTIME_USERNAME: ${TEST_RUNTIME_DB_USERNAME}
+      TEST_RUNTIME_PASSWORD: ${TEST_RUNTIME_DB_PASSWORD}
+
+      TEST_MIGRATION_USERNAME: ${TEST_MIGRATION_DB_USERNAME}
+      TEST_MIGRATION_PASSWORD: ${TEST_MIGRATION_DB_PASSWORD}
 
     depends_on:
       db:
@@ -133,9 +138,31 @@ services:
           CHARACTER SET utf8mb4
           COLLATE utf8mb4_unicode_ci;
 
+        DROP USER IF EXISTS
+          '$$TEST_RUNTIME_USERNAME'@'%';
+
+        DROP USER IF EXISTS
+          '$$TEST_MIGRATION_USERNAME'@'%';
+
+        CREATE USER
+          '$$TEST_RUNTIME_USERNAME'@'%'
+          IDENTIFIED BY '$$TEST_RUNTIME_PASSWORD';
+
+        CREATE USER
+          '$$TEST_MIGRATION_USERNAME'@'%'
+          IDENTIFIED BY '$$TEST_MIGRATION_PASSWORD';
+
+        GRANT
+          SELECT,
+          INSERT,
+          UPDATE,
+          DELETE
+        ON \`$$TEST_DATABASE\`.*
+        TO '$$TEST_RUNTIME_USERNAME'@'%';
+
         GRANT ALL PRIVILEGES
-          ON \`$$TEST_DATABASE\`.*
-          TO '$$TEST_USERNAME'@'%';
+        ON \`$$TEST_DATABASE\`.*
+        TO '$$TEST_MIGRATION_USERNAME'@'%';
 
         FLUSH PRIVILEGES;
         SQL
@@ -155,13 +182,17 @@ services:
       app.baseURL: http://localhost/
 
       TEST_DATABASE: ${DB_DATABASE}_test
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+
+      RUNTIME_DB_USERNAME: ${TEST_RUNTIME_DB_USERNAME}
+      RUNTIME_DB_PASSWORD: ${TEST_RUNTIME_DB_PASSWORD}
+
+      MIGRATION_DB_USERNAME: ${TEST_MIGRATION_DB_USERNAME}
+      MIGRATION_DB_PASSWORD: ${TEST_MIGRATION_DB_PASSWORD}
 
       database.tests.hostname: db
       database.tests.database: ${DB_DATABASE}_test
-      database.tests.username: ${DB_USERNAME}
-      database.tests.password: ${DB_PASSWORD}
+      database.tests.username: ${TEST_RUNTIME_DB_USERNAME}
+      database.tests.password: ${TEST_RUNTIME_DB_PASSWORD}
       database.tests.DBDriver: MySQLi
       database.tests.DBPrefix: ""
       database.tests.port: "3306"

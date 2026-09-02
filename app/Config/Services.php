@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Services\AuditService;
 use App\Services\AuthorizationService;
 use App\Services\TenantContext;
 use CodeIgniter\Config\BaseService;
@@ -24,6 +25,17 @@ class Services extends BaseService
         }
 
         return new AuthorizationService(
+            static::tenantContext()
+        );
+    }
+
+    public static function audit(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('audit');
+        }
+
+        return new AuditService(
             static::tenantContext()
         );
     }
