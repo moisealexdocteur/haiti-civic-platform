@@ -2,13 +2,19 @@
 
 namespace App\Controllers;
 
+use App\Services\Otp\OtpChannelRouter;
+use App\Services\Otp\OtpTransportFactory;
+use App\Services\Otp\PublicPhoneOtpFlowService;
+use App\Services\Otp\PublicPhoneOtpProofService;
 use App\Services\PublicIdentitySubmissionService;
 use App\Services\PublicTenantResolver;
 use App\Services\TenantContext;
 use App\Services\VerificationDocumentWriteService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
 use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 
 final class CitizenPortal extends BaseController
@@ -71,6 +77,129 @@ final class CitizenPortal extends BaseController
         );
     }
 
+    public function requestOtp(string $tenantSlug): ResponseInterface
+    {
+        $tenant = $this->resolveTenant($tenantSlug);
+        $locale = $this->resolveLocale(
+            (string) ($tenant['default_locale'] ?? '')
+        );
+
+        $this->request->setLocale($locale);
+
+        try {
+            $phone = trim((string) $this->request->getPost('phone'));
+            $tenantContext = $this->tenantContext($tenant);
+            $flow = new PublicPhoneOtpFlowService(
+                $tenantContext,
+                OtpTransportFactory::fromEnvironment()
+            );
+
+            $result = $flow->request(
+                $phone,
+                $this->otpRequestFingerprint((int) $tenant['id'])
+            );
+
+            $messageKey = $result['delivered_channel'] === 'sms'
+                ? 'CitizenPortal.otpSentSms'
+                : 'CitizenPortal.otpSentWhatsApp';
+
+            return $this->otpJson([
+                'ok' => true,
+                'challenge_uuid' => (string) $result['challenge_uuid'],
+                'delivered_channel' => (string) $result['delivered_channel'],
+                'ttl_seconds' => (int) $result['ttl_seconds'],
+                'message' => lang($messageKey),
+            ]);
+        } catch (InvalidArgumentException) {
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.otpPhoneInvalid'),
+            ], 422);
+        } catch (RuntimeException $exception) {
+            $rateLimited = in_array(
+                $exception->getMessage(),
+                [
+                    'OTP issue rate limit exceeded.',
+                    'OTP requester rate limit exceeded.',
+                    'OTP resend cooldown is active.',
+                ],
+                true
+            );
+
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang(
+                    $rateLimited
+                        ? 'CitizenPortal.otpRateLimited'
+                        : 'CitizenPortal.otpUnavailable'
+                ),
+            ], $rateLimited ? 429 : 503);
+        } catch (Throwable $exception) {
+            log_message(
+                'error',
+                'Public OTP request failed: {type}',
+                ['type' => $exception::class]
+            );
+
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.otpUnavailable'),
+            ], 503);
+        }
+    }
+
+    public function verifyOtp(string $tenantSlug): ResponseInterface
+    {
+        $tenant = $this->resolveTenant($tenantSlug);
+        $locale = $this->resolveLocale(
+            (string) ($tenant['default_locale'] ?? '')
+        );
+
+        $this->request->setLocale($locale);
+
+        try {
+            $challengeUuid = trim(
+                (string) $this->request->getPost('challenge_uuid')
+            );
+            $code = trim((string) $this->request->getPost('code'));
+
+            $flow = new PublicPhoneOtpFlowService(
+                $this->tenantContext($tenant),
+                new OtpChannelRouter([])
+            );
+
+            $result = $flow->verify($challengeUuid, $code);
+
+            if (! $result['accepted']) {
+                return $this->otpJson([
+                    'ok' => false,
+                    'message' => lang('CitizenPortal.otpInvalid'),
+                ], 422);
+            }
+
+            return $this->otpJson([
+                'ok' => true,
+                'message' => lang('CitizenPortal.otpVerified'),
+            ]);
+        } catch (InvalidArgumentException | RuntimeException) {
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.otpInvalid'),
+            ], 422);
+        } catch (Throwable $exception) {
+            log_message(
+                'error',
+                'Public OTP verification failed: {type}',
+                ['type' => $exception::class]
+            );
+
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.otpUnavailable'),
+            ], 503);
+        }
+    }
+
     public function submit(string $tenantSlug): string
     {
         $tenant = $this->resolveTenant($tenantSlug);
@@ -93,6 +222,16 @@ final class CitizenPortal extends BaseController
                 (string) $this->request->getPost('phone')
             );
 
+            if ($phoneInput === '') {
+                throw new InvalidArgumentException(
+                    'Phone OTP verification is required.'
+                );
+            }
+
+            $tenantContext = $this->tenantContext($tenant);
+            $phoneProof = new PublicPhoneOtpProofService($tenantContext);
+            $phoneProof->assertVerifiedPhone($phoneInput);
+
             $documents = [
                 VerificationDocumentWriteService::CIN_FRONT =>
                     $this->uploadedTemporaryPath('cin_front'),
@@ -102,17 +241,16 @@ final class CitizenPortal extends BaseController
                     $this->uploadedTemporaryPath('portrait'),
             ];
 
-            $tenantContext = (new TenantContext())
-                ->set((int) $tenant['id']);
-
             $result = (new PublicIdentitySubmissionService(
                 $tenantContext
             ))->submit(
                 $ninu,
-                $phoneInput === '' ? null : $phoneInput,
+                $phoneInput,
                 self::CONSENT_VERSION,
                 $documents
             );
+
+            $phoneProof->clear();
 
             return view(
                 'citizen_portal/confirmation',
@@ -177,6 +315,51 @@ final class CitizenPortal extends BaseController
         return $tenant;
     }
 
+    private function tenantContext(array $tenant): TenantContext
+    {
+        return (new TenantContext())->set((int) $tenant['id']);
+    }
+
+    private function otpRequestFingerprint(int $tenantId): string
+    {
+        $secret = getenv('APP_KEY');
+
+        if (
+            ! is_string($secret)
+            || strlen($secret) < 32
+            || str_contains($secret, 'CHANGE_ME')
+        ) {
+            throw new RuntimeException(
+                'OTP request fingerprint secret is unavailable.'
+            );
+        }
+
+        return hash_hmac(
+            'sha256',
+            "v1\0otp-request\0tenant:{$tenantId}\0"
+            . $this->request->getIPAddress(),
+            $secret
+        );
+    }
+
+    private function otpJson(
+        array $payload,
+        int $status = 200
+    ): ResponseInterface {
+        helper(['form', 'security']);
+
+        $payload['csrf'] = [
+            'name' => csrf_token(),
+            'hash' => csrf_hash(),
+        ];
+
+        return $this->response
+            ->setStatusCode($status)
+            ->setHeader('Cache-Control', 'no-store, private, max-age=0')
+            ->setHeader('Pragma', 'no-cache')
+            ->setJSON($payload);
+    }
+
     private function uploadedTemporaryPath(string $field): string
     {
         $file = $this->request->getFile($field);
@@ -210,6 +393,8 @@ final class CitizenPortal extends BaseController
                 lang('CitizenPortal.consentRequired'),
             'document_invalid' =>
                 lang('CitizenPortal.documentInvalid'),
+            'Phone OTP verification is required.' =>
+                lang('CitizenPortal.phoneVerificationRequired'),
             'Citizen identity already exists in the current tenant.' =>
                 lang('CitizenPortal.duplicateIdentity'),
             default =>
