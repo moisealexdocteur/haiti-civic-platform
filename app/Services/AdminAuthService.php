@@ -32,28 +32,9 @@ final class AdminAuthService
             return null;
         }
 
-        $row = $this->db
-            ->table('tenant_users tu')
-            ->select([
-                't.id AS tenant_id',
-                't.uuid AS tenant_uuid',
-                't.slug AS tenant_slug',
-                't.name AS tenant_name',
-                'u.id AS user_id',
-                'u.uuid AS user_uuid',
-                'u.email',
-                'u.display_name',
-                'u.password_hash',
-            ])
-            ->join('tenants t', 't.id = tu.tenant_id')
-            ->join('users u', 'u.id = tu.user_id')
+        $row = $this->activeMembershipQuery()
             ->where('t.slug', $tenantSlug)
-            ->where('t.status', 'active')
-            ->where('t.deleted_at', null)
-            ->where('tu.status', 'active')
             ->where('u.email', $email)
-            ->where('u.status', 'active')
-            ->where('u.deleted_at', null)
             ->limit(1)
             ->get()
             ->getFirstRow('array');
@@ -80,5 +61,53 @@ final class AdminAuthService
         unset($row['password_hash']);
 
         return $row;
+    }
+
+    public function sessionIsActive(
+        int $userId,
+        int $tenantId,
+        string $tenantSlug
+    ): bool {
+        if (
+            $userId <= 0
+            || $tenantId <= 0
+            || trim($tenantSlug) === ''
+        ) {
+            return false;
+        }
+
+        $row = $this->activeMembershipQuery()
+            ->where('t.id', $tenantId)
+            ->where('t.slug', strtolower(trim($tenantSlug)))
+            ->where('u.id', $userId)
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        return $row !== null;
+    }
+
+    private function activeMembershipQuery()
+    {
+        return $this->db
+            ->table('tenant_users tu')
+            ->select([
+                't.id AS tenant_id',
+                't.uuid AS tenant_uuid',
+                't.slug AS tenant_slug',
+                't.name AS tenant_name',
+                'u.id AS user_id',
+                'u.uuid AS user_uuid',
+                'u.email',
+                'u.display_name',
+                'u.password_hash',
+            ])
+            ->join('tenants t', 't.id = tu.tenant_id')
+            ->join('users u', 'u.id = tu.user_id')
+            ->where('t.status', 'active')
+            ->where('t.deleted_at', null)
+            ->where('tu.status', 'active')
+            ->where('u.status', 'active')
+            ->where('u.deleted_at', null);
     }
 }
