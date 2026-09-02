@@ -27,4 +27,25 @@ $routes->post(
     ['filter' => ['adminauth', 'csrf']]
 );
 
+$routes->get(
+    'admin/identites',
+    'AdminIdentities::index',
+    ['filter' => 'adminauth']
+);
+$routes->get(
+    'admin/identites/(:segment)/documents/(:segment)',
+    'AdminIdentities::document/$1/$2',
+    ['filter' => 'adminauth']
+);
+$routes->post(
+    'admin/identites/(:segment)/statut',
+    'AdminIdentities::transition/$1',
+    ['filter' => ['adminauth', 'csrf']]
+);
+$routes->get(
+    'admin/identites/(:segment)',
+    'AdminIdentities::show/$1',
+    ['filter' => 'adminauth']
+);
+
 $routes->get('health', 'Health::index');
