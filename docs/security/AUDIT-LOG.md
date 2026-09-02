@@ -26,9 +26,27 @@ Il ne constitue pas un registre externe immuable.
 10. libère le verrou.
 
 La conception utilise ce verrou pour sérialiser les écritures
-concurrentes d'un même tenant. Ce comportement doit encore faire l'objet
-d'un test de concurrence ou de charge dédié avant d'être considéré comme
-validé expérimentalement.
+concurrentes d'un même tenant.
+
+Cette sérialisation a été validée expérimentalement sur la base de test
+avec deux processus PHP indépendants et deux connexions MariaDB distinctes.
+Un troisième client conserve d'abord le verrou nommé du tenant afin de
+placer simultanément les deux workers en attente sur le même `GET_LOCK`,
+puis libère ce verrou.
+
+Deux scénarios sont couverts :
+
+- deux créations d'organisation auditées concurrentes sont sérialisées,
+  produisent deux écritures métier et une chaîne d'audit valide de deux
+  entrées ;
+- deux propriétaires actifs tentant simultanément de perdre leur statut
+  de propriétaire aboutissent à une seule démotion réussie ; la seconde
+  est refusée et il reste exactement un propriétaire actif.
+
+Ces tests valident le comportement concurrent dans l'environnement Docker
+de test utilisé par le projet. Ils ne constituent pas un test de charge,
+une preuve formelle de correction ni une garantie face à des écritures
+contournant les services applicatifs.
 
 ## Validation de l'acteur
 
