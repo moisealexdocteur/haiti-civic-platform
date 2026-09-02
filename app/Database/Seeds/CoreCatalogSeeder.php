@@ -26,6 +26,9 @@ class CoreCatalogSeeder extends Seeder
             ['modules.view',        'Voir les modules',               'core'],
             ['modules.manage',      'Administrer les modules',        'core'],
 
+            ['identity.view',       'Consulter les identités citoyennes',    'identity_verification'],
+            ['identity.manage',     'Administrer les identités citoyennes', 'identity_verification'],
+
             ['audit.view',          'Consulter le journal d’audit',   'core'],
         ];
 
