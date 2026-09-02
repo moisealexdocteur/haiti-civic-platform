@@ -10,6 +10,16 @@ $routes->get(
     'CitizenPortal::register/$1'
 );
 $routes->post(
+    'inscription/(:segment)/otp/demander',
+    'CitizenPortal::requestOtp/$1',
+    ['filter' => 'csrf']
+);
+$routes->post(
+    'inscription/(:segment)/otp/verifier',
+    'CitizenPortal::verifyOtp/$1',
+    ['filter' => 'csrf']
+);
+$routes->post(
     'inscription/(:segment)',
     'CitizenPortal::submit/$1',
     ['filter' => 'csrf']
