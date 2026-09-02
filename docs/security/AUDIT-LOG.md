@@ -25,7 +25,10 @@ Il ne constitue pas un registre externe immuable.
 9. valide la transaction ;
 10. libère le verrou.
 
-Le verrou sérialise les écritures concurrentes d'un même tenant.
+La conception utilise ce verrou pour sérialiser les écritures
+concurrentes d'un même tenant. Ce comportement doit encore faire l'objet
+d'un test de concurrence ou de charge dédié avant d'être considéré comme
+validé expérimentalement.
 
 ## Validation de l'acteur
 
@@ -46,8 +49,22 @@ installe :
 Elle remplace également la clé étrangère de l'acteur par
 `fk_audit_actor_restrict` avec `ON DELETE RESTRICT`.
 
-Cela évite qu'une suppression physique d'utilisateur modifie
-rétroactivement une entrée participant à la chaîne de hachage.
+La migration
+`2026-09-02-000400_RestrictAuditForeignKeyUpdates`
+complète ce durcissement en imposant `ON UPDATE RESTRICT` sur :
+
+- `fk_audit_actor_restrict` ;
+- `fk_audit_tenant`.
+
+`actor_user_id` et `tenant_id` participent au calcul de `entry_hash`.
+Une mise à jour en cascade de l'une de ces valeurs modifierait donc
+rétroactivement une entrée déjà hachée.
+
+Ces restrictions empêchent les mises à jour de clés parentes de modifier
+implicitement ces colonnes du journal.
+
+La suppression physique de l'acteur et du tenant référencés reste
+également en `ON DELETE RESTRICT`.
 
 ## Séparation des comptes MariaDB
 
