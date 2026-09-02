@@ -9,15 +9,18 @@ FROM php:8.3-fpm-alpine AS php-base
 USER root
 
 RUN apk add --no-cache \
+        curl \
         icu-libs \
         oniguruma \
         libzip \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
+        curl-dev \
         icu-dev \
         oniguruma-dev \
         libzip-dev \
     && docker-php-ext-install -j1 \
+        curl \
         intl \
         mbstring \
         mysqli \
