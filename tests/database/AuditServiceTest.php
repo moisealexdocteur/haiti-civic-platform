@@ -238,6 +238,202 @@ final class AuditServiceTest extends CIUnitTestCase
         );
     }
 
+    public function testAuditForeignKeysRestrictParentUpdatesAndDeletes(): void
+    {
+        $rows = $this->db
+            ->query(
+                <<<'SQL'
+SELECT
+    CONSTRAINT_NAME,
+    UPDATE_RULE,
+    DELETE_RULE
+FROM information_schema.REFERENTIAL_CONSTRAINTS
+WHERE CONSTRAINT_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'audit_logs'
+  AND CONSTRAINT_NAME IN (
+      'fk_audit_actor_restrict',
+      'fk_audit_tenant'
+  )
+ORDER BY CONSTRAINT_NAME
+SQL
+            )
+            ->getResultArray();
+
+        $rules = [];
+
+        foreach ($rows as $row) {
+            $rules[
+                (string) $row['CONSTRAINT_NAME']
+            ] = [
+                'UPDATE_RULE' =>
+                    strtoupper(
+                        (string) $row['UPDATE_RULE']
+                    ),
+                'DELETE_RULE' =>
+                    strtoupper(
+                        (string) $row['DELETE_RULE']
+                    ),
+            ];
+        }
+
+        $this->assertSame(
+            [
+                'fk_audit_actor_restrict' => [
+                    'UPDATE_RULE' => 'RESTRICT',
+                    'DELETE_RULE' => 'RESTRICT',
+                ],
+                'fk_audit_tenant' => [
+                    'UPDATE_RULE' => 'RESTRICT',
+                    'DELETE_RULE' => 'RESTRICT',
+                ],
+            ],
+            $rules
+        );
+
+        /*
+         * La FK historique ne doit plus coexister
+         * avec fk_audit_actor_restrict.
+         */
+        $legacy = $this->db
+            ->query(
+                <<<'SQL'
+SELECT COUNT(*) AS total
+FROM information_schema.REFERENTIAL_CONSTRAINTS
+WHERE CONSTRAINT_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'audit_logs'
+  AND CONSTRAINT_NAME = 'fk_audit_actor'
+SQL
+            )
+            ->getFirstRow('array');
+
+        $this->assertSame(
+            0,
+            (int) $legacy['total']
+        );
+    }
+
+    public function testReferencedActorPrimaryKeyUpdateIsRejected(): void
+    {
+        $service = $this->service();
+
+        $service->record(
+            'audit.actor_pk_update_guard',
+            $this->userId
+        );
+
+        $max = $this->db
+            ->table('users')
+            ->selectMax('id', 'max_id')
+            ->get()
+            ->getFirstRow('array');
+
+        $newUserId =
+            (int) $max['max_id'] + 1000000;
+
+        try {
+            $this->db
+                ->table('users')
+                ->where('id', $this->userId)
+                ->update([
+                    'id' => $newUserId,
+                ]);
+
+            $this->fail(
+                'Referenced actor PK update should be rejected.'
+            );
+        } catch (DatabaseException $exception) {
+            $this->assertNotSame(
+                '',
+                trim($exception->getMessage())
+            );
+        }
+
+        $oldUser = $this->db
+            ->table('users')
+            ->where('id', $this->userId)
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        $newUser = $this->db
+            ->table('users')
+            ->where('id', $newUserId)
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        $this->assertNotNull($oldUser);
+        $this->assertNull($newUser);
+
+        $verification =
+            $service->verifyCurrentTenantChain();
+
+        $this->assertTrue(
+            $verification['valid']
+        );
+    }
+
+    public function testReferencedTenantPrimaryKeyUpdateIsRejected(): void
+    {
+        $service = $this->service();
+
+        $service->record(
+            'audit.tenant_pk_update_guard',
+            $this->userId
+        );
+
+        $max = $this->db
+            ->table('tenants')
+            ->selectMax('id', 'max_id')
+            ->get()
+            ->getFirstRow('array');
+
+        $newTenantId =
+            (int) $max['max_id'] + 1000000;
+
+        try {
+            $this->db
+                ->table('tenants')
+                ->where('id', $this->tenantId)
+                ->update([
+                    'id' => $newTenantId,
+                ]);
+
+            $this->fail(
+                'Referenced tenant PK update should be rejected.'
+            );
+        } catch (DatabaseException $exception) {
+            $this->assertNotSame(
+                '',
+                trim($exception->getMessage())
+            );
+        }
+
+        $oldTenant = $this->db
+            ->table('tenants')
+            ->where('id', $this->tenantId)
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        $newTenant = $this->db
+            ->table('tenants')
+            ->where('id', $newTenantId)
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        $this->assertNotNull($oldTenant);
+        $this->assertNull($newTenant);
+
+        $verification =
+            $service->verifyCurrentTenantChain();
+
+        $this->assertTrue(
+            $verification['valid']
+        );
+    }
+
     public function testRuntimeDatabaseUserHasNoDdlPrivileges(): void
     {
         $rows = $this->db
