@@ -15,9 +15,16 @@ $routes->post(
     ['filter' => 'csrf']
 );
 
-/*
- * --------------------------------------------------------------------
- * Platform Health Check
- * --------------------------------------------------------------------
- */
+$routes->get('admin/login', 'AdminAuth::login');
+$routes->post(
+    'admin/login',
+    'AdminAuth::authenticate',
+    ['filter' => 'csrf']
+);
+$routes->post(
+    'admin/logout',
+    'AdminAuth::logout',
+    ['filter' => 'adminauth,csrf']
+);
+
 $routes->get('health', 'Health::index');
