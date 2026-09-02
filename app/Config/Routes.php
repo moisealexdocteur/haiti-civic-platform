@@ -24,7 +24,7 @@ $routes->post(
 $routes->post(
     'admin/logout',
     'AdminAuth::logout',
-    ['filter' => 'adminauth,csrf']
+    ['filter' => ['adminauth', 'csrf']]
 );
 
 $routes->get('health', 'Health::index');
