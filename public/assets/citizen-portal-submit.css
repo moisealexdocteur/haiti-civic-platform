@@ -1,0 +1,89 @@
+.registration-card input[type="file"] {
+    width: min(100%, 220px);
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.registration-card input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: #dfeaf5;
+    color: #17324d;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.consent-live {
+    cursor: pointer;
+}
+
+.consent-live > input[type="checkbox"] {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    margin: 1px 0 0;
+    accent-color: var(--accent);
+}
+
+.confirmation-card {
+    margin-top: 64px;
+    padding: 34px;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(31, 54, 77, 0.08);
+    text-align: center;
+}
+
+.confirmation-mark {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #e9f8ef;
+    color: #18794e;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.confirmation-details {
+    display: grid;
+    gap: 12px;
+    margin: 28px 0 16px;
+    text-align: left;
+}
+
+.confirmation-details > div {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--soft);
+}
+
+.confirmation-details dt {
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.confirmation-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 700;
+}
+
+.confirmation-help {
+    margin: 0 0 22px;
+}
+
+.confirmation-button {
+    display: inline-flex;
+    justify-content: center;
+    text-decoration: none;
+}
