@@ -9,6 +9,7 @@
     }
 
     const phone = form.querySelector('#phone');
+    const email = form.querySelector('#email');
     const csrf = form.querySelector('input[name="csrf_test_name"]');
     const requestButton = root.querySelector('[data-otp-request]');
     const codePanel = root.querySelector('[data-otp-code-panel]');
@@ -17,14 +18,18 @@
     const status = root.querySelector('[data-otp-status]');
 
     if (
-        !phone || !csrf || !requestButton || !codePanel ||
+        !phone || !email || !csrf || !requestButton || !codePanel ||
         !codeInput || !verifyButton || !status
     ) {
         return;
     }
 
     let challengeUuid = '';
-    let verifiedPhone = '';
+    let verifiedContact = '';
+
+    const contactSignature = () => {
+        return `${phone.value.trim()}\u0000${email.value.trim().toLowerCase()}`;
+    };
 
     const setBusy = (busy) => {
         requestButton.disabled = busy;
@@ -79,22 +84,34 @@
         return {response, payload};
     };
 
-    phone.addEventListener('input', () => {
-        if (verifiedPhone !== '' && phone.value.trim() !== verifiedPhone) {
-            verifiedPhone = '';
+    const resetChallenge = () => {
+        if (
+            verifiedContact !== ''
+            && contactSignature() !== verifiedContact
+        ) {
+            verifiedContact = '';
             setStatus('');
         }
 
         challengeUuid = '';
         codeInput.value = '';
         codePanel.hidden = true;
-    });
+    };
+
+    phone.addEventListener('input', resetChallenge);
+    email.addEventListener('input', resetChallenge);
 
     requestButton.addEventListener('click', async () => {
-        const value = phone.value.trim();
+        const phoneValue = phone.value.trim();
+        const emailValue = email.value.trim();
 
-        if (value === '') {
+        if (phoneValue === '') {
             phone.focus();
+            return;
+        }
+
+        if (emailValue !== '' && !email.checkValidity()) {
+            email.focus();
             return;
         }
 
@@ -104,7 +121,10 @@
         try {
             const {response, payload} = await post(
                 root.dataset.requestUrl,
-                {phone: value}
+                {
+                    phone: phoneValue,
+                    email: emailValue,
+                }
             );
 
             if (!response.ok || !payload || payload.ok !== true) {
@@ -118,7 +138,7 @@
             }
 
             challengeUuid = payload.challenge_uuid || '';
-            verifiedPhone = '';
+            verifiedContact = '';
             codePanel.hidden = challengeUuid === '';
             codeInput.value = '';
             setStatus(payload.message || '', 'sent');
@@ -164,7 +184,7 @@
                 return;
             }
 
-            verifiedPhone = phone.value.trim();
+            verifiedContact = contactSignature();
             challengeUuid = '';
             codePanel.hidden = true;
             setStatus(payload.message || '', 'verified');
