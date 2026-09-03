@@ -25,7 +25,7 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     <title><?= esc($pageTitle) ?></title>
     <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
-    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/portal.css'), 'attr') ?>">
+    <style data-portal-styles="inline"><?= inline_stylesheet('/assets/portal.css') ?></style>
     <?= $this->renderSection('head') ?>
 </head>
 <body>

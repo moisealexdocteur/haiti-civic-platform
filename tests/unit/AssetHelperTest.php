@@ -30,6 +30,16 @@ final class AssetHelperTest extends CIUnitTestCase
         $this->assertStringContainsString('@media (max-width: 620px)', $stylesheet);
     }
 
+    public function testPublicPortalStylesheetCanBeDeliveredInline(): void
+    {
+        $stylesheet = inline_stylesheet('/assets/portal.css');
+
+        $this->assertStringContainsString('.trust svg', $stylesheet);
+        $this->assertStringContainsString('.dirsum', $stylesheet);
+        $this->assertStringContainsString('.dirtable-wrap', $stylesheet);
+        $this->assertStringContainsString('.dirtable th', $stylesheet);
+    }
+
     public function testInlineStylesheetRejectsPathTraversal(): void
     {
         $this->expectException(\InvalidArgumentException::class);
