@@ -228,7 +228,6 @@ return [
     'deleteChannelConfirm' => 'Supprimer la configuration de {0} ?',
     'deleteChannelWarning' => 'Le canal sera désactivé et tous ses paramètres, y compris le secret chiffré, seront effacés.',
     'confirmDeleteChannel' => 'Supprimer définitivement',
-    'cancel' => 'Annuler',
     'close' => 'Fermer',
     'eventChannelValidated' => 'Canal de communication testé et validé',
     'eventChannelTestFailed' => 'Échec du test d’un canal de communication',

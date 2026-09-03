@@ -39,7 +39,7 @@ return [
     'officialStructuresParties' => 'pati',
     'officialStructuresGroups' => 'gwoupman',
     'officialStructuresSourceText' => 'Lis final CEP la pibliye {0}, referans {1}.',
-    'officialStructuresNumberNote' => 'Nimewo a se plas la nan lis CEP la. Se pa nimewo kanpay yo tire apre.',
+    'officialStructuresNumberNote' => 'Nimewo sa a se plas estrikti a nan lis CEP la. Se pa nimewo kanpay CEP a pral bay nan tiraj osò a.',
     'officialStructuresSourceLink' => 'Louvri dokiman CEP la',
     'officialStructuresSearchLabel' => 'Chèche yon estrikti',
     'officialStructuresSearchPlaceholder' => 'Non oswa sig',
@@ -170,7 +170,7 @@ return [
 
     // --- swivi ki pwoteje ---
     'trackingEyebrow' => 'Swivi dosye',
-    'trackingTitle' => 'Ki kote dosye ou a rive?',
+    'trackingTitle' => 'Nan ki etap dosye ou a ye?',
     'trackingLookupTitle' => 'Jwenn dosye ou a',
     'trackingLookupLead' => 'Antre referans ou te resevwa lè ou te fini demann lan.',
     'trackingOpen' => 'Louvri swivi a',
@@ -181,16 +181,16 @@ return [
     'trackingSending' => 'N ap voye kòd la',
     'trackingSentWhatsapp' => 'Nou voye kòd la sou WhatsApp.',
     'trackingSentSms' => 'Nou voye kòd la pa SMS.',
-    'trackingVerify' => 'Gade ki kote dosye a rive',
+    'trackingVerify' => 'Montre etap dosye a',
     'trackingCodeInvalid' => 'Kòd sa a pa bon, li fini oswa yo deja sèvi avè l.',
     'trackingUnavailable' => 'Nou pa ka voye kòd la kounye a. Eseye ankò pita.',
     'trackingReferenceInvalid' => 'Nou pa jwenn referans sa a oswa li pa ekri byen.',
     'trackingPrivacy' => 'Kòd QR la ak referans lan pa gen okenn enfòmasyon idantite ladan yo.',
-    'trackingCurrentStatus' => 'Ki kote li rive',
+    'trackingCurrentStatus' => 'Etap dosye a',
     'trackingStatusPending' => 'Dosye ou a ap tann yon moun verifye l.',
     'trackingStatusVerified' => 'Nou verifye idantite ou.',
     'trackingStatusRejected' => 'Gen yon bagay pou korije nan dosye a. Estrikti politik la ap kontakte ou.',
-    'trackingUpdated' => 'Dènye chanjman: {0}',
+    'trackingUpdated' => 'Dènye mizajou: {0}',
 
     // --- mesaj sèvè a ---
     'otpSentWhatsApp' => 'Nou voye kòd la sou WhatsApp.',
