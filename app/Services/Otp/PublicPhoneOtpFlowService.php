@@ -42,12 +42,17 @@ final class PublicPhoneOtpFlowService
         ?string $email = null
     ): array {
         $normalizedEmail = $this->normalizeEmail($email);
+        $requestedChannel = $this->firstConfiguredChannel();
+
+        if ($requestedChannel === null) {
+            throw new RuntimeException(
+                'No OTP delivery channel is configured.'
+            );
+        }
 
         if (
-            $normalizedEmail === null
-            && ! $this->router->hasTransport(OtpChannel::WHATSAPP)
-            && ! $this->router->hasTransport(OtpChannel::SMS)
-            && $this->router->hasTransport(OtpChannel::EMAIL)
+            $requestedChannel === OtpChannel::EMAIL
+            && $normalizedEmail === null
         ) {
             throw new InvalidArgumentException(
                 'OTP email recipient is required.'
@@ -57,7 +62,7 @@ final class PublicPhoneOtpFlowService
         $issued = $this->challenges->issue(
             $phone,
             OtpChallengeService::PURPOSE_CITIZEN_PHONE,
-            OtpChannel::WHATSAPP,
+            $requestedChannel,
             $requestFingerprint
         );
 
@@ -165,6 +170,21 @@ final class PublicPhoneOtpFlowService
     public function proofService(): PublicPhoneOtpProofService
     {
         return $this->proofs;
+    }
+
+    private function firstConfiguredChannel(): ?OtpChannel
+    {
+        foreach ([
+            OtpChannel::WHATSAPP,
+            OtpChannel::SMS,
+            OtpChannel::EMAIL,
+        ] as $channel) {
+            if ($this->router->hasTransport($channel)) {
+                return $channel;
+            }
+        }
+
+        return null;
     }
 
     private function normalizeEmail(?string $email): ?string
