@@ -2,11 +2,11 @@
 
 return [
     // --- coquille ---
-    'brand' => 'Portail citoyen',
+    'brand' => 'Portail de vérification citoyenne',
     'languageSwitch' => 'Langue',
     'languageFr' => 'Français',
     'languageHt' => 'Kreyòl',
-    'securityFootnote' => 'Vos données sont chiffrées et isolées par organisation.',
+    'securityFootnote' => 'Vos données sont chiffrées et séparées pour chaque structure politique.',
     'continue' => 'Continuer',
     'back' => 'Retour',
     'backHome' => 'Retour à l’accueil',
@@ -17,15 +17,15 @@ return [
 
     // --- accueil ---
     'homeTitle' => 'Votre démarche est simple, et elle est protégée.',
-    'homeLead' => 'Ouvrez le portail de votre organisation pour faire vérifier votre identité.',
+    'homeLead' => 'Ouvrez le portail de votre parti ou groupement politique pour faire vérifier votre identité.',
     'trustOne' => 'Votre numéro d’identité est chiffré.',
-    'trustTwo' => 'Chaque organisation ne voit que ses propres dossiers.',
+    'trustTwo' => 'Chaque structure politique ne voit que ses propres dossiers.',
     'trustThree' => 'Vous pouvez suivre chaque étape.',
-    'accessTitle' => 'Ouvrir un portail',
+    'accessTitle' => 'Ouvrir le portail d’une structure politique',
     'organizationCode' => 'Code du portail',
     'organizationPlaceholder' => 'Exemple : demo-citoyen',
-    'organizationHelp' => 'Votre organisation vous a donné ce code. Avec un lien direct, il est déjà rempli.',
-    'organizationRequired' => 'Entrez le code que votre organisation vous a donné.',
+    'organizationHelp' => 'Votre parti ou groupement politique vous a donné ce code. Avec un lien direct, il est déjà rempli.',
+    'organizationRequired' => 'Entrez le code remis par votre parti ou groupement politique.',
     'directoryLink' => 'Voir les 105 structures politiques agréées par le CEP',
 
     // --- répertoire CEP ---
@@ -65,8 +65,8 @@ return [
     'ninuTitle' => 'Votre numéro d’identité',
     'ninuLead' => 'Nous utilisons ce numéro seulement pour éviter deux dossiers pour la même personne.',
     'ninuLabel' => 'NINU ou CIN',
-    'ninuHint' => 'Les chiffres inscrits sur votre carte.',
-    'ninuRequired' => 'Entrez le numéro inscrit sur votre carte.',
+    'ninuHint' => 'Les 10 chiffres inscrits sur votre carte.',
+    'ninuRequired' => 'Entrez exactement les 10 chiffres inscrits sur votre carte.',
 
     // --- contact ---
     'phoneTitle' => 'Comment vous joindre ?',
@@ -159,7 +159,7 @@ return [
     'otpEmailInvalid' => 'Ce courriel n’est pas valide.',
     'contactVerificationRequired' => 'Confirmez votre numéro avant d’envoyer le dossier.',
     'documentInvalid' => 'Une photo n’est pas arrivée. Reprenez-la.',
-    'duplicateIdentity' => 'Un dossier avec ce numéro existe déjà dans cette organisation.',
+    'duplicateIdentity' => 'Un dossier avec ce numéro existe déjà dans cette structure politique.',
     'submissionInvalid' => 'Une information du dossier n’est pas valide. Vérifiez et recommencez.',
     'submissionError' => 'Le dossier n’a pas pu être enregistré. Rien n’a été validé. Réessayez.',
 ];

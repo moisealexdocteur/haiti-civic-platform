@@ -26,9 +26,7 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
 
     private const PASSWORD = 'Synthetic-Admin-Password-2026!';
 
-    private const NINU =
-        '11111111111111111111111111111111'
-        . '11111111111111111111111111111111';
+    private const NINU = '1111111111';
 
     private const PHONE = '00000000';
 

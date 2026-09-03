@@ -6,7 +6,7 @@ use InvalidArgumentException;
 
 final class IdentityInputNormalizer
 {
-    private const MAX_NINU_DIGITS = 64;
+    public const NINU_DIGITS = 10;
 
     public function normalizeNinu(string $value): string
     {
@@ -24,9 +24,8 @@ final class IdentityInputNormalizer
          * Nous retirons uniquement les séparateurs de
          * présentation usuels.
          *
-         * Aucune longueur réglementaire du NINU n'est
-         * imposée ici tant qu'une spécification ONI
-         * autoritative n'est pas intégrée au projet.
+         * La carte CINU et le vérificateur DELIDOC présentent
+         * le NINU sous la forme de dix chiffres.
          */
         $normalized = preg_replace(
             '/[\s\-\x{2010}\x{2011}\x{2012}'
@@ -54,12 +53,9 @@ final class IdentityInputNormalizer
             );
         }
 
-        if (
-            strlen($normalized)
-            > self::MAX_NINU_DIGITS
-        ) {
+        if (strlen($normalized) !== self::NINU_DIGITS) {
             throw new InvalidArgumentException(
-                'NINU exceeds the technical maximum length.'
+                'NINU must contain exactly 10 digits.'
             );
         }
 

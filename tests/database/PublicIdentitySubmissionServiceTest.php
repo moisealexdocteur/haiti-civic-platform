@@ -15,9 +15,7 @@ use Throwable;
 final class PublicIdentitySubmissionServiceTest
     extends CIUnitTestCase
 {
-    private const NINU =
-        '00000000000000000000000000000000'
-        . '00000000000000000000000000000000';
+    private const NINU = '0000000000';
 
     private const PHONE = '00000000';
 

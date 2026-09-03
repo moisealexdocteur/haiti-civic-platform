@@ -33,18 +33,18 @@ final class IdentityInputNormalizerTest
     public function testNinuPresentationSeparatorsAreRemoved(): void
     {
         $this->assertSame(
-            '01234567890123456',
+            '0123456789',
             $this->normalizer
                 ->normalizeNinu(
-                    '01-23-45-6789-01-23456'
+                    '01-23-45-67-89'
                 )
         );
 
         $this->assertSame(
-            '01234567890123456',
+            '0123456789',
             $this->normalizer
                 ->normalizeNinu(
-                    ' 01 23 45 6789 01 23456 '
+                    ' 01 23 45 67 89 '
                 )
         );
     }
@@ -95,7 +95,7 @@ final class IdentityInputNormalizerTest
             ->normalizeNinu('   ');
     }
 
-    public function testExcessivelyLongNinuIsRejected(): void
+    public function testNinuWithWrongLengthIsRejected(): void
     {
         $this->expectException(
             InvalidArgumentException::class
@@ -103,7 +103,19 @@ final class IdentityInputNormalizerTest
 
         $this->normalizer
             ->normalizeNinu(
-                str_repeat('1', 65)
+                '123456789'
+            );
+    }
+
+    public function testNinuWithMoreThanTenDigitsIsRejected(): void
+    {
+        $this->expectException(
+            InvalidArgumentException::class
+        );
+
+        $this->normalizer
+            ->normalizeNinu(
+                '12345678901'
             );
     }
 

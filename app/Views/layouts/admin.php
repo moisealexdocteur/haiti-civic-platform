@@ -20,6 +20,7 @@ $nav = [
     <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?> | <?= esc(lang('Admin.productName')) ?></title>
+    <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <style data-admin-styles="inline"><?= inline_stylesheet('/assets/admin.css') ?></style>
 </head>
@@ -28,7 +29,7 @@ $nav = [
 <div class="admin-shell">
     <aside class="admin-sidebar">
         <a class="admin-brand" href="/admin" aria-label="<?= esc(lang('Admin.navDashboard'), 'attr') ?>">
-            <span class="admin-seal" aria-hidden="true">BS</span>
+            <img class="product-mark" src="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" alt="">
             <span>
                 <b><?= esc(lang('Admin.productName')) ?></b>
                 <small><?= esc(lang('Admin.adminArea')) ?></small>

@@ -638,10 +638,44 @@ table.queue td.num { font-variant-numeric: tabular-nums; }
 }
 
 .switch-row input {
-    width: 22px;
-    height: 22px;
+    appearance: none;
+    position: relative;
+    width: 42px;
+    height: 24px;
     min-height: 0;
-    accent-color: var(--accent);
+    flex: 0 0 42px;
+    margin: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.switch-row input::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ink-3);
+    transition: transform .16s ease, background .16s ease;
+}
+
+.switch-row input:checked {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.switch-row input:checked::after {
+    background: var(--accent-on);
+    transform: translateX(18px);
+}
+
+.switch-row input:disabled {
+    cursor: not-allowed;
+    opacity: .55;
 }
 
 .form-note { padding: 0 20px 18px; color: var(--ink-3); font-size: var(--t-xs); }

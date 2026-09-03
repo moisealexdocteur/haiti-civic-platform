@@ -1,5 +1,5 @@
 /*
- * Ble Sitwayen : jetons et primitives partagés.
+ * Jetons et primitives partagés par tous les portails.
  * Un seul fichier pour le portail citoyen et l'administration.
  * Aucune police téléchargée : pile système uniquement.
  */
@@ -191,6 +191,14 @@ img { max-width: 100%; }
     white-space: nowrap;
 }
 
+.product-mark {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 8px;
+}
+
 .seal {
     width: 26px;
     height: 26px;
@@ -247,6 +255,7 @@ input[type="tel"],
 input[type="email"],
 input[type="password"],
 input[type="search"],
+input[type="number"],
 select,
 textarea {
     width: 100%;
@@ -258,6 +267,21 @@ textarea {
     background: var(--surface);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius);
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+    color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) input,
+    :root:not([data-theme="light"]) select,
+    :root:not([data-theme="light"]) textarea {
+        color-scheme: dark;
+    }
 }
 
 input:focus-visible,

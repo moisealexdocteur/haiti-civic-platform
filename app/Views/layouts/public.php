@@ -23,6 +23,7 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?></title>
+    <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/portal.css'), 'attr') ?>">
     <?= $this->renderSection('head') ?>
@@ -31,7 +32,7 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
 <div class="shell<?= ($wide ?? false) ? ' shell-wide' : '' ?>">
     <header class="topbar">
         <p class="brand">
-            <span class="seal" aria-hidden="true"><?= esc($brandInitials ?? 'PS') ?></span>
+            <img class="product-mark" src="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" alt="">
             <span><?= esc($brandName ?? lang('CitizenPortal.brand')) ?></span>
         </p>
         <nav class="langswitch" aria-label="<?= esc(lang('CitizenPortal.languageSwitch')) ?>">

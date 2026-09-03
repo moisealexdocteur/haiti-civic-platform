@@ -180,20 +180,28 @@
 
     function validateNinu() {
         var input = document.getElementById('ninu');
-        var value = input.value.replace(/\s+/g, '');
+        var value = input.value.replace(/\D+/g, '').slice(0, 10);
 
-        if (value.length < 6) {
+        input.value = value;
+
+        if (!/^\d{10}$/.test(value)) {
             setError('ninu', t('ninuRequired'));
             input.focus();
 
             return false;
         }
 
-        input.value = value;
         setError('ninu', '');
 
         return true;
     }
+
+    document.getElementById('ninu').addEventListener('input', function (event) {
+        event.target.value = event.target.value
+            .replace(/\D+/g, '')
+            .slice(0, 10);
+        setError('ninu', '');
+    });
 
     /* ---------------- étape téléphone ---------------- */
 
