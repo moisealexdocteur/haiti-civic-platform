@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc(lang('CitizenPortal.officialStructuresTitle')) ?> — <?= esc(lang('CitizenPortal.brand')) ?></title>
+    <title><?= esc(lang('CitizenPortal.officialStructuresTitle')) ?> | <?= esc(lang('CitizenPortal.brand')) ?></title>
     <link rel="stylesheet" href="/assets/citizen-portal.css">
     <link rel="stylesheet" href="/assets/political-structures.css">
 </head>
