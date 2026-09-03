@@ -44,6 +44,7 @@ final class OtpChannelRouter
         $preference ??= [
             OtpChannel::WHATSAPP,
             OtpChannel::SMS,
+            OtpChannel::EMAIL,
         ];
 
         if ($preference === []) {
@@ -89,5 +90,10 @@ final class OtpChannelRouter
         throw new RuntimeException(
             'No configured OTP transport matches the requested channels.'
         );
+    }
+
+    public function hasTransport(OtpChannel $channel): bool
+    {
+        return isset($this->transports[$channel->value]);
     }
 }
