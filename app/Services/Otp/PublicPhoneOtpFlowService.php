@@ -44,12 +44,6 @@ final class PublicPhoneOtpFlowService
         $normalizedEmail = $this->normalizeEmail($email);
         $requestedChannel = $this->firstConfiguredChannel();
 
-        if ($requestedChannel === null) {
-            throw new RuntimeException(
-                'No OTP delivery channel is configured.'
-            );
-        }
-
         if (
             $requestedChannel === OtpChannel::EMAIL
             && $normalizedEmail === null
@@ -172,7 +166,7 @@ final class PublicPhoneOtpFlowService
         return $this->proofs;
     }
 
-    private function firstConfiguredChannel(): ?OtpChannel
+    private function firstConfiguredChannel(): OtpChannel
     {
         foreach ([
             OtpChannel::WHATSAPP,
@@ -184,7 +178,7 @@ final class PublicPhoneOtpFlowService
             }
         }
 
-        return null;
+        return OtpChannel::WHATSAPP;
     }
 
     private function normalizeEmail(?string $email): ?string
