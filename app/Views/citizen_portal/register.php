@@ -1,414 +1,273 @@
-<!doctype html>
-<html lang="<?= esc($locale) ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc(lang('CitizenPortal.registerTitle')) ?> | <?= esc($tenant['name']) ?></title>
-    <link rel="stylesheet" href="/assets/citizen-portal.css">
-    <link rel="stylesheet" href="/assets/citizen-portal-submit.css">
-    <link rel="stylesheet" href="/assets/citizen-otp.css">
-    <link rel="stylesheet" href="/assets/citizen-registration-wizard.css">
-    <script defer src="/assets/citizen-otp.js"></script>
-    <script defer src="/assets/citizen-registration-wizard.js"></script>
-</head>
-<body>
-    <main class="shell shell-narrow">
-        <header class="topbar">
-            <a class="back-link" href="/?lang=<?= esc($locale) ?>">← <?= esc(lang('CitizenPortal.backHome')) ?></a>
-            <nav class="language-switch" aria-label="Language">
-                <a href="?lang=fr" class="<?= $locale === 'fr' ? 'active' : '' ?>">FR</a>
-                <a href="?lang=ht" class="<?= $locale === 'ht' ? 'active' : '' ?>">HT</a>
-            </nav>
-        </header>
+<?= $this->extend('layouts/public') ?>
 
-        <section class="registration-head">
-            <p class="eyebrow"><?= esc(lang('CitizenPortal.registerEyebrow')) ?></p>
-            <h1><?= esc(lang('CitizenPortal.registerTitle')) ?></h1>
-            <p class="lead tenant-name">
-                <?= esc(lang('CitizenPortal.forOrganization', [$tenant['name']])) ?>
-            </p>
-            <p class="field-help registration-intro">
-                <?= esc(lang('CitizenPortal.registrationIntro')) ?>
-            </p>
-        </section>
+<?= $this->section('main') ?>
+<?php
+$slug = rawurlencode((string) $tenant['slug']);
+?>
+<noscript>
+    <div class="alert" role="alert"><?= esc(lang('CitizenPortal.noscriptText')) ?></div>
+</noscript>
 
-        <section class="wizard-progress-card" aria-label="<?= esc(lang('CitizenPortal.progressionLabel')) ?>">
-            <div class="wizard-progress-copy">
-                <span
-                    data-progress-label
-                    data-template="<?= esc(lang('CitizenPortal.progressTemplate')) ?>"
-                ><?= esc(lang('CitizenPortal.progressInitial')) ?></span>
-                <strong data-progress-percent>0%</strong>
-            </div>
-            <div class="wizard-progress-track" aria-hidden="true">
-                <span class="wizard-progress-fill" data-progress-fill></span>
-            </div>
-            <ol class="progress">
-                <li data-progress-step="1"><span>1</span><?= esc(lang('CitizenPortal.progressIdentity')) ?></li>
-                <li data-progress-step="2"><span>2</span><?= esc(lang('CitizenPortal.progressContact')) ?></li>
-                <li data-progress-step="3"><span>3</span><?= esc(lang('CitizenPortal.progressDocuments')) ?></li>
-                <li data-progress-step="4"><span>4</span><?= esc(lang('CitizenPortal.progressConfirm')) ?></li>
-            </ol>
-        </section>
+<?php if (is_string($errorMessage) && $errorMessage !== ''): ?>
+    <div class="alert" role="alert"><?= esc($errorMessage) ?></div>
+<?php endif; ?>
 
-        <?php if ($errorMessage !== null): ?>
-            <div class="alert" role="alert">
-                <?= esc($errorMessage) ?>
-            </div>
-        <?php endif; ?>
+<div class="steps" aria-hidden="true">
+    <i data-step="1"></i><i data-step="2"></i><i data-step="3"></i><i data-step="4"></i>
+</div>
+<p class="sr-only" id="wizard-progress" aria-live="polite"></p>
 
-        <div class="preview-notice" role="status">
-            <?= esc(lang('CitizenPortal.secureSubmissionNotice')) ?>
-        </div>
+<form
+    id="wizard"
+    class="wizard"
+    method="post"
+    action="/inscription/<?= $slug ?>"
+    enctype="multipart/form-data"
+    novalidate
+    data-slug="<?= esc((string) $tenant['slug'], 'attr') ?>"
+    data-locale="<?= esc($locale, 'attr') ?>"
+>
+    <?= csrf_field() ?>
+    <input type="hidden" name="consent" id="consent-value" value="">
 
-        <form
-            id="citizen-registration-form"
-            class="registration-card"
-            aria-label="<?= esc(lang('CitizenPortal.registerTitle')) ?>"
-            method="post"
-            enctype="multipart/form-data"
-            action="/inscription/<?= esc($tenant['slug']) ?>?lang=<?= esc($locale) ?>"
-        >
-            <?= csrf_field() ?>
+    <!-- 01 · entrée -->
+    <section class="screen is-active screen-center" id="s-intro" data-group="1">
+        <div class="spacer"></div>
+        <h1><?= esc(lang('CitizenPortal.introTitle')) ?></h1>
+        <p class="lead"><?= esc(lang('CitizenPortal.introLead')) ?></p>
+        <ul class="trust">
+            <li><?= view('partials/icon_check') ?><span><?= esc(lang('CitizenPortal.introPoint1')) ?></span></li>
+            <li><?= view('partials/icon_check') ?><span><?= esc(lang('CitizenPortal.introPoint2')) ?></span></li>
+            <li><?= view('partials/icon_check') ?><span><?= esc(lang('CitizenPortal.introPoint3')) ?></span></li>
+        </ul>
+        <div class="spacer"></div>
+        <button type="button" class="btn" data-go="s-ninu"><?= esc(lang('CitizenPortal.introStart')) ?></button>
+    </section>
 
-            <section class="form-section wizard-step" data-wizard-step="1">
-                <div class="step-heading">
-                    <span class="step-number">1</span>
-                    <div>
-                        <h2><?= esc(lang('CitizenPortal.identitySection')) ?></h2>
-                        <p><?= esc(lang('CitizenPortal.identityStepLead')) ?></p>
-                    </div>
-                </div>
+    <!-- 02 · identité -->
+    <section class="screen" id="s-ninu" data-group="1">
+        <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [1])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.ninuTitle')) ?></h1>
+        <p class="lead"><?= esc(lang('CitizenPortal.ninuLead')) ?></p>
 
-                <div class="guide-card">
-                    <span class="guide-icon" aria-hidden="true">🪪</span>
-                    <div>
-                        <strong><?= esc(lang('CitizenPortal.identityGuideTitle')) ?></strong>
-                        <p><?= esc(lang('CitizenPortal.identityGuideText')) ?></p>
-                    </div>
-                </div>
-
-                <label for="ninu"><?= esc(lang('CitizenPortal.ninuLabel')) ?></label>
-                <input
-                    id="ninu"
-                    name="ninu"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="96"
-                    required
-                >
-                <p class="field-help"><?= esc(lang('CitizenPortal.ninuHelp')) ?></p>
-                <p
-                    class="step-validation"
-                    data-identity-status
-                    data-required="<?= esc(lang('CitizenPortal.identityRequiredStatus')) ?>"
-                    data-ready="<?= esc(lang('CitizenPortal.identityReadyStatus')) ?>"
-                    data-complete="<?= esc(lang('CitizenPortal.identityCompleteStatus')) ?>"
-                    role="status"
-                ></p>
-
-                <div class="step-actions">
-                    <span></span>
-                    <button type="button" class="primary-button" data-step-next="2">
-                        <?= esc(lang('CitizenPortal.nextStep')) ?>
-                    </button>
-                </div>
-            </section>
-
-            <section
-                class="form-section wizard-step"
-                data-wizard-step="2"
-                data-otp-root
-                data-request-url="/inscription/<?= esc($tenant['slug']) ?>/otp/demander?lang=<?= esc($locale) ?>"
-                data-verify-url="/inscription/<?= esc($tenant['slug']) ?>/otp/verifier?lang=<?= esc($locale) ?>"
+        <div class="field">
+            <label for="ninu"><?= esc(lang('CitizenPortal.ninuLabel')) ?></label>
+            <input
+                id="ninu"
+                name="ninu"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="40"
+                aria-describedby="ninu-hint"
             >
-                <div class="step-heading">
-                    <span class="step-number">2</span>
-                    <div>
-                        <h2><?= esc(lang('CitizenPortal.contactSection')) ?></h2>
-                        <p><?= esc(lang('CitizenPortal.contactStepLead')) ?></p>
-                    </div>
-                </div>
+            <p class="hint" id="ninu-hint"><?= esc(lang('CitizenPortal.ninuHint')) ?></p>
+            <p class="field-error" data-error-for="ninu" hidden></p>
+        </div>
 
-                <div class="guide-card">
-                    <span class="guide-icon" aria-hidden="true">🔐</span>
-                    <div>
-                        <strong><?= esc(lang('CitizenPortal.contactGuideTitle')) ?></strong>
-                        <p><?= esc(lang('CitizenPortal.contactGuideText')) ?></p>
-                    </div>
-                </div>
+        <div class="spacer"></div>
+        <button type="button" class="btn" data-validate="ninu" data-go="s-phone"><?= esc(lang('CitizenPortal.continue')) ?></button>
+    </section>
 
-                <button type="button" class="help-link" data-dialog-open="why-contact-dialog">
-                    ⓘ <?= esc(lang('CitizenPortal.contactWhyButton')) ?>
-                </button>
+    <!-- 03 · contact -->
+    <section class="screen" id="s-phone" data-group="2">
+        <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [2])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.phoneTitle')) ?></h1>
+        <p class="lead"><?= esc(lang('CitizenPortal.phoneLead')) ?></p>
 
-                <label for="phone"><?= esc(lang('CitizenPortal.phoneLabel')) ?></label>
+        <div class="field">
+            <label for="phone-local"><?= esc(lang('CitizenPortal.phoneLabel')) ?></label>
+            <div class="telrow">
+                <span class="prefix" aria-hidden="true">+509</span>
                 <input
-                    id="phone"
-                    name="phone"
+                    id="phone-local"
                     type="tel"
-                    maxlength="24"
-                    autocomplete="tel"
-                    placeholder="<?= esc(lang('CitizenPortal.phonePlaceholder')) ?>"
-                    required
+                    inputmode="numeric"
+                    autocomplete="tel-national"
+                    maxlength="11"
+                    aria-describedby="phone-hint"
                 >
+            </div>
+            <input type="hidden" name="phone" id="phone">
+            <p class="hint" id="phone-hint"><?= esc(lang('CitizenPortal.phoneHint')) ?></p>
+            <p class="field-error" data-error-for="phone-local" hidden></p>
+        </div>
 
+        <div class="spacer"></div>
+        <div class="btn-row">
+            <button type="button" class="btn btn-ghost" data-go="s-ninu"><?= esc(lang('CitizenPortal.back')) ?></button>
+            <button type="button" class="btn" id="send-code"><?= esc(lang('CitizenPortal.phoneSend')) ?></button>
+        </div>
+    </section>
+
+    <!-- 04 · code -->
+    <section class="screen" id="s-code" data-group="2">
+        <p class="eyebrow" id="code-eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [2])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.codeTitle')) ?></h1>
+        <p class="lead" id="code-lead"></p>
+
+        <div class="otp" id="otp-inputs">
+            <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [1]), 'attr') ?>">
+            <input type="text" inputmode="numeric" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [2]), 'attr') ?>">
+            <input type="text" inputmode="numeric" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [3]), 'attr') ?>">
+            <input type="text" inputmode="numeric" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [4]), 'attr') ?>">
+            <input type="text" inputmode="numeric" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [5]), 'attr') ?>">
+            <input type="text" inputmode="numeric" maxlength="1" aria-label="<?= esc(lang('CitizenPortal.codeDigit', [6]), 'attr') ?>">
+        </div>
+
+        <div class="otpmeta">
+            <span id="code-expiry"></span>
+            <button type="button" id="code-resend" disabled></button>
+        </div>
+
+        <p class="field-error" data-error-for="code" role="alert" hidden></p>
+        <span class="note"><?= esc(lang('CitizenPortal.codeNote')) ?></span>
+
+        <details class="field">
+            <summary><?= esc(lang('CitizenPortal.codeMissingTitle')) ?></summary>
+            <div class="channels">
+                <button type="button" data-channel="whatsapp"><?= esc(lang('CitizenPortal.codeResendWhatsApp')) ?></button>
+                <button type="button" data-channel="email"><?= esc(lang('CitizenPortal.codeUseEmail')) ?></button>
+            </div>
+            <div class="field" id="email-field" hidden>
                 <label for="email"><?= esc(lang('CitizenPortal.emailLabel')) ?></label>
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    maxlength="254"
-                    autocomplete="email"
-                    placeholder="<?= esc(lang('CitizenPortal.emailPlaceholder')) ?>"
-                >
-
-                <p class="field-help"><?= esc(lang('CitizenPortal.contactVerificationHelp')) ?></p>
-
-                <div class="otp-actions">
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-otp-request
-                    >
-                        <?= esc(lang('CitizenPortal.requestOtp')) ?>
-                    </button>
-                </div>
-
-                <div class="otp-code-panel" data-otp-code-panel hidden>
-                    <label for="otp_code"><?= esc(lang('CitizenPortal.otpCodeLabel')) ?></label>
-                    <div class="otp-code-row">
-                        <input
-                            id="otp_code"
-                            type="text"
-                            inputmode="numeric"
-                            autocomplete="one-time-code"
-                            pattern="[0-9]{6}"
-                            maxlength="6"
-                            data-otp-code
-                        >
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-otp-verify
-                        >
-                            <?= esc(lang('CitizenPortal.verifyOtp')) ?>
-                        </button>
-                    </div>
-                </div>
-
-                <p
-                    class="otp-status"
-                    data-otp-status
-                    role="status"
-                    aria-live="polite"
-                ></p>
-                <p
-                    class="step-validation"
-                    data-contact-step-status
-                    data-required="<?= esc(lang('CitizenPortal.contactRequiredStatus')) ?>"
-                    data-complete="<?= esc(lang('CitizenPortal.contactCompleteStatus')) ?>"
-                    role="status"
-                ></p>
-
-                <div class="step-actions">
-                    <button type="button" class="secondary-button" data-step-back="1">
-                        <?= esc(lang('CitizenPortal.backStep')) ?>
-                    </button>
-                    <button type="button" class="primary-button" data-step-next="3" data-contact-continue disabled>
-                        <?= esc(lang('CitizenPortal.nextStep')) ?>
-                    </button>
-                </div>
-            </section>
-
-            <section class="form-section wizard-step" data-wizard-step="3">
-                <div class="step-heading">
-                    <span class="step-number">3</span>
-                    <div>
-                        <h2><?= esc(lang('CitizenPortal.documentsSection')) ?></h2>
-                        <p><?= esc(lang('CitizenPortal.documentsStepLead')) ?></p>
-                    </div>
-                </div>
-
-                <div class="guide-card">
-                    <span class="guide-icon" aria-hidden="true">📷</span>
-                    <div>
-                        <strong><?= esc(lang('CitizenPortal.documentsGuideTitle')) ?></strong>
-                        <p><?= esc(lang('CitizenPortal.documentsGuideText')) ?></p>
-                    </div>
-                </div>
-
-                <button type="button" class="help-link" data-dialog-open="why-documents-dialog">
-                    ⓘ <?= esc(lang('CitizenPortal.documentsWhyButton')) ?>
-                </button>
-
-                <div class="guided-upload-list">
-                    <label class="guided-upload" for="cin_front" data-upload-card>
-                        <span class="upload-step-number">1</span>
-                        <span class="upload-copy">
-                            <strong><?= esc(lang('CitizenPortal.cinFront')) ?></strong>
-                            <p><?= esc(lang('CitizenPortal.cinFrontPurpose')) ?></p>
-                            <span>JPG · PNG · PDF · <?= esc(lang('CitizenPortal.maxFiveMb')) ?></span>
-                            <input
-                                id="cin_front"
-                                name="cin_front"
-                                type="file"
-                                accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
-                                required
-                            >
-                            <span
-                                class="upload-file-status"
-                                data-file-status
-                                data-prefix="<?= esc(lang('CitizenPortal.fileSelectedPrefix')) ?>"
-                            ></span>
-                        </span>
-                    </label>
-
-                    <label class="guided-upload" for="cin_back" data-upload-card>
-                        <span class="upload-step-number">2</span>
-                        <span class="upload-copy">
-                            <strong><?= esc(lang('CitizenPortal.cinBack')) ?></strong>
-                            <p><?= esc(lang('CitizenPortal.cinBackPurpose')) ?></p>
-                            <span>JPG · PNG · PDF · <?= esc(lang('CitizenPortal.maxFiveMb')) ?></span>
-                            <input
-                                id="cin_back"
-                                name="cin_back"
-                                type="file"
-                                accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
-                                required
-                            >
-                            <span
-                                class="upload-file-status"
-                                data-file-status
-                                data-prefix="<?= esc(lang('CitizenPortal.fileSelectedPrefix')) ?>"
-                            ></span>
-                        </span>
-                    </label>
-
-                    <label class="guided-upload" for="portrait" data-upload-card>
-                        <span class="upload-step-number">3</span>
-                        <span class="upload-copy">
-                            <strong><?= esc(lang('CitizenPortal.portrait')) ?></strong>
-                            <p><?= esc(lang('CitizenPortal.portraitPurpose')) ?></p>
-                            <span>JPG · PNG · <?= esc(lang('CitizenPortal.maxFiveMb')) ?></span>
-                            <input
-                                id="portrait"
-                                name="portrait"
-                                type="file"
-                                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                                required
-                            >
-                            <span
-                                class="upload-file-status"
-                                data-file-status
-                                data-prefix="<?= esc(lang('CitizenPortal.fileSelectedPrefix')) ?>"
-                            ></span>
-                        </span>
-                    </label>
-                </div>
-
-                <p class="field-help"><?= esc(lang('CitizenPortal.portraitHelp')) ?></p>
-                <p
-                    class="step-validation"
-                    data-document-step-status
-                    data-required="<?= esc(lang('CitizenPortal.documentsRequiredStatus')) ?>"
-                    data-complete="<?= esc(lang('CitizenPortal.documentsCompleteStatus')) ?>"
-                    role="status"
-                ></p>
-
-                <div class="step-actions">
-                    <button type="button" class="secondary-button" data-step-back="2">
-                        <?= esc(lang('CitizenPortal.backStep')) ?>
-                    </button>
-                    <button type="button" class="primary-button" data-step-next="4" data-documents-continue disabled>
-                        <?= esc(lang('CitizenPortal.nextStep')) ?>
-                    </button>
-                </div>
-            </section>
-
-            <section class="form-section wizard-step" data-wizard-step="4">
-                <div class="step-heading">
-                    <span class="step-number">4</span>
-                    <div>
-                        <h2><?= esc(lang('CitizenPortal.reviewSection')) ?></h2>
-                        <p><?= esc(lang('CitizenPortal.reviewStepLead')) ?></p>
-                    </div>
-                </div>
-
-                <div class="review-list">
-                    <div class="review-item">
-                        <span><?= esc(lang('CitizenPortal.reviewIdentity')) ?></span>
-                        <span>✓ <?= esc(lang('CitizenPortal.reviewReady')) ?></span>
-                    </div>
-                    <div class="review-item">
-                        <span><?= esc(lang('CitizenPortal.reviewContact')) ?></span>
-                        <span>✓ <?= esc(lang('CitizenPortal.reviewReady')) ?></span>
-                    </div>
-                    <div class="review-item">
-                        <span><?= esc(lang('CitizenPortal.reviewDocuments')) ?></span>
-                        <span>✓ <?= esc(lang('CitizenPortal.reviewReady')) ?></span>
-                    </div>
-                </div>
-
-                <label class="consent-box consent-live" for="consent">
-                    <input
-                        id="consent"
-                        name="consent"
-                        type="checkbox"
-                        value="1"
-                        required
-                    >
-                    <div>
-                        <strong><?= esc(lang('CitizenPortal.consentTitle')) ?></strong>
-                        <p><?= esc(lang('CitizenPortal.consentText')) ?></p>
-                    </div>
-                </label>
-
-                <div class="step-actions">
-                    <button type="button" class="secondary-button" data-step-back="3">
-                        <?= esc(lang('CitizenPortal.backStep')) ?>
-                    </button>
-                    <button type="submit" class="primary-button" data-final-submit disabled>
-                        <?= esc(lang('CitizenPortal.submitSecure')) ?>
-                    </button>
-                </div>
-            </section>
-        </form>
-
-        <footer>
-            <?= esc(lang('CitizenPortal.securityFootnote')) ?>
-        </footer>
-    </main>
-
-    <dialog class="wizard-dialog" id="why-contact-dialog">
-        <div class="dialog-content">
-            <h2><?= esc(lang('CitizenPortal.contactDialogTitle')) ?></h2>
-            <p><?= esc(lang('CitizenPortal.contactDialogTextOne')) ?></p>
-            <p><?= esc(lang('CitizenPortal.contactDialogTextTwo')) ?></p>
-            <div class="dialog-actions">
-                <button type="button" class="secondary-button" data-dialog-close>
-                    <?= esc(lang('CitizenPortal.closeDialog')) ?>
-                </button>
+                <input id="email" name="email" type="email" autocomplete="email" maxlength="191">
             </div>
-        </div>
-    </dialog>
+        </details>
 
-    <dialog class="wizard-dialog" id="why-documents-dialog">
-        <div class="dialog-content">
-            <h2><?= esc(lang('CitizenPortal.documentsDialogTitle')) ?></h2>
-            <p><?= esc(lang('CitizenPortal.documentsDialogIntro')) ?></p>
-            <ol>
-                <li><?= esc(lang('CitizenPortal.documentsDialogFront')) ?></li>
-                <li><?= esc(lang('CitizenPortal.documentsDialogBack')) ?></li>
-                <li><?= esc(lang('CitizenPortal.documentsDialogPortrait')) ?></li>
-            </ol>
-            <div class="dialog-actions">
-                <button type="button" class="secondary-button" data-dialog-close>
-                    <?= esc(lang('CitizenPortal.closeDialog')) ?>
-                </button>
-            </div>
+        <div class="spacer"></div>
+        <div class="btn-row">
+            <button type="button" class="btn btn-ghost" data-go="s-phone"><?= esc(lang('CitizenPortal.back')) ?></button>
+            <button type="button" class="btn" id="verify-code"><?= esc(lang('CitizenPortal.continue')) ?></button>
         </div>
-    </dialog>
-</body>
-</html>
+    </section>
+
+    <!-- 05 · contact confirmé -->
+    <section class="screen screen-center" id="s-verified" data-group="2">
+        <div class="tick" aria-hidden="true"><?= view('partials/icon_tick') ?></div>
+        <h1><?= esc(lang('CitizenPortal.verifiedTitle')) ?></h1>
+        <p class="lead" id="verified-phone"></p>
+        <div class="spacer"></div>
+        <button type="button" class="btn" data-go="s-why"><?= esc(lang('CitizenPortal.continue')) ?></button>
+    </section>
+
+    <!-- 06 · pourquoi les pièces -->
+    <section class="screen" id="s-why" data-group="3">
+        <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [3])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.whyTitle')) ?></h1>
+        <p class="lead"><?= esc(lang('CitizenPortal.whyLead')) ?></p>
+
+        <div class="checks">
+            <p class="checkline" data-piece-check="cin_front"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.pieceFront')) ?></span></p>
+            <p class="checkline" data-piece-check="cin_back"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.pieceBack')) ?></span></p>
+            <p class="checkline" data-piece-check="portrait"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.piecePortrait')) ?></span></p>
+        </div>
+
+        <span class="note"><?= esc(lang('CitizenPortal.whyNote')) ?></span>
+        <div class="spacer"></div>
+        <button type="button" class="btn" data-go="s-cin_front"><?= esc(lang('CitizenPortal.whyStart')) ?></button>
+    </section>
+
+    <?php
+    $pieces = [
+        'cin_front' => ['step' => 1, 'title' => 'frontTitle', 'guide' => 'frontGuide', 'art' => 'card', 'next' => 's-cin_back'],
+        'cin_back' => ['step' => 2, 'title' => 'backTitle', 'guide' => 'backGuide', 'art' => 'card', 'next' => 's-portrait'],
+        'portrait' => ['step' => 3, 'title' => 'portraitTitle', 'guide' => 'portraitGuide', 'art' => 'face', 'next' => 's-consent'],
+    ];
+    ?>
+    <?php foreach ($pieces as $field => $piece): ?>
+        <!-- pièce <?= esc($field) ?> -->
+        <section class="screen" id="s-<?= esc($field) ?>" data-group="3" data-piece="<?= esc($field, 'attr') ?>" data-next="<?= esc($piece['next'], 'attr') ?>">
+            <p class="eyebrow"><?= esc(lang('CitizenPortal.pieceOfThree', [$piece['step']])) ?></p>
+            <h1 data-role="title"><?= esc(lang('CitizenPortal.' . $piece['title'])) ?></h1>
+
+            <div data-role="capture">
+                <div class="cardart<?= $piece['art'] === 'face' ? ' is-portrait' : '' ?>" aria-hidden="true">
+                    <?= view($piece['art'] === 'face' ? 'partials/icon_face' : 'partials/icon_card') ?>
+                    <span><?= esc(lang('CitizenPortal.' . $piece['guide'])) ?></span>
+                </div>
+                <?php if ($field === 'portrait'): ?>
+                    <div class="checks">
+                        <p class="checkline is-tip"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.selfieTip1')) ?></span></p>
+                        <p class="checkline is-tip"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.selfieTip2')) ?></span></p>
+                        <p class="checkline is-tip"><span class="box" aria-hidden="true"></span><span><?= esc(lang('CitizenPortal.selfieTip3')) ?></span></p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <figure class="shot" data-role="preview" hidden>
+                <figcaption><?= esc(lang('CitizenPortal.' . $piece['title'])) ?></figcaption>
+                <img alt="" data-role="preview-image">
+            </figure>
+
+            <p class="field-error" data-error-for="<?= esc($field, 'attr') ?>" role="alert" hidden></p>
+
+            <input
+                type="file"
+                class="sr-only"
+                name="<?= esc($field, 'attr') ?>"
+                id="file-<?= esc($field, 'attr') ?>"
+                accept="image/jpeg,image/png,image/webp"
+                <?= $field === 'portrait' ? 'capture="user"' : 'capture="environment"' ?>
+            >
+
+            <div class="spacer"></div>
+
+            <div class="btn-stack" data-role="capture-actions">
+                <button type="button" class="btn" data-shoot="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.takePhoto')) ?></button>
+                <button type="button" class="btn btn-ghost" data-pick="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.choosePhoto')) ?></button>
+            </div>
+
+            <div class="btn-row" data-role="review-actions" hidden>
+                <button type="button" class="btn btn-ghost" data-retake="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.retake')) ?></button>
+                <button type="button" class="btn" data-accept="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.usePhoto')) ?></button>
+            </div>
+        </section>
+    <?php endforeach; ?>
+
+    <!-- 11 · consentement et envoi -->
+    <section class="screen" id="s-consent" data-group="4">
+        <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [4])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.consentTitle')) ?></h1>
+
+        <dl class="kv">
+            <dt><?= esc(lang('CitizenPortal.summaryNumber')) ?></dt>
+            <dd id="summary-ninu"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
+            <dt><?= esc(lang('CitizenPortal.summaryPhone')) ?></dt>
+            <dd id="summary-phone"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
+            <dt><?= esc(lang('CitizenPortal.summaryPhotos')) ?></dt>
+            <dd id="summary-photos"><?= esc(lang('CitizenPortal.summaryNoPhoto')) ?></dd>
+        </dl>
+
+        <label class="consent">
+            <input type="checkbox" id="consent-1">
+            <span><?= esc(lang('CitizenPortal.consentOne')) ?></span>
+        </label>
+        <label class="consent">
+            <input type="checkbox" id="consent-2">
+            <span><?= esc(lang('CitizenPortal.consentTwo')) ?></span>
+        </label>
+
+        <p class="field-error" data-error-for="consent" role="alert" hidden></p>
+
+        <div class="progress" id="upload-progress" hidden>
+            <div class="progress-head">
+                <span><?= esc(lang('CitizenPortal.sending')) ?></span>
+                <span id="upload-percent">0 %</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="upload-fill"></div></div>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="btn-row">
+            <button type="button" class="btn btn-ghost" data-go="s-portrait"><?= esc(lang('CitizenPortal.back')) ?></button>
+            <button type="submit" class="btn" id="submit-file"><?= esc(lang('CitizenPortal.submitSend')) ?></button>
+        </div>
+    </section>
+</form>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script type="application/json" id="wizard-strings"><?= json_encode($strings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<script src="/assets/portal-wizard.js" defer></script>
+<?= $this->endSection() ?>

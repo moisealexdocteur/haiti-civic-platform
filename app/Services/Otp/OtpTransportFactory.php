@@ -2,10 +2,23 @@
 
 namespace App\Services\Otp;
 
+use App\Services\TenantCommunicationSettingsService;
+use App\Services\TenantContext;
 use RuntimeException;
 
 final class OtpTransportFactory
 {
+    public static function forTenant(TenantContext $tenantContext): OtpChannelRouter
+    {
+        $settings = new TenantCommunicationSettingsService($tenantContext);
+
+        if ($settings->hasStoredSettings()) {
+            return $settings->router();
+        }
+
+        return self::fromEnvironment();
+    }
+
     public static function fromEnvironment(): OtpChannelRouter
     {
         $transports = [];

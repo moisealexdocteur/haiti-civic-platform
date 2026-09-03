@@ -2,10 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Controllers\Concerns\AdminPage;
 use App\Services\AdminIdentityDecisionService;
 use App\Services\AdminIdentityReadService;
 use App\Services\AuthorizationService;
-use App\Services\TenantContext;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -13,12 +13,17 @@ use Throwable;
 
 final class AdminIdentities extends BaseController
 {
+    use AdminPage;
+
     public function index()
     {
         helper('form');
         $this->noStore();
 
-        [$tenantContext, $actorUserId, $session] = $this->adminContext();
+        $context = $this->adminContext();
+        $tenantContext = $context['tenantContext'];
+        $actorUserId = $context['userId'];
+        $session = $context['session'];
         $status = strtolower(trim((string) $this->request->getGet('status')));
         $status = $status === '' ? 'pending' : $status;
 
@@ -35,16 +40,19 @@ final class AdminIdentities extends BaseController
 
         $authorization = new AuthorizationService($tenantContext);
 
-        return view('admin/identities/index', [
+        return view('admin/identities/index', $this->adminPageData(
+            $context,
+            'Admin.identitiesTitle',
+            'identities',
+            [
             'rows' => $rows,
             'status' => $status,
             'canManage' => $authorization->userHasPermission(
                 $actorUserId,
                 'identity.manage'
             ),
-            'displayName' => (string) $session->get('admin_display_name'),
-            'tenantName' => (string) $session->get('admin_tenant_name'),
-        ]);
+            ]
+        ));
     }
 
     public function show(string $identityUuid)
@@ -52,7 +60,10 @@ final class AdminIdentities extends BaseController
         helper('form');
         $this->noStore();
 
-        [$tenantContext, $actorUserId, $session] = $this->adminContext();
+        $context = $this->adminContext();
+        $tenantContext = $context['tenantContext'];
+        $actorUserId = $context['userId'];
+        $session = $context['session'];
 
         try {
             $identity = (new AdminIdentityReadService($tenantContext))
@@ -69,23 +80,28 @@ final class AdminIdentities extends BaseController
 
         $authorization = new AuthorizationService($tenantContext);
 
-        return view('admin/identities/show', [
+        return view('admin/identities/show', $this->adminPageData(
+            $context,
+            'Admin.identityTitle',
+            'identities',
+            [
             'identity' => $identity,
             'canManage' => $authorization->userHasPermission(
                 $actorUserId,
                 'identity.manage'
             ),
-            'displayName' => (string) $session->get('admin_display_name'),
-            'tenantName' => (string) $session->get('admin_tenant_name'),
             'decisionOk' => $this->request->getGet('decision') === 'ok',
             'decisionError' => $session->getFlashdata('decision_error'),
-        ]);
+            ]
+        ));
     }
 
     public function document(string $identityUuid, string $documentUuid)
     {
         $this->noStore();
-        [$tenantContext, $actorUserId] = $this->adminContext();
+        $context = $this->adminContext();
+        $tenantContext = $context['tenantContext'];
+        $actorUserId = $context['userId'];
 
         try {
             $document = (new AdminIdentityReadService($tenantContext))
@@ -129,7 +145,10 @@ final class AdminIdentities extends BaseController
 
     public function transition(string $identityUuid)
     {
-        [$tenantContext, $actorUserId, $session] = $this->adminContext();
+        $context = $this->adminContext();
+        $tenantContext = $context['tenantContext'];
+        $actorUserId = $context['userId'];
+        $session = $context['session'];
         $toStatus = (string) $this->request->getPost('to_status');
         $reasonCode = trim((string) $this->request->getPost('reason_code'));
 
@@ -147,7 +166,7 @@ final class AdminIdentities extends BaseController
 
             $session->setFlashdata(
                 'decision_error',
-                'La décision n’a pas pu être enregistrée.'
+                lang('Admin.decisionFailed')
             );
 
             return redirect()->to(
@@ -156,7 +175,7 @@ final class AdminIdentities extends BaseController
         } catch (InvalidArgumentException $exception) {
             $session->setFlashdata(
                 'decision_error',
-                'Transition invalide ou motif obligatoire manquant.'
+                lang('Admin.decisionInvalid')
             );
 
             return redirect()->to(
@@ -169,7 +188,7 @@ final class AdminIdentities extends BaseController
 
             $session->setFlashdata(
                 'decision_error',
-                'La décision n’a pas pu être enregistrée.'
+                lang('Admin.decisionFailed')
             );
 
             return redirect()->to(
@@ -180,23 +199,6 @@ final class AdminIdentities extends BaseController
         return redirect()->to(
             '/admin/identites/' . rawurlencode($identityUuid) . '?decision=ok'
         );
-    }
-
-    private function adminContext(): array
-    {
-        $session = service('session');
-        $actorUserId = (int) $session->get('admin_user_id');
-        $tenantId = (int) $session->get('admin_tenant_id');
-
-        if ($actorUserId <= 0 || $tenantId <= 0) {
-            throw new RuntimeException('Administrative session is missing.');
-        }
-
-        return [
-            (new TenantContext())->set($tenantId),
-            $actorUserId,
-            $session,
-        ];
     }
 
     private function noStore(): void
@@ -211,6 +213,6 @@ final class AdminIdentities extends BaseController
         return $this->response
             ->setStatusCode(403)
             ->setHeader('Cache-Control', 'no-store, private, max-age=0')
-            ->setBody('Accès refusé.');
+            ->setBody(lang('Admin.accessDenied'));
     }
 }

@@ -193,6 +193,37 @@ final class PublicPhoneOtpFlowServiceTest extends CIUnitTestCase
         $this->assertSame('sms-message-1', $row['provider_message_ref']);
     }
 
+    public function testCitizenCanExplicitlyChooseTheEmailChannel(): void
+    {
+        $calls = [];
+        $whatsApp = new CapturingOtpTransport(
+            OtpChannel::WHATSAPP,
+            true,
+            'wa-message-not-used',
+            $calls
+        );
+        $email = new CapturingOtpTransport(
+            OtpChannel::EMAIL,
+            true,
+            'email-message-1',
+            $calls
+        );
+        $flow = $this->flow(
+            $this->tenantA,
+            new OtpChannelRouter([$whatsApp, $email])
+        );
+
+        $requested = $flow->request(
+            self::PHONE,
+            null,
+            'citizen@example.test',
+            'email'
+        );
+
+        $this->assertSame('email', $requested['delivered_channel']);
+        $this->assertSame(['email'], $calls);
+    }
+
     public function testNoTransportInvalidatesChallengeAndCreatesNoProof(): void
     {
         $flow = $this->flow(

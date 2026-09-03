@@ -30,6 +30,9 @@ class CoreCatalogSeeder extends Seeder
             ['identity.manage',     'Administrer les identités citoyennes', 'identity_verification'],
 
             ['audit.view',          'Consulter le journal d’audit',   'core'],
+
+            ['settings.view',       'Consulter les réglages',         'core'],
+            ['settings.manage',     'Administrer les réglages',       'core'],
         ];
 
         $permissionTable = $this->db->table('permissions');
