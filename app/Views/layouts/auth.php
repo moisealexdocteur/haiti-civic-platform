@@ -2,12 +2,14 @@
 <html lang="<?= esc($locale) ?>"<?= $theme === null ? '' : ' data-theme="' . esc($theme, 'attr') . '"' ?>>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?> | <?= esc(lang('Admin.productName')) ?></title>
-    <link rel="stylesheet" href="/assets/tokens.css">
-    <link rel="stylesheet" href="/assets/admin.css">
+    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
+    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/admin.css'), 'attr') ?>">
 </head>
 <body>
 <main class="auth-shell">

@@ -540,7 +540,12 @@ table.queue td.num { font-variant-numeric: tabular-nums; }
 .timeline span { font-size: var(--t-xs); color: var(--ink-3); }
 
 .auth-shell {
-    width: min(100% - 32px, 470px);
+    display: grid;
+    align-content: center;
+    width: calc(100% - 32px);
+    max-width: 470px;
+    min-height: 100vh;
+    min-height: 100svh;
     margin: 0 auto;
     padding: 40px 0 28px;
 }
@@ -574,7 +579,11 @@ table.queue td.num { font-variant-numeric: tabular-nums; }
     font-size: var(--t-sm);
 }
 
-.auth-footer { justify-content: center; border-top: 0; }
+.auth-footer {
+    justify-content: center;
+    margin-top: 10px;
+    border-top: 0;
+}
 
 .settings-form { display: grid; gap: 16px; }
 
@@ -791,4 +800,8 @@ table.queue td.num { font-variant-numeric: tabular-nums; }
     .details > div { grid-template-columns: 1fr; gap: 4px; }
     .compare { grid-template-columns: 1fr; }
     .auth-card { padding: 22px 18px; }
+}
+
+@media (max-height: 700px) {
+    .auth-shell { align-content: start; }
 }

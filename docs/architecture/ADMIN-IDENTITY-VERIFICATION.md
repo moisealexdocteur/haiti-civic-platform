@@ -22,6 +22,13 @@ Le bootstrap crée un utilisateur actif, son appartenance tenant avec `is_owner 
 
 Ce mécanisme n’est pas un système général de gestion des opérateurs. Les ajouts ultérieurs d’utilisateurs doivent passer par les services RBAC prévus pour le tenant.
 
+Un opérateur ayant un accès console au serveur peut réinitialiser un compte
+administrateur actif avec `php spark admin:password:set <tenant-slug> <email>`.
+Le nouveau mot de passe doit être transmis uniquement dans la variable de
+processus `ADMIN_RESET_PASSWORD`. La commande révoque les sessions existantes,
+invalide les liens de réinitialisation encore ouverts et ajoute l’opération au
+journal d’audit. Elle n’affiche jamais le mot de passe.
+
 ## Authentification et session
 
 L’authentification administrative vérifie simultanément :
