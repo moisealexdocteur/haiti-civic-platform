@@ -62,10 +62,11 @@ final class TwilioSmsOtpTransport implements OtpTransportInterface
                 $this->authToken,
                 http_build_query($fields, '', '&', PHP_QUERY_RFC3986)
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::SMS,
-                'twilio_transport_error'
+                'twilio_transport_error',
+                $exception->getMessage()
             );
         }
 
@@ -75,7 +76,8 @@ final class TwilioSmsOtpTransport implements OtpTransportInterface
         if ($status < 200 || $status >= 300) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::SMS,
-                $this->httpFailureCode('twilio', $status)
+                $this->httpFailureCode('twilio', $status),
+                $this->providerError($body, $status)
             );
         }
 
@@ -228,5 +230,23 @@ final class TwilioSmsOtpTransport implements OtpTransportInterface
         }
 
         return $prefix . '_http_error';
+    }
+
+    private function providerError(string $body, int $status): string
+    {
+        $decoded = json_decode($body, true);
+
+        if (is_array($decoded)) {
+            $parts = array_filter([
+                isset($decoded['message']) ? (string) $decoded['message'] : null,
+                isset($decoded['code']) ? 'Twilio ' . (string) $decoded['code'] : null,
+            ]);
+
+            if ($parts !== []) {
+                return implode(' | ', $parts);
+            }
+        }
+
+        return 'HTTP ' . $status;
     }
 }

@@ -91,10 +91,11 @@ final class MetaWhatsAppOtpTransport implements OtpTransportInterface
                     | JSON_UNESCAPED_UNICODE
                 )
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::WHATSAPP,
-                'meta_transport_error'
+                'meta_transport_error',
+                $exception->getMessage()
             );
         }
 
@@ -104,7 +105,8 @@ final class MetaWhatsAppOtpTransport implements OtpTransportInterface
         if ($status < 200 || $status >= 300) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::WHATSAPP,
-                $this->httpFailureCode('meta', $status)
+                $this->httpFailureCode('meta', $status),
+                $this->providerError($body, $status)
             );
         }
 
@@ -238,5 +240,25 @@ final class MetaWhatsAppOtpTransport implements OtpTransportInterface
         }
 
         return $prefix . '_http_error';
+    }
+
+    private function providerError(string $body, int $status): string
+    {
+        $decoded = json_decode($body, true);
+        $error = is_array($decoded) ? ($decoded['error'] ?? null) : null;
+
+        if (is_array($error)) {
+            $parts = array_filter([
+                isset($error['message']) ? (string) $error['message'] : null,
+                isset($error['code']) ? 'Meta ' . (string) $error['code'] : null,
+                isset($error['error_subcode']) ? 'sous-code ' . (string) $error['error_subcode'] : null,
+            ]);
+
+            if ($parts !== []) {
+                return implode(' | ', $parts);
+            }
+        }
+
+        return 'HTTP ' . $status;
     }
 }

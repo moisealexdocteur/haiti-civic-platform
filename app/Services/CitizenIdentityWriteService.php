@@ -133,6 +133,9 @@ final class CitizenIdentityWriteService
             $uuid =
                 $this->uuid();
 
+            $publicReference =
+                $this->availablePublicReference();
+
             $fingerprint =
                 $this->crypto
                     ->ninuFingerprint(
@@ -179,6 +182,9 @@ final class CitizenIdentityWriteService
                 ->insert([
                     'uuid' =>
                         $uuid,
+
+                    'public_reference' =>
+                        $publicReference,
 
                     'tenant_id' =>
                         $tenantId,
@@ -266,6 +272,27 @@ final class CitizenIdentityWriteService
                 $lockName
             );
         }
+    }
+
+    private function availablePublicReference(): string
+    {
+        $generator = new PublicReferenceGenerator();
+
+        for ($attempt = 0; $attempt < 8; $attempt++) {
+            $reference = $generator->generate();
+            $exists = $this->db
+                ->table('citizen_identities')
+                ->where('public_reference', $reference)
+                ->countAllResults();
+
+            if ($exists === 0) {
+                return $reference;
+            }
+        }
+
+        throw new RuntimeException(
+            'Could not allocate a public identity reference.'
+        );
     }
 
     public function updatePhone(

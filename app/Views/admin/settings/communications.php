@@ -11,6 +11,9 @@
 <?php if ($saved): ?>
     <p class="alert alert-ok" role="status"><?= esc(lang('Admin.settingsSaved')) ?></p>
 <?php endif; ?>
+<?php if ($deleted): ?>
+    <p class="alert alert-ok" role="status"><?= esc(lang('Admin.channelDeleted')) ?></p>
+<?php endif; ?>
 <?php if (is_string($errorMessage) && $errorMessage !== ''): ?>
     <p class="alert" role="alert"><?= esc($errorMessage) ?></p>
 <?php endif; ?>
@@ -23,10 +26,15 @@
                 <h2><?= esc(lang('Admin.whatsappTitle')) ?></h2>
                 <p><?= esc(lang('Admin.whatsappHelp')) ?></p>
             </div>
-            <label class="switch-row">
-                <input type="checkbox" name="whatsapp_enabled" value="1" <?= $settings['whatsapp_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
-                <span><?= esc(lang('Admin.useWhatsapp')) ?></span>
-            </label>
+            <div class="channel-head-tools">
+                <span class="channel-state <?= $settings['whatsapp_validation_status'] === 'valid' ? 'is-valid' : 'is-untested' ?>" data-channel-status="whatsapp">
+                    <?= esc(lang($settings['whatsapp_validation_status'] === 'valid' ? 'Admin.channelValid' : 'Admin.channelUntested')) ?>
+                </span>
+                <label class="switch-row">
+                    <input type="checkbox" name="whatsapp_enabled" value="1" <?= $settings['whatsapp_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
+                    <span><?= esc(lang('Admin.useWhatsapp')) ?></span>
+                </label>
+            </div>
         </header>
         <div class="form-grid">
             <div class="field">
@@ -51,6 +59,12 @@
                 <input id="wa-language" name="whatsapp_template_language" type="text" value="<?= esc($settings['whatsapp_template_language'], 'attr') ?>" maxlength="10" placeholder="ht" <?= $canManage ? '' : 'disabled' ?>>
             </div>
         </div>
+        <?php if ($canManage): ?>
+            <div class="channel-actions">
+                <button type="button" class="btn btn-ghost" data-test-channel="whatsapp" data-channel-label="<?= esc(lang('Admin.whatsappTitle'), 'attr') ?>" data-destination-label="<?= esc(lang('Admin.testPhoneLabel'), 'attr') ?>"><?= esc(lang('Admin.testAndValidate')) ?></button>
+                <button type="button" class="btn btn-danger-quiet" data-delete-channel="whatsapp" data-channel-label="<?= esc(lang('Admin.whatsappTitle'), 'attr') ?>" <?= $settings['whatsapp_configured'] ? '' : 'hidden' ?>><?= esc(lang('Admin.deleteChannel')) ?></button>
+            </div>
+        <?php endif; ?>
     </section>
 
     <section class="settings-card">
@@ -59,10 +73,15 @@
                 <h2><?= esc(lang('Admin.smsTitle')) ?></h2>
                 <p><?= esc(lang('Admin.smsHelp')) ?></p>
             </div>
-            <label class="switch-row">
-                <input type="checkbox" name="sms_enabled" value="1" <?= $settings['sms_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
-                <span><?= esc(lang('Admin.useSms')) ?></span>
-            </label>
+            <div class="channel-head-tools">
+                <span class="channel-state <?= $settings['sms_validation_status'] === 'valid' ? 'is-valid' : 'is-untested' ?>" data-channel-status="sms">
+                    <?= esc(lang($settings['sms_validation_status'] === 'valid' ? 'Admin.channelValid' : 'Admin.channelUntested')) ?>
+                </span>
+                <label class="switch-row">
+                    <input type="checkbox" name="sms_enabled" value="1" <?= $settings['sms_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
+                    <span><?= esc(lang('Admin.useSms')) ?></span>
+                </label>
+            </div>
         </header>
         <div class="form-grid">
             <div class="field">
@@ -84,6 +103,12 @@
             </div>
         </div>
         <p class="form-note"><?= esc(lang('Admin.senderChoiceHelp')) ?></p>
+        <?php if ($canManage): ?>
+            <div class="channel-actions">
+                <button type="button" class="btn btn-ghost" data-test-channel="sms" data-channel-label="<?= esc(lang('Admin.smsTitle'), 'attr') ?>" data-destination-label="<?= esc(lang('Admin.testPhoneLabel'), 'attr') ?>"><?= esc(lang('Admin.testAndValidate')) ?></button>
+                <button type="button" class="btn btn-danger-quiet" data-delete-channel="sms" data-channel-label="<?= esc(lang('Admin.smsTitle'), 'attr') ?>" <?= $settings['sms_configured'] ? '' : 'hidden' ?>><?= esc(lang('Admin.deleteChannel')) ?></button>
+            </div>
+        <?php endif; ?>
     </section>
 
     <section class="settings-card">
@@ -92,10 +117,15 @@
                 <h2><?= esc(lang('Admin.emailTitle')) ?></h2>
                 <p><?= esc(lang('Admin.emailHelp')) ?></p>
             </div>
-            <label class="switch-row">
-                <input type="checkbox" name="email_enabled" value="1" <?= $settings['email_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
-                <span><?= esc(lang('Admin.useEmail')) ?></span>
-            </label>
+            <div class="channel-head-tools">
+                <span class="channel-state <?= $settings['email_validation_status'] === 'valid' ? 'is-valid' : 'is-untested' ?>" data-channel-status="email">
+                    <?= esc(lang($settings['email_validation_status'] === 'valid' ? 'Admin.channelValid' : 'Admin.channelUntested')) ?>
+                </span>
+                <label class="switch-row">
+                    <input type="checkbox" name="email_enabled" value="1" <?= $settings['email_enabled'] ? 'checked' : '' ?> <?= $canManage ? '' : 'disabled' ?>>
+                    <span><?= esc(lang('Admin.useEmail')) ?></span>
+                </label>
+            </div>
         </header>
         <div class="form-grid">
             <div class="field">
@@ -134,6 +164,12 @@
                 <input id="from-name" name="email_from_name" type="text" value="<?= esc($settings['email_from_name'], 'attr') ?>" maxlength="160" <?= $canManage ? '' : 'disabled' ?>>
             </div>
         </div>
+        <?php if ($canManage): ?>
+            <div class="channel-actions">
+                <button type="button" class="btn btn-ghost" data-test-channel="email" data-channel-label="<?= esc(lang('Admin.emailTitle'), 'attr') ?>" data-destination-label="<?= esc(lang('Admin.testEmailLabel'), 'attr') ?>"><?= esc(lang('Admin.testAndValidate')) ?></button>
+                <button type="button" class="btn btn-danger-quiet" data-delete-channel="email" data-channel-label="<?= esc(lang('Admin.emailTitle'), 'attr') ?>" <?= $settings['email_configured'] ? '' : 'hidden' ?>><?= esc(lang('Admin.deleteChannel')) ?></button>
+            </div>
+        <?php endif; ?>
     </section>
 
     <?php if ($canManage): ?>
@@ -142,4 +178,68 @@
         </div>
     <?php endif; ?>
 </form>
+
+<?php if ($canManage): ?>
+    <dialog class="admin-dialog" id="channel-test-dialog" aria-labelledby="channel-test-title">
+        <div class="dialog-panel">
+            <div data-test-entry>
+                <p class="eyebrow"><?= esc(lang('Admin.channelTestEyebrow')) ?></p>
+                <h2 id="channel-test-title"><?= esc(lang('Admin.channelTestTitle')) ?></h2>
+                <p class="dialog-lead" data-test-description><?= esc(lang('Admin.channelTestLead')) ?></p>
+                <div class="field">
+                    <label for="test-destination" data-test-destination-label><?= esc(lang('Admin.testDestination')) ?></label>
+                    <input id="test-destination" type="text" name="test_destination" autocomplete="off" required>
+                    <p class="hint"><?= esc(lang('Admin.channelTestCodeHelp')) ?></p>
+                </div>
+                <div class="dialog-actions">
+                    <button type="button" class="btn btn-ghost" data-dialog-close><?= esc(lang('Admin.cancel')) ?></button>
+                    <button type="button" class="btn" data-test-submit><?= esc(lang('Admin.runTest')) ?></button>
+                </div>
+            </div>
+            <div class="is-hidden" data-test-result role="status">
+                <span class="dialog-result-mark" data-test-mark aria-hidden="true"></span>
+                <h2 data-test-title></h2>
+                <p data-test-message></p>
+                <div class="provider-response is-hidden" data-provider-response>
+                    <b><?= esc(lang('Admin.providerResponse')) ?></b>
+                    <code data-provider-detail></code>
+                </div>
+                <div class="dialog-advice is-hidden" data-test-advice-wrap>
+                    <b><?= esc(lang('Admin.whatToChange')) ?></b>
+                    <p data-test-advice></p>
+                </div>
+                <button type="button" class="btn" data-dialog-close><?= esc(lang('Admin.close')) ?></button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="admin-dialog" id="channel-delete-dialog" aria-labelledby="channel-delete-title">
+        <form method="post" class="dialog-panel" data-delete-form>
+            <?= csrf_field() ?>
+            <p class="eyebrow"><?= esc(lang('Admin.deleteChannelEyebrow')) ?></p>
+            <h2 id="channel-delete-title"><?= esc(lang('Admin.deleteChannelTitle')) ?></h2>
+            <p class="dialog-lead" data-delete-message></p>
+            <p class="danger-note"><?= esc(lang('Admin.deleteChannelWarning')) ?></p>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-ghost" data-dialog-close><?= esc(lang('Admin.cancel')) ?></button>
+                <button type="submit" class="btn btn-danger"><?= esc(lang('Admin.confirmDeleteChannel')) ?></button>
+            </div>
+        </form>
+    </dialog>
+<?php endif; ?>
 <?= $this->endSection() ?>
+
+<?php if ($canManage): ?>
+    <?= $this->section('scripts') ?>
+    <script
+        src="<?= esc(versioned_asset('/assets/admin-communications.js'), 'attr') ?>"
+        data-valid-label="<?= esc(lang('Admin.channelValid'), 'attr') ?>"
+        data-failed-label="<?= esc(lang('Admin.channelFailed'), 'attr') ?>"
+        data-testing-label="<?= esc(lang('Admin.channelTesting'), 'attr') ?>"
+        data-untested-label="<?= esc(lang('Admin.channelUntested'), 'attr') ?>"
+        data-run-label="<?= esc(lang('Admin.runTest'), 'attr') ?>"
+        data-delete-template="<?= esc(lang('Admin.deleteChannelConfirm', ['{channel}']), 'attr') ?>"
+        defer
+    ></script>
+    <?= $this->endSection() ?>
+<?php endif; ?>

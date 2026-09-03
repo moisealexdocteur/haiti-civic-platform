@@ -63,15 +63,22 @@ final class AdminPortalReadService
 
         if (in_array('settings.view', $permissions, true)) {
             $row = $this->db->table('tenant_communication_settings')
-                ->select('whatsapp_enabled, sms_enabled, email_enabled')
+                ->select(
+                    'whatsapp_enabled, whatsapp_validation_status, '
+                    . 'sms_enabled, sms_validation_status, '
+                    . 'email_enabled, email_validation_status'
+                )
                 ->where('tenant_id', $tenantId)
                 ->limit(1)
                 ->get()
                 ->getFirstRow('array');
             $communications = [
-                'whatsapp' => (int) ($row['whatsapp_enabled'] ?? 0) === 1,
-                'sms' => (int) ($row['sms_enabled'] ?? 0) === 1,
-                'email' => (int) ($row['email_enabled'] ?? 0) === 1,
+                'whatsapp' => (int) ($row['whatsapp_enabled'] ?? 0) === 1
+                    && (string) ($row['whatsapp_validation_status'] ?? '') === 'valid',
+                'sms' => (int) ($row['sms_enabled'] ?? 0) === 1
+                    && (string) ($row['sms_validation_status'] ?? '') === 'valid',
+                'email' => (int) ($row['email_enabled'] ?? 0) === 1
+                    && (string) ($row['email_validation_status'] ?? '') === 'valid',
             ];
         }
 

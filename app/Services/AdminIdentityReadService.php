@@ -53,6 +53,7 @@ final class AdminIdentityReadService
             ->table('citizen_identities ci')
             ->select([
                 'ci.uuid',
+                'ci.public_reference',
                 'ci.verification_status',
                 'ci.contact_verification_status',
                 'ci.department_code',
@@ -74,6 +75,7 @@ final class AdminIdentityReadService
             ->groupBy([
                 'ci.id',
                 'ci.uuid',
+                'ci.public_reference',
                 'ci.verification_status',
                 'ci.contact_verification_status',
                 'ci.department_code',
@@ -101,6 +103,7 @@ final class AdminIdentityReadService
             ->select([
                 'ci.id',
                 'ci.uuid',
+                'ci.public_reference',
                 'ci.ninu_ciphertext',
                 'ci.phone_ciphertext',
                 'ci.contact_verification_status',

@@ -117,4 +117,33 @@ final class SmtpEmailOtpTransportTest extends CIUnitTestCase
             (string) $result->failureCode
         );
     }
+
+    public function testSmtpFailureKeepsSanitizedProviderDetail(): void
+    {
+        $transport = new SmtpEmailOtpTransport(
+            'smtp.example.test',
+            587,
+            'tls',
+            'smtp-user@example.test',
+            'synthetic-password',
+            'no-reply@example.test',
+            'Portail citoyen',
+            static fn (): array => [
+                'accepted' => false,
+                'detail' => "<b>535 Authentication failed</b>\nTry an app password",
+            ]
+        );
+
+        $result = $transport->deliver(new OtpDeliveryRequest(
+            '+50900000000',
+            '123456',
+            300,
+            'citizen@example.test'
+        ));
+
+        $this->assertSame(
+            '535 Authentication failed Try an app password',
+            $result->providerDetail
+        );
+    }
 }

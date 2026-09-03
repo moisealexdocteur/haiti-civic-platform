@@ -113,6 +113,9 @@ final class CitizenPortal extends BaseController
                 [
                     'tenant' => $tenant,
                     'reference' => $reference,
+                    'trackingUrl' => site_url(
+                        'swiv/' . rawurlencode($reference)
+                    ) . '?lang=' . rawurlencode($locale),
                     'brandName' => (string) $tenant['name'],
                     'brandInitials' => $this->initials(
                         (string) $tenant['name']
@@ -418,7 +421,7 @@ final class CitizenPortal extends BaseController
             // POST-Redirect-GET : un rafraîchissement ne rejoue pas l'envoi.
             session()->setFlashdata(
                 'civic_reference',
-                (string) $result['uuid']
+                (string) $result['public_reference']
             );
 
             return $this->submissionOutcome(

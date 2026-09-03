@@ -35,6 +35,20 @@ $routes->post(
     ['filter' => 'csrf']
 );
 
+$routes->get('swiv', 'CitizenTracking::index');
+$routes->post('swiv', 'CitizenTracking::locate', ['filter' => 'csrf']);
+$routes->get('swiv/(:segment)', 'CitizenTracking::index/$1');
+$routes->post(
+    'swiv/(:segment)/code/demander',
+    'CitizenTracking::requestCode/$1',
+    ['filter' => 'csrf']
+);
+$routes->post(
+    'swiv/(:segment)/code/verifier',
+    'CitizenTracking::verifyCode/$1',
+    ['filter' => 'csrf']
+);
+
 $routes->get('admin/login', 'AdminAuth::login');
 $routes->post(
     'admin/login',
@@ -68,6 +82,16 @@ $routes->get(
 $routes->post(
     'admin/communications',
     'AdminSettings::saveCommunications',
+    ['filter' => ['adminauth', 'adminperm:settings.manage', 'csrf']]
+);
+$routes->post(
+    'admin/communications/(:segment)/tester',
+    'AdminSettings::testCommunication/$1',
+    ['filter' => ['adminauth', 'adminperm:settings.manage', 'csrf']]
+);
+$routes->post(
+    'admin/communications/(:segment)/supprimer',
+    'AdminSettings::deleteCommunication/$1',
     ['filter' => ['adminauth', 'adminperm:settings.manage', 'csrf']]
 );
 $routes->get(

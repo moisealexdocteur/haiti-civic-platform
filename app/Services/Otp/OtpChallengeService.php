@@ -16,6 +16,9 @@ final class OtpChallengeService
     public const PURPOSE_CITIZEN_PHONE =
         'citizen_phone_verification';
 
+    public const PURPOSE_CITIZEN_TRACKING =
+        'citizen_identity_tracking';
+
     public const TTL_SECONDS = 300;
 
     public const RESEND_COOLDOWN_SECONDS = 60;
