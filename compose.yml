@@ -106,7 +106,7 @@ services:
       - app
 
     ports:
-      - "127.0.0.1:${LOCAL_HTTP_PORT:-18090}:80"
+      - "${LOCAL_HTTP_BIND:-127.0.0.1}:${LOCAL_HTTP_PORT:-18090}:80"
 
     networks:
       - civic-internal
