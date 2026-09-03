@@ -53,6 +53,16 @@ final class AdminAuthService
             return null;
         }
 
+        if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+            $newHash = password_hash($password, PASSWORD_DEFAULT);
+
+            if (is_string($newHash) && $newHash !== '') {
+                $this->db->table('users')
+                    ->where('id', (int) $row['user_id'])
+                    ->update(['password_hash' => $newHash]);
+            }
+        }
+
         $this->db
             ->table('users')
             ->where('id', (int) $row['user_id'])
@@ -66,7 +76,8 @@ final class AdminAuthService
     public function sessionIsActive(
         int $userId,
         int $tenantId,
-        string $tenantSlug
+        string $tenantSlug,
+        ?int $sessionVersion = null
     ): bool {
         if (
             $userId <= 0
@@ -84,7 +95,12 @@ final class AdminAuthService
             ->get()
             ->getFirstRow('array');
 
-        return $row !== null;
+        if ($row === null) {
+            return false;
+        }
+
+        return $sessionVersion === null
+            || (int) $row['session_version'] === $sessionVersion;
     }
 
     private function activeMembershipQuery()
@@ -100,6 +116,8 @@ final class AdminAuthService
                 'u.uuid AS user_uuid',
                 'u.email',
                 'u.display_name',
+                'u.locale',
+                'u.session_version',
                 'u.password_hash',
             ])
             ->join('tenants t', 't.id = tu.tenant_id')

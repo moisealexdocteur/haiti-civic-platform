@@ -93,7 +93,17 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
         );
 
         $this->assertSame(
-            ['identity.manage', 'identity.view'],
+            [
+                'audit.view',
+                'identity.manage',
+                'identity.view',
+                'roles.manage',
+                'roles.view',
+                'settings.manage',
+                'settings.view',
+                'users.manage',
+                'users.view',
+            ],
             $this->permissionCodesForUser(
                 $this->tenantA,
                 (int) $result['user_id']

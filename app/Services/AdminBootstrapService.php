@@ -12,10 +12,17 @@ final class AdminBootstrapService
 {
     private const LOCK_TIMEOUT_SECONDS = 5;
     private const ROLE_CODE = 'identity_admin';
-    private const ROLE_NAME = 'Administrateur des identités';
+    private const ROLE_NAME = 'Administrateur principal';
     private const PERMISSIONS = [
+        'audit.view',
         'identity.view',
         'identity.manage',
+        'roles.manage',
+        'roles.view',
+        'settings.manage',
+        'settings.view',
+        'users.manage',
+        'users.view',
     ];
 
     private BaseConnection $db;
@@ -192,8 +199,8 @@ SQL,
                 'tenant_id' => $tenantId,
                 'code' => self::ROLE_CODE,
                 'name' => self::ROLE_NAME,
-                'description' => 'Accès de vérification des identités pour le premier administrateur du tenant.',
-                'is_system' => 0,
+                'description' => 'Accès principal au portail d’administration du tenant.',
+                'is_system' => 1,
             ])) {
                 throw new RuntimeException('Administrator role insert failed.');
             }

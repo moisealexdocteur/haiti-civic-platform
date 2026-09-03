@@ -1,40 +1,35 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="robots" content="noindex,nofollow,noarchive">
-    <title>Administration | Connexion</title>
-    <link rel="stylesheet" href="/assets/admin.css">
-</head>
-<body>
-<main class="admin-shell admin-login-shell">
-    <section class="admin-card">
-        <p class="admin-eyebrow">Administration sécurisée</p>
-        <h1>Connexion opérateur</h1>
-        <p class="admin-lead">Accédez aux dossiers d’identité de votre organisation.</p>
+<?= $this->extend('layouts/auth') ?>
 
-        <?php if (is_string($errorMessage) && $errorMessage !== ''): ?>
-            <div class="admin-alert" role="alert"><?= esc($errorMessage) ?></div>
-        <?php endif; ?>
+<?= $this->section('main') ?>
+<section class="auth-card" aria-labelledby="login-title">
+    <p class="eyebrow"><?= esc(lang('Admin.loginEyebrow')) ?></p>
+    <h1 id="login-title"><?= esc(lang('Admin.loginHeading')) ?></h1>
+    <p class="auth-lead"><?= esc(lang('Admin.loginLead')) ?></p>
 
-        <form method="post" action="/admin/login" autocomplete="on">
-            <?= csrf_field() ?>
+    <?php if ($resetCompleted): ?>
+        <p class="alert alert-ok" role="status"><?= esc(lang('Admin.resetCompleted')) ?></p>
+    <?php endif; ?>
+    <?php if (is_string($errorMessage) && $errorMessage !== ''): ?>
+        <p class="alert" role="alert"><?= esc(lang('Admin.invalidCredentials')) ?></p>
+    <?php endif; ?>
 
-            <label for="tenant">Organisation</label>
-            <input id="tenant" name="tenant" type="text" maxlength="80" autocomplete="organization" required>
-
-            <label for="email">Courriel</label>
-            <input id="email" name="email" type="email" maxlength="191" autocomplete="username" required>
-
-            <label for="password">Mot de passe</label>
+    <form method="post" action="/admin/login" autocomplete="on">
+        <?= csrf_field() ?>
+        <div class="field">
+            <label for="tenant"><?= esc(lang('Admin.organizationCode')) ?></label>
+            <input id="tenant" name="tenant" type="text" maxlength="80" value="<?= esc($tenantValue, 'attr') ?>" autocomplete="organization" autocapitalize="off" spellcheck="false" required>
+            <p class="hint"><?= esc(lang('Admin.organizationHelp')) ?></p>
+        </div>
+        <div class="field">
+            <label for="email"><?= esc(lang('Admin.email')) ?></label>
+            <input id="email" name="email" type="email" maxlength="191" value="<?= esc($emailValue, 'attr') ?>" autocomplete="username" required>
+        </div>
+        <div class="field">
+            <label for="password"><?= esc(lang('Admin.password')) ?></label>
             <input id="password" name="password" type="password" autocomplete="current-password" required>
-
-            <button type="submit">Se connecter</button>
-        </form>
-
-        <p class="admin-footnote">Les erreurs de connexion restent volontairement génériques.</p>
-    </section>
-</main>
-</body>
-</html>
+        </div>
+        <button type="submit" class="btn"><?= esc(lang('Admin.signIn')) ?></button>
+    </form>
+    <a class="auth-secondary" href="/admin/password/forgot?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('Admin.forgotPassword')) ?></a>
+</section>
+<?= $this->endSection() ?>

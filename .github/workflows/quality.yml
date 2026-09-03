@@ -1,0 +1,89 @@
+name: Quality
+
+on:
+  push:
+    branches:
+      - "feature/**"
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-copy:
+    name: Frontend copy policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject long dashes and emoji
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          roots = [Path("app/Views"), Path("app/Language"), Path("public/assets")]
+          suffixes = {".php", ".css", ".js"}
+          forbidden = []
+
+          def is_emoji(char):
+              code = ord(char)
+              return (
+                  0x1F000 <= code <= 0x1FAFF
+                  or 0x2600 <= code <= 0x27BF
+                  or code in {0xFE0F, 0x200D}
+              )
+
+          for root in roots:
+              for path in root.rglob("*"):
+                  if not path.is_file() or path.suffix not in suffixes:
+                      continue
+                  text = path.read_text(encoding="utf-8")
+                  for line_number, line in enumerate(text.splitlines(), 1):
+                      if "\u2013" in line or "\u2014" in line or any(is_emoji(c) for c in line):
+                          forbidden.append(f"{path}:{line_number}")
+
+          if forbidden:
+              raise SystemExit("Forbidden frontend characters: " + ", ".join(forbidden))
+          PY
+
+  php-tests:
+    name: PHP, migrations and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI_ENVIRONMENT: development
+      APP_KEY: ci-app-key-ci-app-key-ci-app-key-ci-app-key
+      NINU_HMAC_KEY: ci-ninu-key-ci-ninu-key-ci-ninu-key-ci-ninu-key
+      APP_BASE_URL: http://localhost:18090/
+      DB_DATABASE: civic_ci
+      DB_USERNAME: civic_app
+      DB_PASSWORD: civic-app-password
+      DB_ROOT_PASSWORD: civic-root-password
+      TEST_APP_KEY: ci-test-app-key-ci-test-app-key-ci-test-app-key
+      TEST_NINU_HMAC_KEY: ci-test-ninu-key-ci-test-ninu-key-ci-test-ninu-key
+      TEST_RUNTIME_DB_USERNAME: civic_test_runtime
+      TEST_RUNTIME_DB_PASSWORD: civic-test-runtime-password
+      TEST_MIGRATION_DB_USERNAME: civic_test_migration
+      TEST_MIGRATION_DB_PASSWORD: civic-test-migration-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the PHP test image
+        run: docker compose -p civic-${{ github.run_id }} --profile test build test
+      - name: Lint every PHP file
+        run: >-
+          docker compose -p civic-${{ github.run_id }} --profile test
+          run --rm --no-deps test sh -ec
+          'find app tests -type f -name "*.php" -print0 | xargs -0 -n1 php -l'
+      - name: Run migrations and PHPUnit
+        run: >-
+          docker compose -p civic-${{ github.run_id }} --profile test
+          up --no-build --abort-on-container-exit --exit-code-from test test
+      - name: Remove test services and volumes
+        if: always()
+        run: docker compose -p civic-${{ github.run_id }} --profile test down --volumes --remove-orphans

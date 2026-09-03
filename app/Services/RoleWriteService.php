@@ -592,7 +592,7 @@ SQL,
     private function assertMutableRole(
         array $role
     ): void {
-        if ((int) $role['is_system'] === 1) {
+        if ((int) $role['is_system'] === 1 || (string) $role['code'] === 'identity_admin') {
             throw new RuntimeException(
                 'System roles cannot be modified by this service.'
             );

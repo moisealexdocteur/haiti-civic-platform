@@ -15,6 +15,7 @@ final class AdminAuthFilter implements FilterInterface
         $userId = (int) $session->get('admin_user_id');
         $tenantId = (int) $session->get('admin_tenant_id');
         $tenantSlug = (string) $session->get('admin_tenant_slug');
+        $sessionVersion = (int) $session->get('admin_session_version');
 
         if (
             $userId > 0
@@ -23,7 +24,8 @@ final class AdminAuthFilter implements FilterInterface
             && (new AdminAuthService())->sessionIsActive(
                 $userId,
                 $tenantId,
-                $tenantSlug
+                $tenantSlug,
+                $sessionVersion
             )
         ) {
             return null;
@@ -37,6 +39,8 @@ final class AdminAuthFilter implements FilterInterface
             'admin_tenant_uuid',
             'admin_tenant_slug',
             'admin_tenant_name',
+            'admin_locale',
+            'admin_session_version',
         ]);
 
         return redirect()->to('/admin/login');

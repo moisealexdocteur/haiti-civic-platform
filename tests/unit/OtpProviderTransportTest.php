@@ -7,6 +7,7 @@ use App\Services\Otp\OtpChannel;
 use App\Services\Otp\OtpDeliveryRequest;
 use App\Services\Otp\TwilioSmsOtpTransport;
 use CodeIgniter\Test\CIUnitTestCase;
+use InvalidArgumentException;
 
 final class OtpProviderTransportTest extends CIUnitTestCase
 {
@@ -191,6 +192,18 @@ final class OtpProviderTransportTest extends CIUnitTestCase
         $this->assertSame(
             'MG' . str_repeat('e', 32),
             $captured['MessagingServiceSid']
+        );
+    }
+
+    public function testTwilioRejectsTwoSenderTypesAtOnce(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new TwilioSmsOtpTransport(
+            'AC' . str_repeat('a', 32),
+            str_repeat('c', 32),
+            '+15551234567',
+            'MG' . str_repeat('e', 32)
         );
     }
 

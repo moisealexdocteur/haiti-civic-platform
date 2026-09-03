@@ -1,49 +1,24 @@
-<!doctype html>
-<html lang="<?= esc($locale) ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc(lang('CitizenPortal.confirmationTitle')) ?> — <?= esc($tenant['name']) ?></title>
-    <link rel="stylesheet" href="/assets/citizen-portal.css">
-    <link rel="stylesheet" href="/assets/citizen-portal-submit.css">
-</head>
-<body>
-    <main class="shell shell-narrow">
-        <header class="topbar">
-            <a class="back-link" href="/?lang=<?= esc($locale) ?>">← <?= esc(lang('CitizenPortal.backHome')) ?></a>
-        </header>
+<?= $this->extend('layouts/public') ?>
 
-        <section class="confirmation-card">
-            <div class="confirmation-mark" aria-hidden="true">✓</div>
-            <p class="eyebrow"><?= esc(lang('CitizenPortal.confirmationEyebrow')) ?></p>
-            <h1><?= esc(lang('CitizenPortal.confirmationTitle')) ?></h1>
-            <p class="lead">
-                <?= esc(lang('CitizenPortal.confirmationText', [$tenant['name']])) ?>
-            </p>
+<?= $this->section('main') ?>
+<section class="screen is-active screen-center">
+    <div class="tick" aria-hidden="true"><?= view('partials/icon_tick') ?></div>
 
-            <dl class="confirmation-details">
-                <div>
-                    <dt><?= esc(lang('CitizenPortal.referenceLabel')) ?></dt>
-                    <dd><code><?= esc($reference) ?></code></dd>
-                </div>
-                <div>
-                    <dt><?= esc(lang('CitizenPortal.statusLabel')) ?></dt>
-                    <dd><?= esc(lang('CitizenPortal.statusPending')) ?></dd>
-                </div>
-            </dl>
+    <h1><?= esc(lang('CitizenPortal.confirmationTitle')) ?></h1>
+    <p class="lead"><?= esc(lang('CitizenPortal.confirmationLead')) ?></p>
 
-            <p class="field-help confirmation-help">
-                <?= esc(lang('CitizenPortal.referenceHelp')) ?>
-            </p>
+    <p class="reference"><?= esc($reference) ?></p>
+    <p class="hint text-center"><?= esc(lang('CitizenPortal.referenceHelp')) ?></p>
 
-            <a class="primary-button confirmation-button" href="/?lang=<?= esc($locale) ?>">
-                <?= esc(lang('CitizenPortal.finish')) ?>
-            </a>
-        </section>
+    <div class="card next-step-card">
+        <h2><?= esc(lang('CitizenPortal.nextStepTitle')) ?></h2>
+        <p class="lead next-step-lead">
+            <?= esc(lang('CitizenPortal.nextStepText', [lang('CitizenPortal.channelWhatsApp')])) ?>
+        </p>
+    </div>
 
-        <footer>
-            <?= esc(lang('CitizenPortal.securityFootnote')) ?>
-        </footer>
-    </main>
-</body>
-</html>
+    <div class="spacer"></div>
+
+    <a class="btn btn-ghost" href="/?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.finish')) ?></a>
+</section>
+<?= $this->endSection() ?>

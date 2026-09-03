@@ -1,75 +1,60 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Identités citoyennes | Administration</title>
-    <link rel="stylesheet" href="/assets/admin.css">
-</head>
-<body>
-<main class="admin-page">
-    <header class="admin-topbar">
-        <div>
-            <p class="admin-eyebrow">Administration sécurisée</p>
-            <h1>Vérification des identités</h1>
-            <p class="admin-muted"><?= esc($tenantName) ?> · <?= esc($displayName) ?></p>
-        </div>
-        <form method="post" action="/admin/logout" class="admin-inline-form">
-            <?= csrf_field() ?>
-            <button type="submit" class="admin-secondary">Se déconnecter</button>
-        </form>
-    </header>
+<?= $this->extend('layouts/admin') ?>
 
-    <section class="admin-panel">
-        <div class="admin-panel-head">
-            <div>
-                <h2>File de traitement</h2>
-                <p class="admin-muted">La liste n’affiche pas le NINU/CIN ni le téléphone. Ouvrez un dossier pour consulter les données sensibles.</p>
-            </div>
-            <?php if ($canManage): ?>
-                <span class="admin-badge">Droits de décision actifs</span>
-            <?php endif; ?>
-        </div>
+<?= $this->section('main') ?>
+<?php
+$labels = [
+    'pending' => lang('Admin.statusPending'),
+    'verified' => lang('Admin.statusVerified'),
+    'rejected' => lang('Admin.statusRejected'),
+];
+?>
+<section class="panel">
+    <h2><?= esc(lang('Admin.queueTitle')) ?></h2>
+    <p class="panel-note">
+        <?= esc(lang('Admin.queueHelp')) ?>
+        <?php if ($canManage): ?> <?= esc(lang('Admin.canDecide')) ?><?php endif; ?>
+    </p>
 
-        <form method="get" action="/admin/identites" class="admin-filter-form">
-            <label for="status">Statut</label>
+    <form method="get" action="/admin/identites" class="filters">
+        <div class="field">
+            <label for="status"><?= esc(lang('Admin.status')) ?></label>
             <select id="status" name="status">
-                <?php foreach (['pending' => 'En attente', 'verified' => 'Vérifié', 'rejected' => 'Rejeté'] as $value => $label): ?>
-                    <option value="<?= esc($value) ?>" <?= $status === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
+                <?php foreach ($labels as $value => $label): ?>
+                    <option value="<?= esc($value, 'attr') ?>" <?= $status === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit">Filtrer</button>
-        </form>
+        </div>
+        <button type="submit" class="btn"><?= esc(lang('Admin.filter')) ?></button>
+    </form>
 
-        <?php if ($rows === []): ?>
-            <div class="admin-empty">Aucun dossier pour ce statut.</div>
-        <?php else: ?>
-            <div class="admin-table-wrap">
-                <table class="admin-table">
-                    <thead>
+    <?php if ($rows === []): ?>
+        <p class="empty"><?= esc(lang('Admin.noFiles')) ?></p>
+    <?php else: ?>
+        <div class="table-wrap">
+            <table class="queue">
+                <thead>
+                <tr>
+                    <th><?= esc(lang('Admin.reference')) ?></th>
+                    <th><?= esc(lang('Admin.status')) ?></th>
+                    <th><?= esc(lang('Admin.documents')) ?></th>
+                    <th><?= esc(lang('Admin.submittedAt')) ?></th>
+                    <th><span class="sr-only">Action</span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($rows as $row): ?>
+                    <?php $rowStatus = (string) $row['verification_status']; ?>
                     <tr>
-                        <th>Référence</th>
-                        <th>Statut</th>
-                        <th>Documents</th>
-                        <th>Soumis le</th>
-                        <th></th>
+                        <td class="ref"><?= esc(strtoupper(substr((string) $row['uuid'], 0, 8))) ?></td>
+                        <td><span class="pill pill-<?= esc($rowStatus, 'attr') ?>"><?= esc($labels[$rowStatus] ?? $rowStatus) ?></span></td>
+                        <td class="num"><?= esc((string) $row['document_count']) ?> / 3</td>
+                        <td><?= esc((string) $row['created_at']) ?> UTC</td>
+                        <td><a href="/admin/identites/<?= rawurlencode((string) $row['uuid']) ?>"><?= esc(lang('Admin.open')) ?></a></td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($rows as $row): ?>
-                        <tr>
-                            <td><code><?= esc(substr((string) $row['uuid'], 0, 12)) ?>…</code></td>
-                            <td><span class="admin-status admin-status-<?= esc((string) $row['verification_status']) ?>"><?= esc((string) $row['verification_status']) ?></span></td>
-                            <td><?= esc((string) $row['document_count']) ?></td>
-                            <td><?= esc((string) $row['created_at']) ?> UTC</td>
-                            <td><a class="admin-link" href="/admin/identites/<?= rawurlencode((string) $row['uuid']) ?>">Ouvrir</a></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
-    </section>
-</main>
-</body>
-</html>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
+<?= $this->endSection() ?>

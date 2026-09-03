@@ -1,149 +1,233 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Dossier d’identité — Administration</title>
-    <link rel="stylesheet" href="/assets/admin.css">
-</head>
-<body>
-<main class="admin-page">
-    <header class="admin-topbar">
-        <div>
-            <p class="admin-eyebrow">Administration sécurisée</p>
-            <h1>Dossier d’identité</h1>
-            <p class="admin-muted"><?= esc($tenantName) ?> · <?= esc($displayName) ?></p>
-        </div>
-        <div class="admin-actions-row">
-            <a class="admin-secondary admin-button-link" href="/admin/identites">Retour à la file</a>
-            <form method="post" action="/admin/logout" class="admin-inline-form">
-                <?= csrf_field() ?>
-                <button type="submit" class="admin-secondary">Se déconnecter</button>
-            </form>
-        </div>
-    </header>
+<?= $this->extend('layouts/admin') ?>
 
-    <?php if ($decisionOk): ?>
-        <div class="admin-alert admin-alert-success">La décision a été enregistrée.</div>
-    <?php endif; ?>
+<?= $this->section('topActions') ?>
+<a class="btn btn-ghost" href="/admin/identites"><?= esc(lang('Admin.backToQueue')) ?></a>
+<?= $this->endSection() ?>
 
-    <?php if (is_string($decisionError) && $decisionError !== ''): ?>
-        <div class="admin-alert" role="alert"><?= esc($decisionError) ?></div>
-    <?php endif; ?>
+<?= $this->section('main') ?>
+<?php
+$statusLabels = [
+    'pending' => lang('Admin.statusPending'),
+    'verified' => lang('Admin.statusVerified'),
+    'rejected' => lang('Admin.statusRejected'),
+];
 
-    <section class="admin-grid-two">
-        <article class="admin-panel">
-            <div class="admin-panel-head">
-                <div>
-                    <h2>Identité</h2>
-                    <p class="admin-muted">Données déchiffrées uniquement après contrôle de l’autorisation.</p>
-                </div>
-                <span class="admin-status admin-status-<?= esc((string) $identity['verification_status']) ?>"><?= esc((string) $identity['verification_status']) ?></span>
+$documentLabels = [
+    'cin_front' => lang('Admin.cinFront'),
+    'cin_back' => lang('Admin.cinBack'),
+    'portrait' => lang('Admin.portrait'),
+];
+
+$eventLabels = [
+    'identity.public_submitted' => lang('Admin.eventIdentitySubmitted'),
+    'identity.submitted' => lang('Admin.eventIdentitySubmitted'),
+    'identity.verified' => lang('Admin.eventIdentityVerified'),
+    'identity.rejected' => lang('Admin.eventIdentityRejected'),
+    'identity.reopened' => lang('Admin.eventIdentityReopened'),
+    'identity.status_changed' => lang('Admin.eventIdentityStatus'),
+    'document.uploaded' => lang('Admin.eventDocumentUploaded'),
+    'document.revised' => lang('Admin.eventDocumentRevised'),
+];
+
+$reasonCodes = [
+    'document_illisible' => lang('Admin.reasonDocumentUnreadable'),
+    'photo_floue' => lang('Admin.reasonBlurryPhoto'),
+    'carte_incomplete' => lang('Admin.reasonIncompleteCard'),
+    'portrait_non_conforme' => lang('Admin.reasonPortrait'),
+    'information_incoherente' => lang('Admin.reasonMismatch'),
+    'autre' => lang('Admin.reasonOther'),
+];
+
+$byType = [];
+
+foreach ($identity['documents'] as $document) {
+    $byType[(string) $document['document_type']] = $document;
+}
+
+$uuid = rawurlencode((string) $identity['uuid']);
+$status = (string) $identity['verification_status'];
+$ninu = (string) $identity['ninu'];
+$phone = (string) ($identity['phone'] ?? '');
+?>
+
+<?php if ($decisionOk): ?>
+    <p class="alert alert-ok"><?= esc(lang('Admin.decisionSaved')) ?></p>
+<?php endif; ?>
+
+<?php if (is_string($decisionError) && $decisionError !== ''): ?>
+    <p class="alert" role="alert"><?= esc($decisionError) ?></p>
+<?php endif; ?>
+
+<section class="panel">
+    <h2><?= esc(lang('Admin.compareTitle')) ?></h2>
+    <p class="panel-note"><?= esc(lang('Admin.compareHelp')) ?></p>
+
+    <div class="compare">
+        <?php foreach (['cin_front', 'portrait', 'cin_back'] as $type): ?>
+            <figure>
+                <figcaption><?= esc($documentLabels[$type]) ?></figcaption>
+                <?php if (isset($byType[$type])): ?>
+                    <img
+                        src="/admin/identites/<?= $uuid ?>/documents/<?= rawurlencode((string) $byType[$type]['uuid']) ?>"
+                        alt="<?= esc($documentLabels[$type], 'attr') ?>"
+                        loading="lazy"
+                    >
+                    <a
+                        href="/admin/identites/<?= $uuid ?>/documents/<?= rawurlencode((string) $byType[$type]['uuid']) ?>"
+                        target="_blank"
+                        rel="noopener"
+                    ><?= esc(lang('Admin.openLarge')) ?></a>
+                <?php else: ?>
+                    <p class="missing"><?= esc(lang('Admin.missingDocument')) ?></p>
+                <?php endif; ?>
+            </figure>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<div class="grid-two">
+    <section class="panel">
+        <h2><?= esc(lang('Admin.identityTitle')) ?> <span class="pill pill-<?= esc($status, 'attr') ?>"><?= esc($statusLabels[$status] ?? $status) ?></span></h2>
+        <p class="panel-note"><?= esc(lang('Admin.sensitiveHelp')) ?></p>
+
+        <dl class="details">
+            <div>
+                <dt><?= esc(lang('Admin.reference')) ?></dt>
+                <dd class="masked"><?= esc(strtoupper(substr((string) $identity['uuid'], 0, 8))) ?></dd>
             </div>
-
-            <dl class="admin-details">
-                <div><dt>Référence</dt><dd><code><?= esc((string) $identity['uuid']) ?></code></dd></div>
-                <div><dt>NINU / CIN</dt><dd class="admin-sensitive"><?= esc((string) $identity['ninu']) ?></dd></div>
-                <div><dt>Téléphone</dt><dd class="admin-sensitive"><?= esc((string) ($identity['phone'] ?? 'Non fourni')) ?></dd></div>
-                <div><dt>Consentement</dt><dd><?= esc((string) $identity['consent_version']) ?></dd></div>
-                <div><dt>Consenti le</dt><dd><?= esc((string) $identity['consented_at']) ?> UTC</dd></div>
-                <div><dt>Vérifié le</dt><dd><?= esc((string) ($identity['verified_at'] ?? '—')) ?></dd></div>
-            </dl>
-        </article>
-
-        <article class="admin-panel">
-            <h2>Décision</h2>
-            <?php if (! $canManage): ?>
-                <div class="admin-empty">Votre rôle permet la consultation, mais pas la modification du statut.</div>
-            <?php elseif ($identity['verification_status'] === 'pending'): ?>
-                <form method="post" action="/admin/identites/<?= rawurlencode((string) $identity['uuid']) ?>/statut" class="admin-decision-form">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="to_status" value="verified">
-                    <p>Confirmez la validation uniquement après vérification manuelle des pièces.</p>
-                    <button type="submit" class="admin-success">Valider l’identité</button>
-                </form>
-                <hr>
-                <form method="post" action="/admin/identites/<?= rawurlencode((string) $identity['uuid']) ?>/statut" class="admin-decision-form">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="to_status" value="rejected">
-                    <label for="reason_code">Motif du rejet</label>
-                    <input id="reason_code" name="reason_code" type="text" maxlength="80" required placeholder="Ex. document_illisible">
-                    <button type="submit" class="admin-danger">Rejeter le dossier</button>
-                </form>
-            <?php elseif ($identity['verification_status'] === 'rejected'): ?>
-                <form method="post" action="/admin/identites/<?= rawurlencode((string) $identity['uuid']) ?>/statut" class="admin-decision-form">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="to_status" value="pending">
-                    <p>Remettre ce dossier dans la file pour un nouvel examen.</p>
-                    <button type="submit">Remettre en attente</button>
-                </form>
-            <?php else: ?>
-                <div class="admin-empty">Le statut vérifié est terminal dans la politique actuelle.</div>
-            <?php endif; ?>
-        </article>
+            <div>
+                <dt><?= esc(lang('Admin.identityNumber')) ?></dt>
+                <dd>
+                    <span class="masked">••• ••• <?= esc(substr($ninu, -3)) ?></span>
+                    <details class="sensitive">
+                        <summary><?= esc(lang('Admin.show')) ?></summary>
+                        <span class="value"><?= esc($ninu) ?></span>
+                    </details>
+                </dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.phone')) ?></dt>
+                <dd>
+                    <?php if ($phone === ''): ?>
+                        <span class="masked"><?= esc(lang('Admin.notProvided')) ?></span>
+                    <?php else: ?>
+                        <span class="masked">+509 •• •• •• <?= esc(substr($phone, -2)) ?></span>
+                        <details class="sensitive">
+                            <summary><?= esc(lang('Admin.show')) ?></summary>
+                            <span class="value"><?= esc($phone) ?></span>
+                        </details>
+                    <?php endif; ?>
+                </dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.consent')) ?></dt>
+                <dd><?= esc((string) $identity['consented_at']) ?> UTC<br><span class="masked"><?= esc((string) $identity['consent_version']) ?></span></dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.verifiedAt')) ?></dt>
+                <dd><?= esc((string) ($identity['verified_at'] ?? lang('Admin.never'))) ?></dd>
+            </div>
+        </dl>
     </section>
 
-    <section class="admin-panel">
-        <h2>Pièces de vérification</h2>
-        <?php if ($identity['documents'] === []): ?>
-            <div class="admin-empty">Aucune pièce enregistrée.</div>
+    <section class="panel">
+        <h2><?= esc(lang('Admin.decisionTitle')) ?></h2>
+
+        <?php if (! $canManage): ?>
+            <p class="empty"><?= esc(lang('Admin.viewOnly')) ?></p>
+        <?php elseif ($status === 'pending'): ?>
+            <form method="post" action="/admin/identites/<?= $uuid ?>/statut" class="decision">
+                <?= csrf_field() ?>
+
+                <fieldset>
+                    <legend><?= esc(lang('Admin.decisionQuestion')) ?></legend>
+
+                    <label class="choice">
+                        <input type="radio" name="to_status" value="verified" required>
+                        <span><?= esc(lang('Admin.approveDecision')) ?></span>
+                    </label>
+
+                    <label class="choice">
+                        <input type="radio" name="to_status" value="rejected">
+                        <span><?= esc(lang('Admin.rejectDecision')) ?></span>
+                    </label>
+                </fieldset>
+
+                <div class="field">
+                    <label for="reason_code"><?= esc(lang('Admin.rejectionReason')) ?></label>
+                    <select id="reason_code" name="reason_code">
+                        <option value=""></option>
+                        <?php foreach ($reasonCodes as $code => $label): ?>
+                            <option value="<?= esc($code, 'attr') ?>"><?= esc($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="hint"><?= esc(lang('Admin.reasonOnlyForReject')) ?></p>
+                </div>
+
+                <label class="confirm">
+                    <input type="checkbox" required>
+                    <span><?= esc(lang('Admin.confirmDecision')) ?></span>
+                </label>
+
+                <button type="submit" class="btn"><?= esc(lang('Admin.saveDecision')) ?></button>
+            </form>
+        <?php elseif ($status === 'rejected'): ?>
+            <form method="post" action="/admin/identites/<?= $uuid ?>/statut" class="decision">
+                <?= csrf_field() ?>
+                <input type="hidden" name="to_status" value="pending">
+                <p><?= esc(lang('Admin.reopenHelp')) ?></p>
+                <button type="submit" class="btn btn-ghost"><?= esc(lang('Admin.reopen')) ?></button>
+            </form>
         <?php else: ?>
-            <div class="admin-document-grid">
-                <?php foreach ($identity['documents'] as $document): ?>
-                    <article class="admin-document-card">
-                        <strong><?= esc((string) $document['document_type']) ?></strong>
-                        <span>Révision <?= esc((string) $document['revision_no']) ?></span>
-                        <span><?= esc((string) ($document['content_type'] ?? 'type inconnu')) ?></span>
-                        <span><?= esc((string) ($document['size_bytes'] ?? '—')) ?> octets</span>
-                        <a class="admin-link" target="_blank" rel="noopener" href="/admin/identites/<?= rawurlencode((string) $identity['uuid']) ?>/documents/<?= rawurlencode((string) $document['uuid']) ?>">Ouvrir la pièce</a>
-                    </article>
+            <p class="empty"><?= esc(lang('Admin.verifiedFinal')) ?></p>
+        <?php endif; ?>
+    </section>
+</div>
+
+<div class="grid-two">
+    <section class="panel">
+        <h2><?= esc(lang('Admin.historyTitle')) ?></h2>
+        <?php if ($identity['events'] === []): ?>
+            <p class="empty"><?= esc(lang('Admin.noEvent')) ?></p>
+        <?php else: ?>
+            <ol class="timeline">
+                <?php foreach ($identity['events'] as $event): ?>
+                    <?php $type = (string) $event['event_type']; ?>
+                    <li>
+                        <b><?= esc($eventLabels[$type] ?? $type) ?></b>
+                        <span><?= esc((string) $event['occurred_at']) ?> UTC</span>
+                        <?php if ($event['from_status'] !== null || $event['to_status'] !== null): ?>
+                            <span>
+                                <?= esc($statusLabels[(string) $event['from_status']] ?? lang('Admin.notProvided')) ?>
+                                <?= esc(lang('Admin.toStatus')) ?>
+                                <?= esc($statusLabels[(string) $event['to_status']] ?? lang('Admin.notProvided')) ?>
+                            </span>
+                        <?php endif; ?>
+                        <?php if ($event['reason_code'] !== null): ?>
+                            <span><?= esc(lang('Admin.rejectionReason')) ?>: <?= esc($reasonCodes[(string) $event['reason_code']] ?? lang('Admin.reasonOther')) ?></span>
+                        <?php endif; ?>
+                        <span><?= esc(lang('Admin.by')) ?> <?= esc((string) ($event['actor_display_name'] ?? lang('Admin.citizen'))) ?></span>
+                    </li>
                 <?php endforeach; ?>
-            </div>
+            </ol>
         <?php endif; ?>
     </section>
 
-    <section class="admin-grid-two">
-        <article class="admin-panel">
-            <h2>Historique de vérification</h2>
-            <?php if ($identity['events'] === []): ?>
-                <div class="admin-empty">Aucun événement.</div>
-            <?php else: ?>
-                <ol class="admin-timeline">
-                    <?php foreach ($identity['events'] as $event): ?>
-                        <li>
-                            <strong><?= esc((string) $event['event_type']) ?></strong>
-                            <span><?= esc((string) $event['occurred_at']) ?> UTC</span>
-                            <?php if ($event['from_status'] !== null || $event['to_status'] !== null): ?>
-                                <span><?= esc((string) ($event['from_status'] ?? '—')) ?> → <?= esc((string) ($event['to_status'] ?? '—')) ?></span>
-                            <?php endif; ?>
-                            <?php if ($event['reason_code'] !== null): ?>
-                                <span>Motif : <?= esc((string) $event['reason_code']) ?></span>
-                            <?php endif; ?>
-                            <span>Acteur : <?= esc((string) ($event['actor_display_name'] ?? 'Public / système')) ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ol>
-            <?php endif; ?>
-        </article>
-
-        <article class="admin-panel">
-            <h2>Traçabilité d’audit</h2>
-            <?php if ($identity['audit'] === []): ?>
-                <div class="admin-empty">Aucune entrée d’audit liée.</div>
-            <?php else: ?>
-                <ol class="admin-timeline">
-                    <?php foreach ($identity['audit'] as $audit): ?>
-                        <li>
-                            <strong><?= esc((string) $audit['event']) ?></strong>
-                            <span><?= esc((string) $audit['occurred_at']) ?> UTC</span>
-                            <span>Acteur : <?= esc((string) $audit['actor_type']) ?></span>
-                            <span>Requête : <code><?= esc((string) ($audit['request_id'] ?? '—')) ?></code></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ol>
-            <?php endif; ?>
-        </article>
+    <section class="panel">
+        <h2><?= esc(lang('Admin.traceTitle')) ?></h2>
+        <?php if ($identity['audit'] === []): ?>
+            <p class="empty"><?= esc(lang('Admin.noAudit')) ?></p>
+        <?php else: ?>
+            <ol class="timeline">
+                <?php foreach ($identity['audit'] as $audit): ?>
+                    <li>
+                        <b><?= esc((string) $audit['event']) ?></b>
+                        <span><?= esc((string) $audit['occurred_at']) ?> UTC</span>
+                        <span><?= esc(lang('Admin.actor')) ?>: <?= esc((string) $audit['actor_type']) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+        <?php endif; ?>
     </section>
-</main>
-</body>
-</html>
+</div>
+<?= $this->endSection() ?>

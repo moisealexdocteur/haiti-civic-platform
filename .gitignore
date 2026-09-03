@@ -47,3 +47,6 @@ node_modules/
 # Docker local overrides
 compose.override.yml
 docker-compose.override.yml
+
+# Test artifacts
+/build/

@@ -159,6 +159,12 @@ final class TwilioSmsOtpTransport implements OtpTransportInterface
                 'Twilio sender configuration is missing.'
             );
         }
+
+        if ($this->messagingServiceSid !== null && $this->fromNumber !== null) {
+            throw new InvalidArgumentException(
+                'Twilio sender configuration must use one sender type.'
+            );
+        }
     }
 
     /** @return array{status:int,body:string} */

@@ -39,10 +39,16 @@ final class PublicPhoneOtpFlowService
     public function request(
         string $phone,
         ?string $requestFingerprint = null,
-        ?string $email = null
+        ?string $email = null,
+        ?string $preferredChannel = null
     ): array {
         $normalizedEmail = $this->normalizeEmail($email);
-        $requestedChannel = $this->firstConfiguredChannel();
+        $preferred = $this->preferredChannel($preferredChannel);
+        $requestedChannel = $preferred ?? $this->firstConfiguredChannel();
+
+        if ($preferred !== null && ! $this->router->hasTransport($preferred)) {
+            throw new RuntimeException('Requested OTP channel is not configured.');
+        }
 
         if (
             $requestedChannel === OtpChannel::EMAIL
@@ -71,7 +77,8 @@ final class PublicPhoneOtpFlowService
                     $code,
                     (int) $issued['ttl_seconds'],
                     $normalizedEmail
-                )
+                ),
+                $preferred === null ? null : [$preferred]
             );
 
             if (! $delivery->accepted) {
@@ -179,6 +186,22 @@ final class PublicPhoneOtpFlowService
         }
 
         return OtpChannel::WHATSAPP;
+    }
+
+    private function preferredChannel(?string $channel): ?OtpChannel
+    {
+        $channel = strtolower(trim((string) $channel));
+
+        if ($channel === '') {
+            return null;
+        }
+
+        return match ($channel) {
+            'whatsapp' => OtpChannel::WHATSAPP,
+            'sms' => OtpChannel::SMS,
+            'email' => OtpChannel::EMAIL,
+            default => throw new InvalidArgumentException('Requested OTP channel is invalid.'),
+        };
     }
 
     private function normalizeEmail(?string $email): ?string

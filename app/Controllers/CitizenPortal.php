@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Controllers\Concerns\PublicPage;
 use App\Services\Otp\OtpChannelRouter;
 use App\Services\Otp\OtpTransportFactory;
 use App\Services\Otp\PublicPhoneOtpFlowService;
@@ -19,21 +20,28 @@ use Throwable;
 
 final class CitizenPortal extends BaseController
 {
+    use PublicPage;
+
     private const CONSENT_VERSION = 'public-identity-v1';
 
     public function home(): string
     {
         $locale = $this->resolveLocale();
         $this->request->setLocale($locale);
+        $this->rememberLocale($locale);
 
         return view(
             'citizen_portal/home',
-            [
-                'locale' => $locale,
-                'organizationError' =>
-                    $this->request->getGet('erreur')
-                    === 'organisation',
-            ]
+            $this->pageData(
+                $locale,
+                lang('CitizenPortal.brand'),
+                ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'],
+                [
+                    'organizationError' =>
+                        $this->request->getGet('erreur')
+                        === 'organisation',
+                ]
+            )
         );
     }
 
@@ -68,12 +76,46 @@ final class CitizenPortal extends BaseController
         );
 
         $this->request->setLocale($locale);
+        $this->rememberLocale($locale);
         helper('form');
 
         return $this->registrationView(
             $tenant,
             $locale,
             null
+        );
+    }
+
+    public function confirmation(string $tenantSlug): string
+    {
+        $tenant = $this->resolveTenant($tenantSlug);
+        $locale = $this->resolveLocale(
+            (string) ($tenant['default_locale'] ?? '')
+        );
+
+        $this->request->setLocale($locale);
+
+        $reference = (string) session()->getFlashdata('civic_reference');
+
+        if ($reference === '') {
+            return $this->registrationView($tenant, $locale, null);
+        }
+
+        return view(
+            'citizen_portal/confirmation',
+            $this->pageData(
+                $locale,
+                lang('CitizenPortal.confirmationTitle'),
+                $this->tenantLangUrls($tenant),
+                [
+                    'tenant' => $tenant,
+                    'reference' => $reference,
+                    'brandName' => (string) $tenant['name'],
+                    'brandInitials' => $this->initials(
+                        (string) $tenant['name']
+                    ),
+                ]
+            )
         );
     }
 
@@ -89,16 +131,18 @@ final class CitizenPortal extends BaseController
         try {
             $phone = trim((string) $this->request->getPost('phone'));
             $email = trim((string) $this->request->getPost('email'));
+            $channel = trim((string) $this->request->getPost('channel'));
             $tenantContext = $this->tenantContext($tenant);
             $flow = new PublicPhoneOtpFlowService(
                 $tenantContext,
-                OtpTransportFactory::fromEnvironment()
+                OtpTransportFactory::forTenant($tenantContext)
             );
 
             $result = $flow->request(
                 $phone,
                 $this->otpRequestFingerprint((int) $tenant['id']),
-                $email === '' ? null : $email
+                $email === '' ? null : $email,
+                $channel === '' ? null : $channel
             );
 
             $messageKey = match ($result['delivered_channel']) {
@@ -212,7 +256,7 @@ final class CitizenPortal extends BaseController
         }
     }
 
-    public function submit(string $tenantSlug): string
+    public function submit(string $tenantSlug): string|ResponseInterface
     {
         $tenant = $this->resolveTenant($tenantSlug);
         $locale = $this->resolveLocale(
@@ -270,24 +314,23 @@ final class CitizenPortal extends BaseController
 
             $contactProof->clear();
 
-            return view(
-                'citizen_portal/confirmation',
-                [
-                    'locale' => $locale,
-                    'tenant' => $tenant,
-                    'reference' => (string) $result['uuid'],
-                    'status' => (string) $result[
-                        'verification_status'
-                    ],
-                ]
+            // POST-Redirect-GET : un rafraîchissement ne rejoue pas l'envoi.
+            session()->setFlashdata(
+                'civic_reference',
+                (string) $result['uuid']
             );
-        } catch (InvalidArgumentException $exception) {
-            $this->response->setStatusCode(422);
 
-            return $this->registrationView(
+            return $this->submissionOutcome(
                 $tenant,
                 $locale,
-                $this->publicErrorMessage($exception)
+                null
+            );
+        } catch (InvalidArgumentException $exception) {
+            return $this->submissionOutcome(
+                $tenant,
+                $locale,
+                $this->publicErrorMessage($exception),
+                422
             );
         } catch (Throwable $exception) {
             log_message(
@@ -296,14 +339,55 @@ final class CitizenPortal extends BaseController
                 ['type' => $exception::class]
             );
 
-            $this->response->setStatusCode(500);
-
-            return $this->registrationView(
+            return $this->submissionOutcome(
                 $tenant,
                 $locale,
-                lang('CitizenPortal.submissionError')
+                lang('CitizenPortal.submissionError'),
+                500
             );
         }
+    }
+
+    /**
+     * Le parcours est piloté en JavaScript : en cas d'erreur, la réponse
+     * reste du JSON pour que la page, et donc les photos déjà prises,
+     * ne soient jamais détruites par un nouveau rendu.
+     */
+    private function submissionOutcome(
+        array $tenant,
+        string $locale,
+        ?string $errorMessage,
+        int $status = 200
+    ): string|ResponseInterface {
+        $target = '/inscription/'
+            . rawurlencode((string) $tenant['slug'])
+            . '/konfimasyon?lang='
+            . rawurlencode($locale);
+
+        if ($this->request->isAJAX()) {
+            helper(['form', 'security']);
+
+            return $this->response
+                ->setStatusCode($errorMessage === null ? 200 : $status)
+                ->setHeader('Cache-Control', 'no-store, private, max-age=0')
+                ->setJSON([
+                    'ok' => $errorMessage === null,
+                    'message' => $errorMessage,
+                    'redirect' => $errorMessage === null ? $target : null,
+                    'csrf' => [
+                        'name' => csrf_token(),
+                        'hash' => csrf_hash(),
+                    ],
+                ]);
+        }
+
+        if ($errorMessage === null) {
+            return redirect()->to($target);
+        }
+
+        $this->response->setStatusCode($status);
+
+        return $this->registrationView($tenant, $locale, $errorMessage);
     }
 
     private function registrationView(
@@ -311,14 +395,68 @@ final class CitizenPortal extends BaseController
         string $locale,
         ?string $errorMessage
     ): string {
+        helper(['form', 'security']);
+
         return view(
             'citizen_portal/register',
-            [
-                'locale' => $locale,
-                'tenant' => $tenant,
-                'errorMessage' => $errorMessage,
-            ]
+            $this->pageData(
+                $locale,
+                (string) $tenant['name'],
+                $this->tenantLangUrls($tenant),
+                [
+                    'tenant' => $tenant,
+                    'errorMessage' => $errorMessage,
+                    'brandName' => (string) $tenant['name'],
+                    'brandInitials' => $this->initials(
+                        (string) $tenant['name']
+                    ),
+                    'strings' => $this->wizardStrings(),
+                ]
+            )
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function tenantLangUrls(array $tenant): array
+    {
+        $base = '/inscription/' . rawurlencode((string) $tenant['slug']);
+
+        return [
+            'fr' => $base . '?lang=fr',
+            'ht' => $base . '?lang=ht',
+        ];
+    }
+
+    /**
+     * Toutes les chaînes affichées par le JavaScript. Rien n'est écrit
+     * en dur dans le script : la page kreyòl n'affiche plus « Erreur. ».
+     *
+     * @return array<string, string>
+     */
+    private function wizardStrings(): array
+    {
+        $keys = [
+            'stepAnnounce', 'ninuRequired', 'phoneRequired', 'sendingCode',
+            'phoneSend', 'codeLead', 'channelWhatsApp', 'channelSms',
+            'channelEmail', 'codeExpires', 'codeExpired', 'codeResend',
+            'codeResendIn', 'codeIncomplete', 'networkError', 'fileNotImage',
+            'fileTooLarge', 'reviewTitle', 'photosCount', 'consentRequired',
+            'piecesMissing',
+        ];
+
+        $strings = ['csrfName' => csrf_token()];
+
+        foreach ($keys as $key) {
+            $strings[$key] = lang('CitizenPortal.' . $key);
+        }
+
+        $strings['title_cin_front'] = lang('CitizenPortal.frontTitle');
+        $strings['title_cin_back'] = lang('CitizenPortal.backTitle');
+        $strings['title_portrait'] = lang('CitizenPortal.portraitTitle');
+
+        return $strings;
     }
 
     private function resolveTenant(string $tenantSlug): array
@@ -419,30 +557,5 @@ final class CitizenPortal extends BaseController
             default =>
                 lang('CitizenPortal.submissionInvalid'),
         };
-    }
-
-    private function resolveLocale(
-        ?string $tenantDefault = null
-    ): string {
-        $requested = strtolower(
-            trim(
-                (string) $this->request
-                    ->getGet('lang')
-            )
-        );
-
-        if (in_array($requested, ['fr', 'ht'], true)) {
-            return $requested;
-        }
-
-        $tenantDefault = strtolower(
-            trim((string) $tenantDefault)
-        );
-
-        if (in_array($tenantDefault, ['fr', 'ht'], true)) {
-            return $tenantDefault;
-        }
-
-        return 'fr';
     }
 }

@@ -1,0 +1,1 @@
+<svg viewBox="0 0 54 68" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><ellipse cx="27" cy="34" rx="19" ry="25"/><path d="M20 30h.01M34 30h.01" stroke-linecap="round" stroke-width="3"/><path d="M21 43c1.8 2.2 4 3.3 6 3.3s4.2-1.1 6-3.3" stroke-linecap="round"/></svg>
