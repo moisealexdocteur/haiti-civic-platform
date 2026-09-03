@@ -34,7 +34,6 @@ final class AdminPortalReadService
             $rows = $this->db->table('citizen_identities')
                 ->select('verification_status, COUNT(*) AS total')
                 ->where('tenant_id', $tenantId)
-                ->where('deleted_at', null)
                 ->groupBy('verification_status')
                 ->get()
                 ->getResultArray();
