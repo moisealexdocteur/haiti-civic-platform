@@ -58,7 +58,10 @@ final class PublicIdentitySubmissionService
         ?string $phone,
         string $consentVersion,
         array $documents,
-        ?string $requestId = null
+        ?string $requestId = null,
+        string $contactVerificationStatus =
+            ContactVerificationStatus::OTP_VERIFIED,
+        ?string $departmentCode = null
     ): array {
         $tenantId = $this->tenantContext->id();
         $consentVersion = $this->requiredString(
@@ -67,6 +70,11 @@ final class PublicIdentitySubmissionService
             'Consent version'
         );
         $documents = $this->requiredDocuments($documents);
+        $contactVerificationStatus = ContactVerificationStatus::normalize(
+            $contactVerificationStatus
+        );
+        $departmentCode = (new HaitiDepartmentCatalog())
+            ->normalize($departmentCode);
 
         $lockName = $this->auditLockName($tenantId);
         $storedPaths = [];
@@ -120,6 +128,9 @@ final class PublicIdentitySubmissionService
                     'ninu_ciphertext' => $ninuCiphertext,
                     'ninu_fingerprint' => $fingerprint,
                     'phone_ciphertext' => $phoneCiphertext,
+                    'contact_verification_status' =>
+                        $contactVerificationStatus,
+                    'department_code' => $departmentCode,
                     'verification_status' => self::INITIAL_STATUS,
                     'consent_version' => $consentVersion,
                     'consented_at' => $consentedAt,
@@ -154,6 +165,9 @@ final class PublicIdentitySubmissionService
 
             $context = [
                 'phone_present' => $normalizedPhone !== null,
+                'contact_verification_status' =>
+                    $contactVerificationStatus,
+                'department_code' => $departmentCode,
                 'consent_version' => $consentVersion,
                 'document_types' => self::REQUIRED_DOCUMENTS,
                 'document_count' => count(self::REQUIRED_DOCUMENTS),
@@ -178,6 +192,9 @@ final class PublicIdentitySubmissionService
                 [
                     'verification_status' => self::INITIAL_STATUS,
                     'phone_present' => $normalizedPhone !== null,
+                    'contact_verification_status' =>
+                        $contactVerificationStatus,
+                    'department_code' => $departmentCode,
                     'consent_version' => $consentVersion,
                     'document_types' => self::REQUIRED_DOCUMENTS,
                 ]
@@ -189,6 +206,9 @@ final class PublicIdentitySubmissionService
                 'id' => $identityId,
                 'uuid' => $uuid,
                 'verification_status' => self::INITIAL_STATUS,
+                'contact_verification_status' =>
+                    $contactVerificationStatus,
+                'department_code' => $departmentCode,
                 'consented_at' => $consentedAt,
             ];
         } catch (Throwable $exception) {

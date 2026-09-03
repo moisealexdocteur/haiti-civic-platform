@@ -254,6 +254,36 @@
 .metric span { font-size: var(--t-xs); font-weight: 650; }
 .metric strong { margin-top: auto; color: var(--ink); font-size: 2rem; line-height: 1; }
 
+.map-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 620px;
+}
+
+.map-panel { overflow: hidden; }
+
+.identity-map {
+    width: 100%;
+    height: clamp(360px, 56vh, 620px);
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    z-index: 0;
+}
+
+.map-status {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--ink-2);
+}
+
+.leaflet-popup-content p {
+    margin: 5px 0 0;
+    color: #39424F;
+}
+
 .channel-list {
     list-style: none;
     margin: 0 0 18px;

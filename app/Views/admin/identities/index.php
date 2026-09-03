@@ -7,6 +7,10 @@ $labels = [
     'verified' => lang('Admin.statusVerified'),
     'rejected' => lang('Admin.statusRejected'),
 ];
+$contactLabels = [
+    'otp_verified' => lang('Admin.contactOtpVerified'),
+    'manual_review' => lang('Admin.contactManualReview'),
+];
 ?>
 <section class="panel">
     <h2><?= esc(lang('Admin.queueTitle')) ?></h2>
@@ -36,6 +40,8 @@ $labels = [
                 <tr>
                     <th><?= esc(lang('Admin.reference')) ?></th>
                     <th><?= esc(lang('Admin.status')) ?></th>
+                    <th><?= esc(lang('Admin.contactVerification')) ?></th>
+                    <th><?= esc(lang('Admin.department')) ?></th>
                     <th><?= esc(lang('Admin.documents')) ?></th>
                     <th><?= esc(lang('Admin.submittedAt')) ?></th>
                     <th><span class="sr-only">Action</span></th>
@@ -47,6 +53,9 @@ $labels = [
                     <tr>
                         <td class="ref"><?= esc(strtoupper(substr((string) $row['uuid'], 0, 8))) ?></td>
                         <td><span class="pill pill-<?= esc($rowStatus, 'attr') ?>"><?= esc($labels[$rowStatus] ?? $rowStatus) ?></span></td>
+                        <?php $contactStatus = (string) $row['contact_verification_status']; ?>
+                        <td><?= esc($contactLabels[$contactStatus] ?? $contactStatus) ?></td>
+                        <td><?= esc($departments[(string) ($row['department_code'] ?? '')] ?? lang('Admin.notProvided')) ?></td>
                         <td class="num"><?= esc((string) $row['document_count']) ?> / 3</td>
                         <td><?= esc((string) $row['created_at']) ?> UTC</td>
                         <td><a href="/admin/identites/<?= rawurlencode((string) $row['uuid']) ?>"><?= esc(lang('Admin.open')) ?></a></td>

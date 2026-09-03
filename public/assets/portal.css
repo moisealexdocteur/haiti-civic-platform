@@ -163,6 +163,28 @@
 
 .channels button:hover { border-color: var(--line-strong); }
 
+.fallback-card {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid var(--warn);
+    border-radius: var(--radius-lg);
+    background: var(--warn-soft);
+    color: var(--ink);
+}
+
+.fallback-card h2 {
+    margin: 0 0 6px;
+    font-size: var(--t-base);
+}
+
+.fallback-card p {
+    margin: 0 0 12px;
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+}
+
+.fallback-card .btn { width: 100%; }
+
 /* ---------- pièces ---------- */
 
 .cardart {

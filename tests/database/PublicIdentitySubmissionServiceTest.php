@@ -3,6 +3,7 @@
 namespace Tests\Database;
 
 use App\Services\AuditService;
+use App\Services\ContactVerificationStatus;
 use App\Services\IdentityCryptoService;
 use App\Services\PublicIdentitySubmissionService;
 use App\Services\TenantContext;
@@ -74,6 +75,10 @@ final class PublicIdentitySubmissionServiceTest
 
         $this->assertNotNull($identity);
         $this->assertSame('pending', $identity['verification_status']);
+        $this->assertSame(
+            ContactVerificationStatus::OTP_VERIFIED,
+            $identity['contact_verification_status']
+        );
         $this->assertSame('public-test-v1', $identity['consent_version']);
         $this->assertNotSame(self::NINU, $identity['ninu_ciphertext']);
         $this->assertNotSame(
@@ -208,6 +213,48 @@ final class PublicIdentitySubmissionServiceTest
         );
         $this->assertSame(1, $this->identityCount($this->tenantA));
         $this->assertSame(1, $this->identityCount($this->tenantB));
+    }
+
+    public function testManualContactReviewIsPersistedAndAudited(): void
+    {
+        $result = $this->service($this->tenantA)->submit(
+            self::NINU,
+            self::PHONE,
+            'public-test-v1',
+            $this->documents,
+            contactVerificationStatus:
+                ContactVerificationStatus::MANUAL_REVIEW
+        );
+
+        $identity = $this->identity(
+            $this->tenantA,
+            (int) $result['id']
+        );
+
+        $this->assertNotNull($identity);
+        $this->assertSame(
+            ContactVerificationStatus::MANUAL_REVIEW,
+            $identity['contact_verification_status']
+        );
+        $this->assertSame(
+            ContactVerificationStatus::MANUAL_REVIEW,
+            $result['contact_verification_status']
+        );
+
+        $event = $this->db
+            ->table('identity_verification_events')
+            ->select('context_json')
+            ->where('tenant_id', $this->tenantA)
+            ->where('citizen_identity_id', (int) $result['id'])
+            ->where('event_type', 'identity.public_submitted')
+            ->get()
+            ->getFirstRow('array');
+
+        $this->assertNotNull($event);
+        $this->assertStringContainsString(
+            'manual_review',
+            (string) $event['context_json']
+        );
     }
 
     public function testDuplicateIsRejectedWithoutExtraResidue(): void

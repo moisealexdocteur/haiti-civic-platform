@@ -3,6 +3,7 @@ $can = static fn (string $permission): bool => in_array($permission, $permission
 $nav = [
     ['dashboard', '/admin', 'Admin.navDashboard', true],
     ['identities', '/admin/identites', 'Admin.navIdentities', $can('identity.view')],
+    ['map', '/admin/carte', 'Admin.navMap', $can('identity.view')],
     ['users', '/admin/utilisateurs', 'Admin.navUsers', $can('users.view')],
     ['roles', '/admin/roles', 'Admin.navRoles', $can('roles.view')],
     ['communications', '/admin/communications', 'Admin.navCommunications', $can('settings.view')],
@@ -23,6 +24,7 @@ $nav = [
     <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <style data-admin-styles="inline"><?= inline_stylesheet('/assets/admin.css') ?></style>
+    <?= $this->renderSection('head') ?>
 </head>
 <body class="admin-page">
 <a class="skip-link" href="#main-content"><?= esc(lang('Admin.skipToContent')) ?></a>
@@ -86,5 +88,6 @@ $nav = [
         </footer>
     </div>
 </div>
+<?= $this->renderSection('scripts') ?>
 </body>
 </html>

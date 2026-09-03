@@ -96,6 +96,14 @@ $slug = rawurlencode((string) $tenant['slug']);
             <p class="field-error" data-error-for="phone-local" hidden></p>
         </div>
 
+        <aside class="fallback-card" id="otp-fallback" hidden>
+            <h2><?= esc(lang('CitizenPortal.manualTitle')) ?></h2>
+            <p><?= esc(lang('CitizenPortal.manualLead')) ?></p>
+            <button type="button" class="btn btn-ghost" id="continue-manual">
+                <?= esc(lang('CitizenPortal.manualAction')) ?>
+            </button>
+        </aside>
+
         <div class="spacer"></div>
         <div class="btn-row">
             <button type="button" class="btn btn-ghost" data-go="s-ninu"><?= esc(lang('CitizenPortal.back')) ?></button>
@@ -148,13 +156,38 @@ $slug = rawurlencode((string) $tenant['slug']);
     <!-- 05 · contact confirmé -->
     <section class="screen screen-center" id="s-verified" data-group="2">
         <div class="tick" aria-hidden="true"><?= view('partials/icon_tick') ?></div>
-        <h1><?= esc(lang('CitizenPortal.verifiedTitle')) ?></h1>
+        <h1 id="verified-title"><?= esc(lang('CitizenPortal.verifiedTitle')) ?></h1>
         <p class="lead" id="verified-phone"></p>
         <div class="spacer"></div>
-        <button type="button" class="btn" data-go="s-why"><?= esc(lang('CitizenPortal.continue')) ?></button>
+        <button type="button" class="btn" data-go="s-department"><?= esc(lang('CitizenPortal.continue')) ?></button>
     </section>
 
-    <!-- 06 · pourquoi les pièces -->
+    <!-- 06 · département -->
+    <section class="screen" id="s-department" data-group="2">
+        <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [2])) ?></p>
+        <h1><?= esc(lang('CitizenPortal.departmentTitle')) ?></h1>
+        <p class="lead"><?= esc(lang('CitizenPortal.departmentLead')) ?></p>
+
+        <div class="field">
+            <label for="department-code"><?= esc(lang('CitizenPortal.departmentLabel')) ?></label>
+            <select id="department-code" name="department_code" required>
+                <option value=""><?= esc(lang('CitizenPortal.departmentPlaceholder')) ?></option>
+                <?php foreach ($departments as $code => $department): ?>
+                    <option value="<?= esc($code, 'attr') ?>"><?= esc($department) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <p class="hint"><?= esc(lang('CitizenPortal.departmentHint')) ?></p>
+            <p class="field-error" data-error-for="department_code" hidden></p>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="btn-row">
+            <button type="button" class="btn btn-ghost" data-go="s-verified"><?= esc(lang('CitizenPortal.back')) ?></button>
+            <button type="button" class="btn" data-validate="department" data-go="s-why"><?= esc(lang('CitizenPortal.continue')) ?></button>
+        </div>
+    </section>
+
+    <!-- 07 · pourquoi les pièces -->
     <section class="screen" id="s-why" data-group="3">
         <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [3])) ?></p>
         <h1><?= esc(lang('CitizenPortal.whyTitle')) ?></h1>
@@ -238,6 +271,8 @@ $slug = rawurlencode((string) $tenant['slug']);
             <dd id="summary-ninu"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
             <dt><?= esc(lang('CitizenPortal.summaryPhone')) ?></dt>
             <dd id="summary-phone"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
+            <dt><?= esc(lang('CitizenPortal.summaryDepartment')) ?></dt>
+            <dd id="summary-department"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
             <dt><?= esc(lang('CitizenPortal.summaryPhotos')) ?></dt>
             <dd id="summary-photos"><?= esc(lang('CitizenPortal.summaryNoPhoto')) ?></dd>
         </dl>
