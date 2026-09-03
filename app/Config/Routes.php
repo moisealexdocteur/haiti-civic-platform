@@ -4,6 +4,7 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'CitizenPortal::home');
+$routes->get('structures-politiques', 'PoliticalStructures::index');
 $routes->get('inscription', 'CitizenPortal::locate');
 $routes->get(
     'inscription/(:segment)',
