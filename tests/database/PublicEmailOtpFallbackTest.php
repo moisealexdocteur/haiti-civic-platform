@@ -10,6 +10,7 @@ use App\Services\Otp\OtpTransportInterface;
 use App\Services\Otp\PublicPhoneOtpFlowService;
 use App\Services\TenantContext;
 use CodeIgniter\Test\CIUnitTestCase;
+use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
@@ -24,7 +25,6 @@ final class PublicEmailOtpFallbackTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->db = db_connect();
         service('session')->remove('public_phone_otp_proof');
         $this->cleanupFixtures();
@@ -46,17 +46,10 @@ final class PublicEmailOtpFallbackTest extends CIUnitTestCase
             new OtpChannelRouter([$transport])
         );
 
-        $requested = $flow->request(
-            self::PHONE,
-            null,
-            self::EMAIL
-        );
+        $requested = $flow->request(self::PHONE, null, self::EMAIL);
 
         $this->assertSame('email', $requested['delivered_channel']);
-        $this->assertMatchesRegularExpression(
-            '/^[0-9]{6}$/D',
-            $transport->lastCode
-        );
+        $this->assertMatchesRegularExpression('/^[0-9]{6}$/D', $transport->lastCode);
         $this->assertSame(self::EMAIL, $transport->lastEmail);
 
         $row = $this->db
@@ -77,10 +70,7 @@ final class PublicEmailOtpFallbackTest extends CIUnitTestCase
 
         $this->assertTrue($verified['accepted']);
         $this->assertTrue(
-            $flow->proofService()->hasVerifiedContact(
-                self::PHONE,
-                self::EMAIL
-            )
+            $flow->proofService()->hasVerifiedContact(self::PHONE, self::EMAIL)
         );
         $this->assertFalse(
             $flow->proofService()->hasVerifiedContact(
@@ -96,14 +86,8 @@ final class PublicEmailOtpFallbackTest extends CIUnitTestCase
         $serialized = json_encode($proof, JSON_THROW_ON_ERROR);
 
         $this->assertStringNotContainsString(self::EMAIL, $serialized);
-        $this->assertStringNotContainsString(
-            '+509' . self::PHONE,
-            $serialized
-        );
-        $this->assertStringNotContainsString(
-            $transport->lastCode,
-            $serialized
-        );
+        $this->assertStringNotContainsString('+509' . self::PHONE, $serialized);
+        $this->assertStringNotContainsString($transport->lastCode, $serialized);
     }
 
     public function testEmailOnlyFlowRequiresEmailBeforeIssuingChallenge(): void
@@ -117,7 +101,7 @@ final class PublicEmailOtpFallbackTest extends CIUnitTestCase
             fn () => $flow->request(self::PHONE)
         );
 
-        $this->assertInstanceOf(RuntimeException::class, $exception);
+        $this->assertInstanceOf(InvalidArgumentException::class, $exception);
         $this->assertSame(
             'OTP email recipient is required.',
             $exception->getMessage()
