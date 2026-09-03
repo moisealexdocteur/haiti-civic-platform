@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= esc(lang('CitizenPortal.brand')) ?></title>
     <link rel="stylesheet" href="/assets/citizen-portal.css">
+    <link rel="stylesheet" href="/assets/political-structures.css">
 </head>
 <body>
     <main class="shell">
@@ -64,6 +65,9 @@
                         required
                     >
                     <p class="field-help"><?= esc(lang('CitizenPortal.organizationHelp')) ?></p>
+                    <a class="directory-link" href="/structures-politiques?lang=<?= esc($locale) ?>">
+                        <?= esc(lang('CitizenPortal.officialStructuresLink')) ?>
+                    </a>
                     <button type="submit" class="primary-button">
                         <?= esc(lang('CitizenPortal.continue')) ?>
                     </button>
