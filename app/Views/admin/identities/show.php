@@ -12,6 +12,11 @@ $statusLabels = [
     'rejected' => lang('Admin.statusRejected'),
 ];
 
+$contactLabels = [
+    'otp_verified' => lang('Admin.contactOtpVerified'),
+    'manual_review' => lang('Admin.contactManualReview'),
+];
+
 $documentLabels = [
     'cin_front' => lang('Admin.cinFront'),
     'cin_back' => lang('Admin.cinBack'),
@@ -48,6 +53,7 @@ $uuid = rawurlencode((string) $identity['uuid']);
 $status = (string) $identity['verification_status'];
 $ninu = (string) $identity['ninu'];
 $phone = (string) ($identity['phone'] ?? '');
+$contactStatus = (string) $identity['contact_verification_status'];
 ?>
 
 <?php if ($decisionOk): ?>
@@ -120,6 +126,14 @@ $phone = (string) ($identity['phone'] ?? '');
                 </dd>
             </div>
             <div>
+                <dt><?= esc(lang('Admin.contactVerification')) ?></dt>
+                <dd><?= esc($contactLabels[$contactStatus] ?? $contactStatus) ?></dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.department')) ?></dt>
+                <dd><?= esc($departments[(string) ($identity['department_code'] ?? '')] ?? lang('Admin.notProvided')) ?></dd>
+            </div>
+            <div>
                 <dt><?= esc(lang('Admin.consent')) ?></dt>
                 <dd><?= esc((string) $identity['consented_at']) ?> UTC<br><span class="masked"><?= esc((string) $identity['consent_version']) ?></span></dd>
             </div>
@@ -168,6 +182,14 @@ $phone = (string) ($identity['phone'] ?? '');
                     <input type="checkbox" required>
                     <span><?= esc(lang('Admin.confirmDecision')) ?></span>
                 </label>
+
+                <?php if ($contactStatus === 'manual_review'): ?>
+                    <label class="confirm">
+                        <input type="checkbox" name="contact_reviewed" value="1" required>
+                        <span><?= esc(lang('Admin.confirmManualContact')) ?></span>
+                    </label>
+                    <p class="hint"><?= esc(lang('Admin.contactManualReviewHelp')) ?></p>
+                <?php endif; ?>
 
                 <button type="submit" class="btn"><?= esc(lang('Admin.saveDecision')) ?></button>
             </form>

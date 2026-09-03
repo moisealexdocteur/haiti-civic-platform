@@ -3,8 +3,11 @@
 namespace App\Controllers;
 
 use App\Controllers\Concerns\PublicPage;
+use App\Services\ContactVerificationStatus;
+use App\Services\HaitiDepartmentCatalog;
 use App\Services\Otp\OtpChannelRouter;
 use App\Services\Otp\OtpTransportFactory;
+use App\Services\Otp\PublicContactFallbackService;
 use App\Services\Otp\PublicPhoneOtpFlowService;
 use App\Services\Otp\PublicPhoneOtpProofService;
 use App\Services\PublicIdentitySubmissionService;
@@ -128,11 +131,15 @@ final class CitizenPortal extends BaseController
 
         $this->request->setLocale($locale);
 
+        $phone = '';
+        $tenantContext = null;
+
         try {
             $phone = trim((string) $this->request->getPost('phone'));
             $email = trim((string) $this->request->getPost('email'));
             $channel = trim((string) $this->request->getPost('channel'));
             $tenantContext = $this->tenantContext($tenant);
+            (new PublicContactFallbackService($tenantContext))->clear();
             $flow = new PublicPhoneOtpFlowService(
                 $tenantContext,
                 OtpTransportFactory::forTenant($tenantContext)
@@ -181,9 +188,35 @@ final class CitizenPortal extends BaseController
                 ],
                 true
             );
+            $deliveryUnavailable = in_array(
+                $exception->getMessage(),
+                [
+                    'Requested OTP channel is not configured.',
+                    'OTP delivery is temporarily unavailable.',
+                    'No configured OTP transport matches the requested channels.',
+                ],
+                true
+            );
+
+            $fallbackAvailable = false;
+
+            if (
+                $deliveryUnavailable
+                && $tenantContext instanceof TenantContext
+                && $phone !== ''
+            ) {
+                try {
+                    (new PublicContactFallbackService($tenantContext))
+                        ->offer($phone);
+                    $fallbackAvailable = true;
+                } catch (Throwable) {
+                    $fallbackAvailable = false;
+                }
+            }
 
             return $this->otpJson([
                 'ok' => false,
+                'fallback_available' => $fallbackAvailable,
                 'message' => lang(
                     $rateLimited
                         ? 'CitizenPortal.otpRateLimited'
@@ -200,6 +233,46 @@ final class CitizenPortal extends BaseController
             return $this->otpJson([
                 'ok' => false,
                 'message' => lang('CitizenPortal.otpUnavailable'),
+            ], 503);
+        }
+    }
+
+    public function continueWithoutOtp(
+        string $tenantSlug
+    ): ResponseInterface {
+        $tenant = $this->resolveTenant($tenantSlug);
+        $locale = $this->resolveLocale(
+            (string) ($tenant['default_locale'] ?? '')
+        );
+
+        $this->request->setLocale($locale);
+
+        try {
+            $phone = trim((string) $this->request->getPost('phone'));
+            $fallback = new PublicContactFallbackService(
+                $this->tenantContext($tenant)
+            );
+            $fallback->accept($phone);
+
+            return $this->otpJson([
+                'ok' => true,
+                'message' => lang('CitizenPortal.manualAccepted'),
+            ]);
+        } catch (InvalidArgumentException | RuntimeException) {
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.manualUnavailable'),
+            ], 422);
+        } catch (Throwable $exception) {
+            log_message(
+                'error',
+                'Public OTP fallback failed: {type}',
+                ['type' => $exception::class]
+            );
+
+            return $this->otpJson([
+                'ok' => false,
+                'message' => lang('CitizenPortal.manualUnavailable'),
             ], 503);
         }
     }
@@ -232,6 +305,10 @@ final class CitizenPortal extends BaseController
                     'message' => lang('CitizenPortal.otpInvalid'),
                 ], 422);
             }
+
+            (new PublicContactFallbackService(
+                $this->tenantContext($tenant)
+            ))->clear();
 
             return $this->otpJson([
                 'ok' => true,
@@ -280,6 +357,15 @@ final class CitizenPortal extends BaseController
             $emailInput = trim(
                 (string) $this->request->getPost('email')
             );
+            $departmentCode = trim(
+                (string) $this->request->getPost('department_code')
+            );
+
+            if ($departmentCode === '') {
+                throw new InvalidArgumentException(
+                    'Department is required.'
+                );
+            }
 
             if ($phoneInput === '') {
                 throw new InvalidArgumentException(
@@ -289,10 +375,22 @@ final class CitizenPortal extends BaseController
 
             $tenantContext = $this->tenantContext($tenant);
             $contactProof = new PublicPhoneOtpProofService($tenantContext);
-            $contactProof->assertVerifiedContact(
+            $contactFallback = new PublicContactFallbackService(
+                $tenantContext
+            );
+
+            if ($contactProof->hasVerifiedContact(
                 $phoneInput,
                 $emailInput === '' ? null : $emailInput
-            );
+            )) {
+                $contactStatus = ContactVerificationStatus::OTP_VERIFIED;
+            } elseif ($contactFallback->hasAccepted($phoneInput)) {
+                $contactStatus = ContactVerificationStatus::MANUAL_REVIEW;
+            } else {
+                throw new InvalidArgumentException(
+                    'Contact verification is required.'
+                );
+            }
 
             $documents = [
                 VerificationDocumentWriteService::CIN_FRONT =>
@@ -309,10 +407,13 @@ final class CitizenPortal extends BaseController
                 $ninu,
                 $phoneInput,
                 self::CONSENT_VERSION,
-                $documents
+                $documents,
+                contactVerificationStatus: $contactStatus,
+                departmentCode: $departmentCode
             );
 
             $contactProof->clear();
+            $contactFallback->clear();
 
             // POST-Redirect-GET : un rafraîchissement ne rejoue pas l'envoi.
             session()->setFlashdata(
@@ -410,6 +511,8 @@ final class CitizenPortal extends BaseController
                     'brandInitials' => $this->initials(
                         (string) $tenant['name']
                     ),
+                    'departments' => (new HaitiDepartmentCatalog())
+                        ->options($locale),
                     'strings' => $this->wizardStrings(),
                 ]
             )
@@ -444,6 +547,11 @@ final class CitizenPortal extends BaseController
             'codeResendIn', 'codeIncomplete', 'networkError', 'fileNotImage',
             'fileTooLarge', 'reviewTitle', 'photosCount', 'consentRequired',
             'piecesMissing',
+            'verifiedTitle',
+            'departmentRequired',
+            'manualTitle', 'manualLead', 'manualAction',
+            'manualSending', 'manualAccepted', 'manualUnavailable',
+            'contactVerificationRequired',
         ];
 
         $strings = ['csrfName' => csrf_token()];
@@ -550,8 +658,12 @@ final class CitizenPortal extends BaseController
             'document_invalid' =>
                 lang('CitizenPortal.documentInvalid'),
             'Phone OTP verification is required.',
-            'Contact OTP verification is required.' =>
+            'Contact OTP verification is required.',
+            'Contact verification is required.' =>
                 lang('CitizenPortal.contactVerificationRequired'),
+            'Department is required.',
+            'Unknown Haiti department code.' =>
+                lang('CitizenPortal.departmentRequired'),
             'Citizen identity already exists in the current tenant.' =>
                 lang('CitizenPortal.duplicateIdentity'),
             default =>

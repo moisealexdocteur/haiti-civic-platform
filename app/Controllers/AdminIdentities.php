@@ -6,6 +6,7 @@ use App\Controllers\Concerns\AdminPage;
 use App\Services\AdminIdentityDecisionService;
 use App\Services\AdminIdentityReadService;
 use App\Services\AuthorizationService;
+use App\Services\HaitiDepartmentCatalog;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -51,6 +52,8 @@ final class AdminIdentities extends BaseController
                 $actorUserId,
                 'identity.manage'
             ),
+            'departments' => (new HaitiDepartmentCatalog())
+                ->options($context['locale']),
             ]
         ));
     }
@@ -92,6 +95,8 @@ final class AdminIdentities extends BaseController
             ),
             'decisionOk' => $this->request->getGet('decision') === 'ok',
             'decisionError' => $session->getFlashdata('decision_error'),
+            'departments' => (new HaitiDepartmentCatalog())
+                ->options($context['locale']),
             ]
         ));
     }
@@ -157,7 +162,8 @@ final class AdminIdentities extends BaseController
                 $actorUserId,
                 rawurldecode($identityUuid),
                 $toStatus,
-                $reasonCode === '' ? null : $reasonCode
+                $reasonCode === '' ? null : $reasonCode,
+                (string) $this->request->getPost('contact_reviewed') === '1'
             );
         } catch (RuntimeException $exception) {
             if (str_starts_with($exception->getMessage(), 'Permission denied:')) {

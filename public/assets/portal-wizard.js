@@ -50,6 +50,7 @@
         challenge: null,
         channel: null,
         verified: false,
+        manualPending: false,
         expiresAt: 0,
         resendAt: 0,
         pieces: {}
@@ -87,7 +88,7 @@
         window.scrollTo(0, 0);
 
         var focusable = target.querySelector(
-            'input:not([type=hidden]):not(.sr-only), button'
+            'input:not([type=hidden]):not(.sr-only), select, button'
         );
 
         if (focusable && id !== 's-intro') {
@@ -175,6 +176,10 @@
             return;
         }
 
+        if (validate === 'department' && !validateDepartment()) {
+            return;
+        }
+
         show(goButton.getAttribute('data-go'));
     });
 
@@ -203,10 +208,31 @@
         setError('ninu', '');
     });
 
+    var departmentInput = document.getElementById('department-code');
+
+    function validateDepartment() {
+        if (departmentInput.value === '') {
+            setError('department_code', t('departmentRequired'));
+            departmentInput.focus();
+
+            return false;
+        }
+
+        setError('department_code', '');
+
+        return true;
+    }
+
+    departmentInput.addEventListener('change', function () {
+        setError('department_code', '');
+    });
+
     /* ---------------- étape téléphone ---------------- */
 
     var phoneLocal = document.getElementById('phone-local');
     var phoneHidden = document.getElementById('phone');
+    var fallbackBox = document.getElementById('otp-fallback');
+    var manualButton = document.getElementById('continue-manual');
 
     phoneLocal.addEventListener('input', function () {
         var digits = phoneLocal.value.replace(/\D+/g, '').slice(0, 8);
@@ -217,6 +243,11 @@
                 return [a, b, c, d].filter(Boolean).join(' ');
             }
         );
+
+        fallbackBox.hidden = true;
+        state.verified = false;
+        state.manualPending = false;
+        state.challenge = null;
     });
 
     function phoneDigits() {
@@ -268,6 +299,7 @@
 
         setError('phone-local', '');
         phoneHidden.value = '+509' + digits;
+        fallbackBox.hidden = true;
 
         var button = document.getElementById('send-code');
 
@@ -295,11 +327,17 @@
                 setError('phone-local', response.message || t('networkError'));
                 setError('code', response.message || t('networkError'));
 
+                if (response.fallback_available === true) {
+                    fallbackBox.hidden = false;
+                    show('s-phone');
+                }
+
                 return;
             }
 
             state.challenge = response.challenge_uuid;
             state.channel = response.delivered_channel;
+            state.manualPending = false;
             state.expiresAt = Date.now() + (response.ttl_seconds || 300) * 1000;
             state.resendAt = Date.now() + 60000;
 
@@ -313,6 +351,45 @@
             tick();
         });
     }
+
+    manualButton.addEventListener('click', function () {
+        if (phoneHidden.value === '') {
+            setError('phone-local', t('phoneRequired'));
+
+            return;
+        }
+
+        manualButton.disabled = true;
+        manualButton.textContent = t('manualSending');
+
+        postForm(
+            '/inscription/' + encodeURIComponent(slug)
+                + '/otp/continuer-sans-code',
+            { phone: phoneHidden.value }
+        ).then(function (response) {
+            manualButton.disabled = false;
+            manualButton.textContent = t('manualAction');
+
+            if (!response.ok) {
+                setError(
+                    'phone-local',
+                    response.message || t('manualUnavailable')
+                );
+
+                return;
+            }
+
+            state.verified = false;
+            state.manualPending = true;
+            state.expiresAt = 0;
+            fallbackBox.hidden = true;
+            document.getElementById('verified-title').textContent =
+                t('manualTitle');
+            document.getElementById('verified-phone').textContent =
+                t('manualAccepted').replace('{0}', maskedPhone());
+            show('s-verified');
+        });
+    });
 
     function channelName(channel) {
         if (channel === 'sms') {
@@ -463,7 +540,10 @@
             }
 
             state.verified = true;
+            state.manualPending = false;
             state.expiresAt = 0;
+            document.getElementById('verified-title').textContent =
+                t('verifiedTitle');
             document.getElementById('verified-phone').textContent = maskedPhone();
             show('s-verified');
         });
@@ -667,6 +747,8 @@
         document.getElementById('summary-ninu').textContent =
             '•• •• •• ' + document.getElementById('ninu').value.slice(-2);
         document.getElementById('summary-phone').textContent = maskedPhone();
+        document.getElementById('summary-department').textContent =
+            departmentInput.options[departmentInput.selectedIndex].text;
         document.getElementById('summary-photos').textContent =
             t('photosCount').replace('{0}', String(count));
     }
@@ -683,6 +765,20 @@
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
+
+        if (!state.verified && !state.manualPending) {
+            setError('phone-local', t('contactVerificationRequired'));
+            show('s-phone');
+
+            return;
+        }
+
+        if (departmentInput.value === '') {
+            show('s-department');
+            validateDepartment();
+
+            return;
+        }
 
         if (!consentOne.checked || !consentTwo.checked) {
             setError('consent', t('consentRequired'));
@@ -720,6 +816,7 @@
         data.append('consent', '1');
         data.append('ninu', document.getElementById('ninu').value);
         data.append('phone', phoneHidden.value);
+        data.append('department_code', departmentInput.value);
 
         if (emailInput.value.trim() !== '') {
             data.append('email', emailInput.value.trim());

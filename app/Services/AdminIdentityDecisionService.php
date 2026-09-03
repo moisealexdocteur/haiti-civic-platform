@@ -34,7 +34,8 @@ final class AdminIdentityDecisionService
         int $actorUserId,
         string $identityUuid,
         string $toStatus,
-        ?string $reasonCode = null
+        ?string $reasonCode = null,
+        bool $manualContactReviewed = false
     ): void {
         if (! $this->authorization->userHasPermission(
             $actorUserId,
@@ -48,7 +49,7 @@ final class AdminIdentityDecisionService
         $identityUuid = $this->normalizeUuid($identityUuid);
         $row = $this->db
             ->table('citizen_identities')
-            ->select('id')
+            ->select('id, contact_verification_status')
             ->where('tenant_id', $this->tenantContext->id())
             ->where('uuid', $identityUuid)
             ->limit(1)
@@ -61,11 +62,29 @@ final class AdminIdentityDecisionService
             );
         }
 
+        if (
+            strtolower(trim($toStatus))
+                === IdentityVerificationStateMachine::VERIFIED
+            && (string) $row['contact_verification_status']
+                === ContactVerificationStatus::MANUAL_REVIEW
+            && ! $manualContactReviewed
+        ) {
+            throw new InvalidArgumentException(
+                'Manual contact review must be confirmed.'
+            );
+        }
+
         $this->identityWrite->transitionVerificationStatus(
             $actorUserId,
             (int) $row['id'],
             strtolower(trim($toStatus)),
-            $reasonCode === null ? null : trim($reasonCode)
+            $reasonCode === null ? null : trim($reasonCode),
+            additionalContext: [
+                'manual_contact_reviewed' =>
+                    (string) $row['contact_verification_status']
+                        === ContactVerificationStatus::MANUAL_REVIEW
+                    && $manualContactReviewed,
+            ]
         );
     }
 

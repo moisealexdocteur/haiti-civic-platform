@@ -5,7 +5,9 @@ namespace Tests\Database;
 use App\Services\AdminAuthService;
 use App\Services\AdminBootstrapService;
 use App\Services\AdminIdentityDecisionService;
+use App\Services\AdminIdentityMapService;
 use App\Services\AdminIdentityReadService;
+use App\Services\ContactVerificationStatus;
 use App\Services\PublicIdentitySubmissionService;
 use App\Services\TenantContext;
 use App\Services\VerificationDocumentWriteService;
@@ -205,6 +207,10 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
         $this->assertSame(self::NINU, $detail['ninu']);
         $this->assertSame('+509' . self::PHONE, $detail['phone']);
         $this->assertSame('pending', $detail['verification_status']);
+        $this->assertSame(
+            ContactVerificationStatus::OTP_VERIFIED,
+            $detail['contact_verification_status']
+        );
         $this->assertCount(3, $detail['documents']);
 
         $this->assertNull(
@@ -372,6 +378,88 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
         $this->assertSame(2, $decisionEvents);
     }
 
+    public function testManualContactReviewMustBeConfirmedBeforeApproval(): void
+    {
+        $admin = $this->bootstrapA();
+        $identity = $this->submitIdentity(
+            $this->tenantA,
+            '2222222222',
+            ContactVerificationStatus::MANUAL_REVIEW
+        );
+        $decision = new AdminIdentityDecisionService(
+            (new TenantContext())->set($this->tenantA),
+            $this->db
+        );
+
+        $exception = $this->captureException(
+            fn () => $decision->transition(
+                (int) $admin['user_id'],
+                $identity['uuid'],
+                'verified'
+            )
+        );
+
+        $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+
+        $decision->transition(
+            (int) $admin['user_id'],
+            $identity['uuid'],
+            'verified',
+            null,
+            true
+        );
+
+        $stored = $this->identityByUuid(
+            $this->tenantA,
+            $identity['uuid']
+        );
+        $this->assertSame('verified', $stored['verification_status']);
+
+        $event = $this->db
+            ->table('identity_verification_events')
+            ->select('context_json')
+            ->where('tenant_id', $this->tenantA)
+            ->where('citizen_identity_id', (int) $identity['id'])
+            ->where('event_type', 'identity.verification_status_changed')
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getFirstRow('array');
+
+        $this->assertNotNull($event);
+        $this->assertStringContainsString(
+            '"manual_contact_reviewed":true',
+            (string) $event['context_json']
+        );
+    }
+
+    public function testMapSummaryIsAggregatedAndTenantScoped(): void
+    {
+        $adminA = $this->bootstrapA();
+        $this->submitIdentity(
+            $this->tenantA,
+            self::NINU,
+            ContactVerificationStatus::OTP_VERIFIED,
+            'HT-OU'
+        );
+        $this->submitIdentity(
+            $this->tenantB,
+            self::NINU,
+            ContactVerificationStatus::OTP_VERIFIED,
+            'HT-OU'
+        );
+
+        $rows = (new AdminIdentityMapService(
+            (new TenantContext())->set($this->tenantA),
+            $this->db
+        ))->summaryForActor((int) $adminA['user_id'], 'fr');
+        $byCode = array_column($rows, null, 'code');
+
+        $this->assertCount(10, $rows);
+        $this->assertSame(1, $byCode['HT-OU']['total']);
+        $this->assertSame(1, $byCode['HT-OU']['pending']);
+        $this->assertSame(0, $byCode['HT-ND']['total']);
+    }
+
     private function bootstrapA(): array
     {
         return (new AdminBootstrapService($this->db))
@@ -394,7 +482,13 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
             );
     }
 
-    private function submitIdentity(int $tenantId, string $ninu): array
+    private function submitIdentity(
+        int $tenantId,
+        string $ninu,
+        string $contactVerificationStatus =
+            ContactVerificationStatus::OTP_VERIFIED,
+        ?string $departmentCode = null
+    ): array
     {
         return (new PublicIdentitySubmissionService(
             (new TenantContext())->set($tenantId),
@@ -403,7 +497,9 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
             $ninu,
             self::PHONE,
             'admin-test-v1',
-            $this->documents
+            $this->documents,
+            contactVerificationStatus: $contactVerificationStatus,
+            departmentCode: $departmentCode
         );
     }
 

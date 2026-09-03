@@ -410,7 +410,8 @@ final class CitizenIdentityWriteService
         string $toStatus,
         ?string $reasonCode = null,
         ?string $requestId = null,
-        ?string $ipHash = null
+        ?string $ipHash = null,
+        array $additionalContext = []
     ): void {
         $tenantId =
             $this->tenantContext->id();
@@ -521,10 +522,10 @@ final class CitizenIdentityWriteService
                 );
             }
 
-            $eventContext = [
+            $eventContext = array_merge($additionalContext, [
                 'reason_present' =>
                     $reasonCode !== null,
-            ];
+            ]);
 
             $this->insertIdentityEvent(
                 $tenantId,
@@ -545,7 +546,7 @@ final class CitizenIdentityWriteService
                 $identityId,
                 $requestId,
                 $ipHash,
-                [
+                array_merge($additionalContext, [
                     'from_status' =>
                         $fromStatus,
 
@@ -554,7 +555,7 @@ final class CitizenIdentityWriteService
 
                     'reason_present' =>
                         $reasonCode !== null,
-                ]
+                ])
             );
 
             $this->commitOrFail();

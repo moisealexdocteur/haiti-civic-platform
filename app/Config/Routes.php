@@ -25,6 +25,11 @@ $routes->post(
     ['filter' => 'csrf']
 );
 $routes->post(
+    'inscription/(:segment)/otp/continuer-sans-code',
+    'CitizenPortal::continueWithoutOtp/$1',
+    ['filter' => 'csrf']
+);
+$routes->post(
     'inscription/(:segment)',
     'CitizenPortal::submit/$1',
     ['filter' => 'csrf']
@@ -110,6 +115,11 @@ $routes->post(
 $routes->get(
     'admin/identites',
     'AdminIdentities::index',
+    ['filter' => ['adminauth', 'adminperm:identity.view']]
+);
+$routes->get(
+    'admin/carte',
+    'AdminMap::index',
     ['filter' => ['adminauth', 'adminperm:identity.view']]
 );
 $routes->get(
