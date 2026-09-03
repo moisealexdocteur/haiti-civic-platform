@@ -133,6 +133,56 @@ final class AdminPasswordResetServiceTest extends CIUnitTestCase
         );
     }
 
+    public function testConsoleResetChangesPasswordRevokesSessionsAndIsAudited(): void
+    {
+        $service = new AdminPasswordResetService($this->db);
+        $auth = new AdminAuthService($this->db);
+
+        $this->assertTrue($auth->sessionIsActive(
+            $this->userId,
+            $this->tenantId,
+            self::TENANT_SLUG,
+            1
+        ));
+        $this->assertTrue($service->resetFromConsole(
+            self::TENANT_SLUG,
+            self::EMAIL,
+            self::NEW_PASSWORD
+        ));
+        $this->assertFalse($auth->sessionIsActive(
+            $this->userId,
+            $this->tenantId,
+            self::TENANT_SLUG,
+            1
+        ));
+        $this->assertNull($auth->authenticate(
+            self::TENANT_SLUG,
+            self::EMAIL,
+            self::OLD_PASSWORD
+        ));
+        $this->assertNotNull($auth->authenticate(
+            self::TENANT_SLUG,
+            self::EMAIL,
+            self::NEW_PASSWORD
+        ));
+
+        $event = $this->db->table('audit_logs')
+            ->select('event, context_json')
+            ->where('tenant_id', $this->tenantId)
+            ->where('event', 'admin.password_reset_completed')
+            ->orderBy('id', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        $this->assertIsArray($event);
+        $this->assertSame('admin.password_reset_completed', $event['event']);
+        $this->assertSame(
+            'console',
+            json_decode((string) $event['context_json'], true, 512, JSON_THROW_ON_ERROR)['source'] ?? null
+        );
+    }
+
     private function cleanupFixtures(): void
     {
         $cleanupDb = $this->privilegedCleanupConnection();

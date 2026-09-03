@@ -65,5 +65,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="/assets/political-structures.js" defer></script>
+<script src="<?= esc(versioned_asset('/assets/political-structures.js'), 'attr') ?>" defer></script>
 <?= $this->endSection() ?>

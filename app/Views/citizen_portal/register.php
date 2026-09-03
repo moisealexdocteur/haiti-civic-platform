@@ -269,5 +269,5 @@ $slug = rawurlencode((string) $tenant['slug']);
 
 <?= $this->section('scripts') ?>
 <script type="application/json" id="wizard-strings"><?= json_encode($strings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script src="/assets/portal-wizard.js" defer></script>
+<script src="<?= esc(versioned_asset('/assets/portal-wizard.js'), 'attr') ?>" defer></script>
 <?= $this->endSection() ?>

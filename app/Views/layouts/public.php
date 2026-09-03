@@ -23,8 +23,8 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?></title>
-    <link rel="stylesheet" href="/assets/tokens.css">
-    <link rel="stylesheet" href="/assets/portal.css">
+    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
+    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/portal.css'), 'attr') ?>">
     <?= $this->renderSection('head') ?>
 </head>
 <body>

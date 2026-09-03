@@ -221,6 +221,80 @@ final class AdminPasswordResetService
         }
     }
 
+    public function resetFromConsole(
+        string $tenantSlug,
+        string $email,
+        string $newPassword
+    ): bool {
+        $this->validatePassword($newPassword);
+        $tenantSlug = strtolower(trim($tenantSlug));
+        $email = strtolower(trim($email));
+
+        if ($tenantSlug === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return false;
+        }
+
+        try {
+            if (! $this->db->transBegin()) {
+                throw new RuntimeException('Could not start console password reset transaction.');
+            }
+
+            $row = $this->db->query(
+                'SELECT t.`id` AS tenant_id, u.`id` AS user_id, u.`session_version` '
+                . 'FROM `users` u '
+                . 'INNER JOIN `tenant_users` tu ON tu.`user_id` = u.`id` '
+                . 'INNER JOIN `tenants` t ON t.`id` = tu.`tenant_id` '
+                . 'WHERE t.`slug` = ? AND u.`email` = ? '
+                . 'AND t.`status` = ? AND t.`deleted_at` IS NULL '
+                . 'AND tu.`status` = ? AND u.`status` = ? AND u.`deleted_at` IS NULL '
+                . 'LIMIT 1 FOR UPDATE',
+                [$tenantSlug, $email, 'active', 'active', 'active']
+            )->getFirstRow('array');
+
+            if ($row === null) {
+                $this->db->transRollback();
+                return false;
+            }
+
+            $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+            if (! is_string($passwordHash) || $passwordHash === '') {
+                throw new RuntimeException('Password hashing failed.');
+            }
+
+            $tenantId = (int) $row['tenant_id'];
+            $userId = (int) $row['user_id'];
+
+            $this->db->table('users')->where('id', $userId)->update([
+                'password_hash' => $passwordHash,
+                'session_version' => ((int) $row['session_version']) + 1,
+            ]);
+            $this->db->table('admin_password_reset_tokens')
+                ->where('tenant_id', $tenantId)
+                ->where('user_id', $userId)
+                ->where('used_at', null)
+                ->update(['used_at' => gmdate('Y-m-d H:i:s')]);
+
+            (new AuditService((new TenantContext())->set($tenantId), $this->db))->record(
+                event: 'admin.password_reset_completed',
+                actorUserId: null,
+                actorType: 'system',
+                entityType: 'user',
+                entityId: $userId,
+                context: ['source' => 'console']
+            );
+
+            if (! $this->db->transStatus() || ! $this->db->transCommit()) {
+                throw new RuntimeException('Could not commit console password reset.');
+            }
+
+            return true;
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
     public function changeAuthenticatedPassword(
         int $tenantId,
         int $userId,
