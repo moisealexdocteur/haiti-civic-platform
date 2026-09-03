@@ -72,7 +72,7 @@
                 </thead>
                 <tbody data-structure-rows>
                 <?php foreach ($structures as $structure): ?>
-                    <tr data-structure-row data-search="<?= esc(mb_strtolower((string) $structure['name'] . ' ' . (string) $structure['acronym'])) ?>">
+                    <tr data-structure-row data-search="<?= esc((string) $structure['name'] . ' ' . (string) $structure['acronym']) ?>">
                         <td><?= esc((string) $structure['cep_list_position']) ?></td>
                         <td>
                             <span class="structure-type">
