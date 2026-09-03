@@ -9,15 +9,18 @@ FROM php:8.3-fpm-alpine AS php-base
 USER root
 
 RUN apk add --no-cache \
+        curl \
         icu-libs \
         oniguruma \
         libzip \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
+        curl-dev \
         icu-dev \
         oniguruma-dev \
         libzip-dev \
     && docker-php-ext-install -j1 \
+        curl \
         intl \
         mbstring \
         mysqli \
@@ -134,7 +137,10 @@ RUN composer install \
     --no-interaction \
     --no-progress
 
-COPY . /var/www/html
+# Keep application/test sources owned by the same unprivileged user that
+# executes Spark and PHPUnit. This prevents permission drift on the host
+# from making Config/Routes.php or another source unreadable in the image.
+COPY --chown=www-data:www-data . /var/www/html
 
 RUN mkdir -p \
         writable/cache \

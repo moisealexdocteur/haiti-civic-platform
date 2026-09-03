@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Identités citoyennes — Administration</title>
+    <title>Identités citoyennes | Administration</title>
     <link rel="stylesheet" href="/assets/admin.css">
 </head>
 <body>

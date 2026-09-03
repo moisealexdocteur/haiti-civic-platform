@@ -4,10 +4,21 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'CitizenPortal::home');
+$routes->get('structures-politiques', 'PoliticalStructures::index');
 $routes->get('inscription', 'CitizenPortal::locate');
 $routes->get(
     'inscription/(:segment)',
     'CitizenPortal::register/$1'
+);
+$routes->post(
+    'inscription/(:segment)/otp/demander',
+    'CitizenPortal::requestOtp/$1',
+    ['filter' => 'csrf']
+);
+$routes->post(
+    'inscription/(:segment)/otp/verifier',
+    'CitizenPortal::verifyOtp/$1',
+    ['filter' => 'csrf']
 );
 $routes->post(
     'inscription/(:segment)',

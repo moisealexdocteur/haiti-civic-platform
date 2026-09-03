@@ -51,6 +51,28 @@ services:
       APP_KEY: ${APP_KEY}
       NINU_HMAC_KEY: ${NINU_HMAC_KEY}
 
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-}
+      WHATSAPP_GRAPH_VERSION: ${WHATSAPP_GRAPH_VERSION:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_OTP_TEMPLATE: ${WHATSAPP_OTP_TEMPLATE:-}
+      WHATSAPP_OTP_TEMPLATE_LANG: ${WHATSAPP_OTP_TEMPLATE_LANG:-}
+
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
+
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-587}
+      EMAIL_SMTP_CRYPTO: ${EMAIL_SMTP_CRYPTO:-tls}
+      EMAIL_SMTP_USER: ${EMAIL_SMTP_USER:-}
+      EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:-}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Portail citoyen}
+
       app.baseURL: ${APP_BASE_URL}
 
       database.default.hostname: db
@@ -84,7 +106,16 @@ services:
       - app
 
     ports:
-      - "127.0.0.1:${LOCAL_HTTP_PORT:-18090}:80"
+      - "${LOCAL_HTTP_BIND:-127.0.0.1}:${LOCAL_HTTP_PORT:-18090}:80"
+
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:-false}"
+      - "traefik.http.routers.civic-platform.rule=Host(`${CIVIC_PUBLIC_HOST:-localhost}`)"
+      - "traefik.http.routers.civic-platform.entrypoints=websecure"
+      - "traefik.http.routers.civic-platform.tls=true"
+      - "traefik.http.routers.civic-platform.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.civic-platform.service=civic-platform"
+      - "traefik.http.services.civic-platform.loadbalancer.server.port=80"
 
     networks:
       - civic-internal
