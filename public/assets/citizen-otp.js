@@ -26,6 +26,11 @@
 
     let challengeUuid = '';
     let verifiedContact = '';
+    let deliveredChannel = '';
+
+    const emit = (name, detail = {}) => {
+        document.dispatchEvent(new CustomEvent(name, {detail}));
+    };
 
     const contactSignature = () => {
         return `${phone.value.trim()}\u0000${email.value.trim().toLowerCase()}`;
@@ -85,6 +90,8 @@
     };
 
     const resetChallenge = () => {
+        const hadVerifiedContact = verifiedContact !== '';
+
         if (
             verifiedContact !== ''
             && contactSignature() !== verifiedContact
@@ -94,8 +101,13 @@
         }
 
         challengeUuid = '';
+        deliveredChannel = '';
         codeInput.value = '';
         codePanel.hidden = true;
+
+        if (hadVerifiedContact && verifiedContact === '') {
+            emit('civic:otp-reset');
+        }
     };
 
     phone.addEventListener('input', resetChallenge);
@@ -129,6 +141,7 @@
 
             if (!response.ok || !payload || payload.ok !== true) {
                 challengeUuid = '';
+                deliveredChannel = '';
                 codePanel.hidden = true;
                 setStatus(
                     payload && payload.message ? payload.message : 'Erreur.',
@@ -138,16 +151,19 @@
             }
 
             challengeUuid = payload.challenge_uuid || '';
+            deliveredChannel = payload.delivered_channel || '';
             verifiedContact = '';
             codePanel.hidden = challengeUuid === '';
             codeInput.value = '';
             setStatus(payload.message || '', 'sent');
+            emit('civic:otp-sent', {channel: deliveredChannel});
 
             if (challengeUuid !== '') {
                 codeInput.focus();
             }
         } catch (_) {
             challengeUuid = '';
+            deliveredChannel = '';
             codePanel.hidden = true;
             setStatus('Erreur.', 'error');
         } finally {
@@ -188,6 +204,7 @@
             challengeUuid = '';
             codePanel.hidden = true;
             setStatus(payload.message || '', 'verified');
+            emit('civic:otp-verified', {channel: deliveredChannel});
         } catch (_) {
             setStatus('Erreur.', 'error');
         } finally {
