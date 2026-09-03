@@ -41,18 +41,25 @@ final class PublicPhoneOtpProofService
 
     public function rememberIssued(
         string $challengeUuid,
-        string $normalizedPhone
+        string $normalizedPhone,
+        ?string $normalizedEmail = null,
+        ?OtpChannel $deliveredChannel = null
     ): void {
         $challengeUuid = $this->normalizeUuid($challengeUuid);
         $normalizedPhone = $this->requiredNormalizedPhone(
             $normalizedPhone
         );
+        $normalizedEmail = $this->normalizeEmail($normalizedEmail);
 
         $this->session->set(self::SESSION_KEY, [
             'tenant_id' => $this->tenantContext->id(),
             'challenge_uuid' => $challengeUuid,
             'phone_fingerprint' =>
                 $this->crypto->phoneFingerprint($normalizedPhone),
+            'email_fingerprint' => $normalizedEmail === null
+                ? null
+                : $this->crypto->emailFingerprint($normalizedEmail),
+            'delivered_channel' => $deliveredChannel?->value,
             'issued_at' => time(),
             'verified_at' => null,
             'valid_until' => null,
@@ -97,8 +104,10 @@ final class PublicPhoneOtpProofService
         $this->session->set(self::SESSION_KEY, $proof);
     }
 
-    public function hasVerifiedPhone(string $phone): bool
-    {
+    public function hasVerifiedContact(
+        string $phone,
+        ?string $email = null
+    ): bool {
         $proof = $this->proof();
 
         if (
@@ -122,16 +131,59 @@ final class PublicPhoneOtpProofService
             return false;
         }
 
-        $expected = (string) ($proof['phone_fingerprint'] ?? '');
+        $expectedPhone = (string) ($proof['phone_fingerprint'] ?? '');
 
-        if (preg_match('/^[0-9a-f]{64}$/D', $expected) !== 1) {
+        if (
+            preg_match('/^[0-9a-f]{64}$/D', $expectedPhone) !== 1
+            || ! hash_equals(
+                $expectedPhone,
+                $this->crypto->phoneFingerprint($normalizedPhone)
+            )
+        ) {
             return false;
         }
 
-        return hash_equals(
-            $expected,
-            $this->crypto->phoneFingerprint($normalizedPhone)
+        $channel = OtpChannel::tryFrom(
+            (string) ($proof['delivered_channel'] ?? '')
         );
+
+        if ($channel === null) {
+            return true;
+        }
+
+        if ($channel !== OtpChannel::EMAIL) {
+            return true;
+        }
+
+        $normalizedEmail = $this->normalizeEmail($email);
+
+        if ($normalizedEmail === null) {
+            return false;
+        }
+
+        $expectedEmail = (string) ($proof['email_fingerprint'] ?? '');
+
+        return preg_match('/^[0-9a-f]{64}$/D', $expectedEmail) === 1
+            && hash_equals(
+                $expectedEmail,
+                $this->crypto->emailFingerprint($normalizedEmail)
+            );
+    }
+
+    public function assertVerifiedContact(
+        string $phone,
+        ?string $email = null
+    ): void {
+        if (! $this->hasVerifiedContact($phone, $email)) {
+            throw new InvalidArgumentException(
+                'Contact OTP verification is required.'
+            );
+        }
+    }
+
+    public function hasVerifiedPhone(string $phone): bool
+    {
+        return $this->hasVerifiedContact($phone, null);
     }
 
     public function assertVerifiedPhone(string $phone): void
@@ -141,6 +193,14 @@ final class PublicPhoneOtpProofService
                 'Phone OTP verification is required.'
             );
         }
+    }
+
+    public function consumeVerifiedContact(
+        string $phone,
+        ?string $email = null
+    ): void {
+        $this->assertVerifiedContact($phone, $email);
+        $this->clear();
     }
 
     public function consumeVerifiedPhone(string $phone): void
@@ -168,6 +228,12 @@ final class PublicPhoneOtpProofService
                 (string) ($proof['challenge_uuid'] ?? ''),
             'phone_fingerprint' =>
                 (string) ($proof['phone_fingerprint'] ?? ''),
+            'email_fingerprint' => isset($proof['email_fingerprint'])
+                ? (string) $proof['email_fingerprint']
+                : null,
+            'delivered_channel' => isset($proof['delivered_channel'])
+                ? (string) $proof['delivered_channel']
+                : null,
             'issued_at' => (int) ($proof['issued_at'] ?? 0),
             'verified_at' => isset($proof['verified_at'])
                 ? (int) $proof['verified_at']
@@ -195,6 +261,30 @@ final class PublicPhoneOtpProofService
         }
 
         return $normalized;
+    }
+
+    private function normalizeEmail(?string $email): ?string
+    {
+        if ($email === null) {
+            return null;
+        }
+
+        $email = strtolower(trim($email));
+
+        if ($email === '') {
+            return null;
+        }
+
+        if (
+            strlen($email) > 254
+            || filter_var($email, FILTER_VALIDATE_EMAIL) === false
+        ) {
+            throw new InvalidArgumentException(
+                'OTP email recipient is invalid.'
+            );
+        }
+
+        return $email;
     }
 
     private function normalizeUuid(string $uuid): string
