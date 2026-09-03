@@ -5,6 +5,8 @@ namespace Tests\Database;
 use App\Services\AdminAuthService;
 use App\Services\AdminBootstrapService;
 use App\Services\AdminPasswordResetService;
+use App\Services\AdminPortalReadService;
+use App\Services\TenantContext;
 use CodeIgniter\Test\CIUnitTestCase;
 use RuntimeException;
 
@@ -180,6 +182,24 @@ final class AdminPasswordResetServiceTest extends CIUnitTestCase
         $this->assertSame(
             'console',
             json_decode((string) $event['context_json'], true, 512, JSON_THROW_ON_ERROR)['source'] ?? null
+        );
+    }
+
+    public function testDashboardLoadsForAFirstAdministrator(): void
+    {
+        $summary = (new AdminPortalReadService(
+            (new TenantContext())->set($this->tenantId),
+            $this->db
+        ))->dashboard($this->userId);
+
+        $this->assertSame(
+            ['pending' => 0, 'verified' => 0, 'rejected' => 0],
+            $summary['identities']
+        );
+        $this->assertSame(1, $summary['members']);
+        $this->assertSame(
+            ['whatsapp' => false, 'sms' => false, 'email' => false],
+            $summary['communications']
         );
     }
 
