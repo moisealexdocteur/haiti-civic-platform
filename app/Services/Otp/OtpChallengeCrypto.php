@@ -13,6 +13,9 @@ final class OtpChallengeCrypto
     private const PHONE_KEY_INFO =
         'civic.otp.phone-fingerprint.v1';
 
+    private const EMAIL_KEY_INFO =
+        'civic.otp.email-fingerprint.v1';
+
     private const CODE_KEY_INFO =
         'civic.otp.code-digest.v1';
 
@@ -42,19 +45,29 @@ final class OtpChallengeCrypto
             );
         }
 
-        $key = $this->deriveTenantKey(
-            self::PHONE_KEY_INFO
+        return $this->fingerprint(
+            self::PHONE_KEY_INFO,
+            $normalizedPhone
         );
+    }
 
-        try {
-            return hash_hmac(
-                'sha256',
-                "v1\0" . $normalizedPhone,
-                $key
+    public function emailFingerprint(
+        string $normalizedEmail
+    ): string {
+        if (
+            strlen($normalizedEmail) > 254
+            || $normalizedEmail !== strtolower(trim($normalizedEmail))
+            || filter_var($normalizedEmail, FILTER_VALIDATE_EMAIL) === false
+        ) {
+            throw new InvalidArgumentException(
+                'Normalized email address is invalid.'
             );
-        } finally {
-            $this->forget($key);
         }
+
+        return $this->fingerprint(
+            self::EMAIL_KEY_INFO,
+            $normalizedEmail
+        );
     }
 
     public function codeDigest(
@@ -84,6 +97,23 @@ final class OtpChallengeCrypto
             return hash_hmac(
                 'sha256',
                 "v1\0" . $code,
+                $key
+            );
+        } finally {
+            $this->forget($key);
+        }
+    }
+
+    private function fingerprint(
+        string $keyInfo,
+        string $value
+    ): string {
+        $key = $this->deriveTenantKey($keyInfo);
+
+        try {
+            return hash_hmac(
+                'sha256',
+                "v1\0" . $value,
                 $key
             );
         } finally {
