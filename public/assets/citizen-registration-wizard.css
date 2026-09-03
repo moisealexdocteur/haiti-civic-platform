@@ -1,0 +1,365 @@
+.wizard-progress-card {
+    margin: 28px 0 22px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 12px 32px rgba(17, 32, 51, .06);
+}
+
+.wizard-progress-copy {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.wizard-progress-copy strong {
+    color: var(--accent);
+    font-size: 14px;
+}
+
+.wizard-progress-track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8eef5;
+}
+
+.wizard-progress-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), #2477b8);
+    transition: width .35s ease;
+}
+
+.progress {
+    margin-top: 16px;
+}
+
+.progress li {
+    opacity: .48;
+    transition: opacity .25s ease, color .25s ease;
+}
+
+.progress li.is-current,
+.progress li.is-complete {
+    opacity: 1;
+}
+
+.progress li.is-complete span {
+    background: #e9f8ef;
+    color: #176b46;
+}
+
+.progress li.is-current {
+    color: var(--accent);
+}
+
+.wizard-ready .wizard-step:not(.is-current) {
+    display: none;
+}
+
+.wizard-ready .wizard-step.is-current {
+    animation: wizard-step-in .3s ease both;
+}
+
+@keyframes wizard-step-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.step-heading {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.step-number {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #e8f1f9;
+    color: var(--accent);
+    font-weight: 900;
+}
+
+.step-heading h2 {
+    margin: 0 0 5px;
+}
+
+.step-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.guide-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border: 1px solid #cfe2f5;
+    border-radius: 14px;
+    background: #f2f8fe;
+}
+
+.guide-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: #fff;
+    font-size: 16px;
+}
+
+.guide-card strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 13px;
+}
+
+.guide-card p {
+    margin: 0;
+    color: #4a6075;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.help-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0 14px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.help-link:hover {
+    text-decoration: underline;
+}
+
+.step-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.step-actions .primary-button,
+.step-actions .secondary-button {
+    width: auto;
+    min-width: 150px;
+}
+
+.step-actions .primary-button {
+    padding-inline: 20px;
+}
+
+.step-actions .primary-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.step-validation {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.step-validation[data-state="ok"] {
+    color: var(--success);
+}
+
+.step-validation[data-state="error"] {
+    color: #b42318;
+}
+
+.guided-upload-list {
+    display: grid;
+    gap: 12px;
+}
+
+.guided-upload {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: #fff;
+    transition: opacity .25s ease, transform .25s ease, border-color .25s ease, background .25s ease;
+}
+
+.guided-upload.is-ready {
+    border-color: #9fc3df;
+    background: #fbfdff;
+}
+
+.guided-upload.is-complete {
+    border-color: #a8d8bd;
+    background: #f7fcf9;
+}
+
+.guided-upload.is-locked {
+    opacity: .45;
+    background: #f6f8fa;
+}
+
+.upload-step-number {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #edf2f7;
+    color: #526171;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.guided-upload.is-complete .upload-step-number {
+    background: #e9f8ef;
+    color: #176b46;
+}
+
+.upload-copy strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.upload-copy p {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.upload-file-status {
+    margin-top: 7px;
+    color: var(--success);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.review-list {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 20px;
+}
+
+.review-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fafcfe;
+    font-size: 13px;
+}
+
+.review-item span:last-child {
+    color: var(--success);
+    font-weight: 800;
+}
+
+.wizard-dialog {
+    width: min(560px, calc(100% - 32px));
+    padding: 0;
+    border: 0;
+    border-radius: 20px;
+    box-shadow: 0 28px 90px rgba(17, 32, 51, .28);
+}
+
+.wizard-dialog::backdrop {
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(2px);
+}
+
+.dialog-content {
+    padding: 24px;
+}
+
+.dialog-content h2 {
+    margin: 0 0 10px;
+    font-size: 22px;
+}
+
+.dialog-content p,
+.dialog-content li {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.dialog-content ol {
+    padding-left: 20px;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+@media (max-width: 680px) {
+    .wizard-progress-card {
+        padding: 16px;
+    }
+
+    .progress {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .progress li {
+        font-size: 10px;
+    }
+
+    .progress li span {
+        margin: 0 auto 5px;
+    }
+
+    .step-actions {
+        flex-direction: column-reverse;
+    }
+
+    .step-actions .primary-button,
+    .step-actions .secondary-button {
+        width: 100%;
+    }
+}
