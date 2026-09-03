@@ -22,7 +22,7 @@
             <?= csrf_field() ?>
             <div class="field">
                 <label for="display-name"><?= esc(lang('Admin.displayName')) ?></label>
-                <input id="display-name" name="display_name" maxlength="160" autocomplete="name" required>
+                <input id="display-name" name="display_name" type="text" maxlength="160" autocomplete="name" required>
             </div>
             <div class="field">
                 <label for="user-email"><?= esc(lang('Admin.email')) ?></label>

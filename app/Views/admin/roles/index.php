@@ -36,11 +36,11 @@ $permissionLabels = [
             <div class="form-grid form-grid-spaced">
                 <div class="field">
                     <label for="role-name-new"><?= esc(lang('Admin.roleName')) ?></label>
-                    <input id="role-name-new" name="name" maxlength="160" required>
+                    <input id="role-name-new" name="name" type="text" maxlength="160" required>
                 </div>
                 <div class="field">
                     <label for="role-description-new"><?= esc(lang('Admin.roleDescription')) ?></label>
-                    <input id="role-description-new" name="description" maxlength="500">
+                    <input id="role-description-new" name="description" type="text" maxlength="500">
                 </div>
             </div>
             <fieldset class="permission-fieldset">
@@ -68,7 +68,7 @@ $permissionLabels = [
                 <?= csrf_field() ?>
                 <header class="role-card-head">
                     <div>
-                        <input class="role-name-input" name="name" value="<?= esc((string) $role['name'], 'attr') ?>" maxlength="160" aria-label="<?= esc(lang('Admin.roleName'), 'attr') ?>" <?= $editable ? '' : 'readonly' ?>>
+                        <input class="role-name-input" name="name" type="text" value="<?= esc((string) $role['name'], 'attr') ?>" maxlength="160" aria-label="<?= esc(lang('Admin.roleName'), 'attr') ?>" <?= $editable ? '' : 'readonly' ?>>
                         <code><?= esc((string) $role['code']) ?></code>
                     </div>
                     <?php if (! $role['mutable']): ?><span class="pill pill-owner"><?= esc(lang('Admin.protectedRole')) ?></span><?php endif; ?>

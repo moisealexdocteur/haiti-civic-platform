@@ -15,16 +15,7 @@ use Throwable;
 final class CitizenIdentityWriteServiceTest
     extends CIUnitTestCase
 {
-    /*
-     * Valeurs exclusivement synthétiques.
-     *
-     * Le NINU de test utilise volontairement 64 zéros,
-     * soit la limite technique du normalizer et non une
-     * représentation d'un identifiant réel.
-     */
-    private const NINU =
-        '00000000000000000000000000000000'
-        . '00000000000000000000000000000000';
+    private const NINU = '0000000000';
 
     private const PHONE =
         '00000000';

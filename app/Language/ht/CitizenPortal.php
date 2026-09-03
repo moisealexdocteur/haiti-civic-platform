@@ -5,11 +5,11 @@
 
 return [
     // --- koki ---
-    'brand' => 'Pòtal sitwayen',
+    'brand' => 'Pòtal verifikasyon sitwayen',
     'languageSwitch' => 'Lang',
     'languageFr' => 'Français',
     'languageHt' => 'Kreyòl',
-    'securityFootnote' => 'Enfòmasyon ou yo sekrè. Chak òganizasyon wè sèlman dosye pa l.',
+    'securityFootnote' => 'Enfòmasyon ou yo pwoteje. Chak estrikti politik wè sèlman dosye pa li.',
     'continue' => 'Kontinye',
     'back' => 'Retounen',
     'backHome' => 'Tounen nan akèy la',
@@ -20,15 +20,15 @@ return [
 
     // --- akèy ---
     'homeTitle' => 'Demach ou a senp, epi li pwoteje.',
-    'homeLead' => 'Louvri pòtal òganizasyon w lan pou fè verifye idantite w.',
+    'homeLead' => 'Louvri pòtal pati oswa gwoupman politik ou a pou fè verifye idantite w.',
     'trustOne' => 'Nimewo idantite w la sekrè.',
-    'trustTwo' => 'Chak òganizasyon wè sèlman dosye pa l.',
+    'trustTwo' => 'Chak estrikti politik wè sèlman dosye pa li.',
     'trustThree' => 'Ou ka swiv chak etap.',
-    'accessTitle' => 'Louvri yon pòtal',
+    'accessTitle' => 'Louvri pòtal yon estrikti politik',
     'organizationCode' => 'Kòd pòtal la',
     'organizationPlaceholder' => 'Egzanp: demo-citoyen',
-    'organizationHelp' => 'Se òganizasyon w lan ki ba ou kòd sa a. Ak yon lyen dirèk, li deja ranpli.',
-    'organizationRequired' => 'Antre kòd òganizasyon w lan ba ou a.',
+    'organizationHelp' => 'Se pati oswa gwoupman politik ou a ki ba ou kòd sa a. Ak yon lyen dirèk, li deja ranpli.',
+    'organizationRequired' => 'Antre kòd pati oswa gwoupman politik ou a ba ou a.',
     'directoryLink' => 'Gade 105 estrikti politik CEP apwouve yo',
 
     // --- anyè CEP ---
@@ -68,8 +68,8 @@ return [
     'ninuTitle' => 'Nimewo idantite w',
     'ninuLead' => 'Nou sèvi ak nimewo sa a sèlman pou evite de dosye pou menm moun nan.',
     'ninuLabel' => 'NINU oswa CIN',
-    'ninuHint' => 'Chif ki make sou kat ou a.',
-    'ninuRequired' => 'Antre nimewo ki make sou kat ou a.',
+    'ninuHint' => '10 chif ki make sou kat ou a.',
+    'ninuRequired' => 'Antre 10 chif ki make sou kat ou a.',
 
     // --- kontak ---
     'phoneTitle' => 'Ki jan pou nou jwenn ou?',
@@ -162,7 +162,7 @@ return [
     'otpEmailInvalid' => 'Imel sa a pa bon.',
     'contactVerificationRequired' => 'Konfime nimewo w anvan ou voye dosye a.',
     'documentInvalid' => 'Gen yon foto ki pa rive. Pran l ankò.',
-    'duplicateIdentity' => 'Gen yon dosye ak nimewo sa a deja nan òganizasyon sa a.',
+    'duplicateIdentity' => 'Gen yon dosye ak nimewo sa a deja nan estrikti politik sa a.',
     'submissionInvalid' => 'Gen yon enfòmasyon nan dosye a ki pa bon. Tcheke epi rekòmanse.',
     'submissionError' => 'Nou pa t ka anrejistre dosye a. Anyen pa valide. Eseye ankò.',
 ];

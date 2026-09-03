@@ -58,7 +58,10 @@ $slug = rawurlencode((string) $tenant['slug']);
                 type="text"
                 inputmode="numeric"
                 autocomplete="off"
-                maxlength="40"
+                minlength="10"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                enterkeyhint="next"
                 aria-describedby="ninu-hint"
             >
             <p class="hint" id="ninu-hint"><?= esc(lang('CitizenPortal.ninuHint')) ?></p>

@@ -31,11 +31,11 @@
         <div class="form-grid">
             <div class="field">
                 <label for="graph-version"><?= esc(lang('Admin.graphVersion')) ?></label>
-                <input id="graph-version" name="whatsapp_graph_version" value="<?= esc($settings['whatsapp_graph_version'], 'attr') ?>" maxlength="20" placeholder="v26.0" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="graph-version" name="whatsapp_graph_version" type="text" value="<?= esc($settings['whatsapp_graph_version'], 'attr') ?>" maxlength="20" placeholder="v26.0" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field">
                 <label for="wa-phone-id"><?= esc(lang('Admin.phoneNumberId')) ?></label>
-                <input id="wa-phone-id" name="whatsapp_phone_number_id" value="<?= esc($settings['whatsapp_phone_number_id'], 'attr') ?>" maxlength="30" inputmode="numeric" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="wa-phone-id" name="whatsapp_phone_number_id" type="text" value="<?= esc($settings['whatsapp_phone_number_id'], 'attr') ?>" maxlength="30" inputmode="numeric" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field span-two">
                 <label for="wa-token"><?= esc(lang('Admin.accessToken')) ?></label>
@@ -44,11 +44,11 @@
             </div>
             <div class="field">
                 <label for="wa-template"><?= esc(lang('Admin.templateName')) ?></label>
-                <input id="wa-template" name="whatsapp_template_name" value="<?= esc($settings['whatsapp_template_name'], 'attr') ?>" maxlength="512" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="wa-template" name="whatsapp_template_name" type="text" value="<?= esc($settings['whatsapp_template_name'], 'attr') ?>" maxlength="512" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field">
                 <label for="wa-language"><?= esc(lang('Admin.templateLanguage')) ?></label>
-                <input id="wa-language" name="whatsapp_template_language" value="<?= esc($settings['whatsapp_template_language'], 'attr') ?>" maxlength="10" placeholder="ht" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="wa-language" name="whatsapp_template_language" type="text" value="<?= esc($settings['whatsapp_template_language'], 'attr') ?>" maxlength="10" placeholder="ht" <?= $canManage ? '' : 'disabled' ?>>
             </div>
         </div>
     </section>
@@ -67,7 +67,7 @@
         <div class="form-grid">
             <div class="field">
                 <label for="twilio-account"><?= esc(lang('Admin.accountSid')) ?></label>
-                <input id="twilio-account" name="twilio_account_sid" value="<?= esc($settings['twilio_account_sid'], 'attr') ?>" maxlength="40" placeholder="AC..." <?= $canManage ? '' : 'disabled' ?>>
+                <input id="twilio-account" name="twilio_account_sid" type="text" value="<?= esc($settings['twilio_account_sid'], 'attr') ?>" maxlength="40" placeholder="AC..." <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field">
                 <label for="twilio-token"><?= esc(lang('Admin.authToken')) ?></label>
@@ -76,11 +76,11 @@
             </div>
             <div class="field">
                 <label for="twilio-from"><?= esc(lang('Admin.fromNumber')) ?></label>
-                <input id="twilio-from" name="twilio_from_number" value="<?= esc($settings['twilio_from_number'], 'attr') ?>" maxlength="20" placeholder="+15551234567" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="twilio-from" name="twilio_from_number" type="tel" value="<?= esc($settings['twilio_from_number'], 'attr') ?>" maxlength="20" placeholder="+15551234567" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field">
                 <label for="twilio-service"><?= esc(lang('Admin.messagingServiceSid')) ?></label>
-                <input id="twilio-service" name="twilio_messaging_service_sid" value="<?= esc($settings['twilio_messaging_service_sid'], 'attr') ?>" maxlength="40" placeholder="MG..." <?= $canManage ? '' : 'disabled' ?>>
+                <input id="twilio-service" name="twilio_messaging_service_sid" type="text" value="<?= esc($settings['twilio_messaging_service_sid'], 'attr') ?>" maxlength="40" placeholder="MG..." <?= $canManage ? '' : 'disabled' ?>>
             </div>
         </div>
         <p class="form-note"><?= esc(lang('Admin.senderChoiceHelp')) ?></p>
@@ -100,7 +100,7 @@
         <div class="form-grid">
             <div class="field">
                 <label for="smtp-host"><?= esc(lang('Admin.smtpHost')) ?></label>
-                <input id="smtp-host" name="smtp_host" value="<?= esc($settings['smtp_host'], 'attr') ?>" maxlength="253" placeholder="mail.example.com" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="smtp-host" name="smtp_host" type="text" value="<?= esc($settings['smtp_host'], 'attr') ?>" maxlength="253" placeholder="mail.example.com" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field field-pair">
                 <span>
@@ -118,7 +118,7 @@
             </div>
             <div class="field">
                 <label for="smtp-user"><?= esc(lang('Admin.smtpUser')) ?></label>
-                <input id="smtp-user" name="smtp_user" value="<?= esc($settings['smtp_user'], 'attr') ?>" maxlength="254" autocomplete="username" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="smtp-user" name="smtp_user" type="text" value="<?= esc($settings['smtp_user'], 'attr') ?>" maxlength="254" autocomplete="username" <?= $canManage ? '' : 'disabled' ?>>
             </div>
             <div class="field">
                 <label for="smtp-password"><?= esc(lang('Admin.smtpPassword')) ?></label>
@@ -131,7 +131,7 @@
             </div>
             <div class="field">
                 <label for="from-name"><?= esc(lang('Admin.fromName')) ?></label>
-                <input id="from-name" name="email_from_name" value="<?= esc($settings['email_from_name'], 'attr') ?>" maxlength="160" <?= $canManage ? '' : 'disabled' ?>>
+                <input id="from-name" name="email_from_name" type="text" value="<?= esc($settings['email_from_name'], 'attr') ?>" maxlength="160" <?= $canManage ? '' : 'disabled' ?>>
             </div>
         </div>
     </section>

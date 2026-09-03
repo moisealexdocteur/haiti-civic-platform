@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?> | <?= esc(lang('Admin.productName')) ?></title>
+    <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/admin.css'), 'attr') ?>">
     <style>
@@ -126,7 +127,7 @@
 <body class="auth-page">
 <main class="auth-shell">
     <header class="auth-brand">
-        <span class="admin-seal" aria-hidden="true">BS</span>
+        <img class="product-mark" src="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" alt="">
         <span><b><?= esc(lang('Admin.productName')) ?></b><small><?= esc(lang('Admin.adminArea')) ?></small></span>
     </header>
     <?= $this->renderSection('main') ?>
