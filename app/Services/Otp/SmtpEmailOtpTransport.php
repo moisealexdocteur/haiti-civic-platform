@@ -53,22 +53,30 @@ final class SmtpEmailOtpTransport implements OtpTransportInterface
         );
 
         try {
-            $accepted = (bool) ($this->sendMail)(
+            $response = ($this->sendMail)(
                 $request->normalizedEmail,
                 $subject,
                 $body
             );
-        } catch (Throwable) {
+            $accepted = is_array($response)
+                ? (bool) ($response['accepted'] ?? false)
+                : (bool) $response;
+            $detail = is_array($response)
+                ? (string) ($response['detail'] ?? '')
+                : '';
+        } catch (Throwable $exception) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::EMAIL,
-                'smtp_transport_error'
+                'smtp_transport_error',
+                $exception->getMessage()
             );
         }
 
         if (! $accepted) {
             return OtpDeliveryResult::rejected(
                 OtpChannel::EMAIL,
-                'smtp_send_failed'
+                'smtp_send_failed',
+                $detail
             );
         }
 
@@ -134,7 +142,7 @@ final class SmtpEmailOtpTransport implements OtpTransportInterface
         string $recipient,
         string $subject,
         string $body
-    ): bool {
+    ): array {
         $email = Services::email(null, false);
         $email->initialize([
             'protocol' => 'smtp',
@@ -156,6 +164,11 @@ final class SmtpEmailOtpTransport implements OtpTransportInterface
         $email->setSubject($subject);
         $email->setMessage($body);
 
-        return $email->send(false);
+        $accepted = $email->send(false);
+
+        return [
+            'accepted' => $accepted,
+            'detail' => $accepted ? '' : $email->printDebugger([]),
+        ];
     }
 }

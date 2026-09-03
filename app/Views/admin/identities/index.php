@@ -51,7 +51,7 @@ $contactLabels = [
                 <?php foreach ($rows as $row): ?>
                     <?php $rowStatus = (string) $row['verification_status']; ?>
                     <tr>
-                        <td class="ref"><?= esc(strtoupper(substr((string) $row['uuid'], 0, 8))) ?></td>
+                        <td class="ref"><?= esc((string) $row['public_reference']) ?></td>
                         <td><span class="pill pill-<?= esc($rowStatus, 'attr') ?>"><?= esc($labels[$rowStatus] ?? $rowStatus) ?></span></td>
                         <?php $contactStatus = (string) $row['contact_verification_status']; ?>
                         <td><?= esc($contactLabels[$contactStatus] ?? $contactStatus) ?></td>

@@ -357,6 +357,52 @@
     text-align: center;
 }
 
+.reference-eyebrow { margin-top: 4px; }
+
+.qr-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 16px;
+    align-items: center;
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    text-align: left;
+}
+
+.qr-code {
+    width: 132px;
+    aspect-ratio: 1;
+    padding: 7px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #FFFFFF;
+}
+
+.qr-code svg { display: block; width: 100%; height: 100%; }
+.qr-copy h2 { margin: 0 0 6px; font-size: var(--t-base); }
+.qr-copy p { margin: 0 0 8px; color: var(--ink-2); font-size: var(--t-sm); }
+
+.tracking-screen { justify-content: flex-start; padding-top: 28px; }
+.tracking-lookup-form { display: grid; gap: 16px; margin-top: 10px; }
+.tracking-lookup-form .btn { width: 100%; }
+.tracking-reference { margin-bottom: 20px; }
+.tracking-auth, .tracking-status { margin-top: 0; text-align: left; }
+.tracking-auth .btn { width: 100%; margin-top: 12px; }
+.tracking-error { margin-top: 14px; }
+.tracking-auth h2, .tracking-status h2 { margin: 0 0 8px; }
+.tracking-auth p, .tracking-status p { color: var(--ink-2); }
+.tracking-help { margin: 16px 0; color: var(--ink-3); font-size: var(--t-xs); }
+.is-hidden { display: none !important; }
+
+@media (max-width: 440px) {
+    .qr-card { grid-template-columns: 1fr; text-align: center; }
+    .qr-code { margin: 0 auto; }
+}
+
 /* ---------- accueil et répertoire ---------- */
 
 .home-hero { padding: 8px 0 24px; }

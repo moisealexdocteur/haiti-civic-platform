@@ -99,7 +99,7 @@ $contactStatus = (string) $identity['contact_verification_status'];
         <dl class="details">
             <div>
                 <dt><?= esc(lang('Admin.reference')) ?></dt>
-                <dd class="masked"><?= esc(strtoupper(substr((string) $identity['uuid'], 0, 8))) ?></dd>
+                <dd class="masked"><?= esc((string) $identity['public_reference']) ?></dd>
             </div>
             <div>
                 <dt><?= esc(lang('Admin.identityNumber')) ?></dt>

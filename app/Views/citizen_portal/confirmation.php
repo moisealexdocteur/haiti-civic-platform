@@ -7,8 +7,23 @@
     <h1><?= esc(lang('CitizenPortal.confirmationTitle')) ?></h1>
     <p class="lead"><?= esc(lang('CitizenPortal.confirmationLead')) ?></p>
 
-    <p class="reference"><?= esc($reference) ?></p>
+    <p class="eyebrow reference-eyebrow"><?= esc(lang('CitizenPortal.referenceLabel')) ?></p>
+    <p class="reference" data-reference><?= esc($reference) ?></p>
     <p class="hint text-center"><?= esc(lang('CitizenPortal.referenceHelp')) ?></p>
+
+    <div class="qr-card">
+        <div
+            class="qr-code"
+            data-qr
+            data-value="<?= esc($trackingUrl, 'attr') ?>"
+            aria-label="<?= esc(lang('CitizenPortal.qrAlt'), 'attr') ?>"
+        ></div>
+        <div class="qr-copy">
+            <h2><?= esc(lang('CitizenPortal.qrTitle')) ?></h2>
+            <p><?= esc(lang('CitizenPortal.qrHelp')) ?></p>
+            <a href="<?= esc($trackingUrl, 'attr') ?>"><?= esc(lang('CitizenPortal.trackNow')) ?></a>
+        </div>
+    </div>
 
     <div class="card next-step-card">
         <h2><?= esc(lang('CitizenPortal.nextStepTitle')) ?></h2>
@@ -21,4 +36,8 @@
 
     <a class="btn btn-ghost" href="/?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.finish')) ?></a>
 </section>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="<?= esc(versioned_asset('/assets/qr-code.js'), 'attr') ?>" defer></script>
 <?= $this->endSection() ?>

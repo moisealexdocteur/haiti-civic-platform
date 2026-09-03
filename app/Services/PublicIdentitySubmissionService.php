@@ -97,6 +97,7 @@ final class PublicIdentitySubmissionService
                 $this->normalizer->normalizeHaitiPhone($phone);
 
             $uuid = $this->uuid();
+            $publicReference = $this->availablePublicReference();
 
             $fingerprint =
                 $this->crypto->ninuFingerprint($normalizedNinu);
@@ -124,6 +125,7 @@ final class PublicIdentitySubmissionService
                 ->table('citizen_identities')
                 ->insert([
                     'uuid' => $uuid,
+                    'public_reference' => $publicReference,
                     'tenant_id' => $tenantId,
                     'ninu_ciphertext' => $ninuCiphertext,
                     'ninu_fingerprint' => $fingerprint,
@@ -205,6 +207,7 @@ final class PublicIdentitySubmissionService
             return [
                 'id' => $identityId,
                 'uuid' => $uuid,
+                'public_reference' => $publicReference,
                 'verification_status' => self::INITIAL_STATUS,
                 'contact_verification_status' =>
                     $contactVerificationStatus,
@@ -222,6 +225,24 @@ final class PublicIdentitySubmissionService
         } finally {
             $this->releaseAuditLock($lockName);
         }
+    }
+
+    private function availablePublicReference(): string
+    {
+        $generator = new PublicReferenceGenerator();
+
+        for ($attempt = 0; $attempt < 8; $attempt++) {
+            $reference = $generator->generate();
+            $exists = $this->db->table('citizen_identities')
+                ->where('public_reference', $reference)
+                ->countAllResults();
+
+            if ($exists === 0) {
+                return $reference;
+            }
+        }
+
+        throw new RuntimeException('Could not allocate a public identity reference.');
     }
 
     private function activeTenantForUpdate(int $tenantId): array

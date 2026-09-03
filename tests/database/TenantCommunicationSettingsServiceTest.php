@@ -90,6 +90,16 @@ final class TenantCommunicationSettingsServiceTest extends CIUnitTestCase
             'synthetic-whatsapp-token-2026',
             (string) $stored['whatsapp_access_token_encrypted']
         );
+        $this->assertSame('untested', $public['email_validation_status']);
+        $this->assertNull($service->smtpConfiguration());
+
+        $this->db->table('tenant_communication_settings')
+            ->where('tenant_id', $this->tenantA)
+            ->update([
+                'email_validation_status' => 'valid',
+                'email_validated_at' => gmdate('Y-m-d H:i:s'),
+            ]);
+
         $this->assertSame(
             'synthetic-smtp-password-2026',
             $service->smtpConfiguration()['password'] ?? null
@@ -104,6 +114,45 @@ final class TenantCommunicationSettingsServiceTest extends CIUnitTestCase
 
         $this->expectException(RuntimeException::class);
         $foreignService->readForActor($this->adminA);
+    }
+
+    public function testGmailHostDiagnosticAndChannelDeletion(): void
+    {
+        $context = (new TenantContext())->set($this->tenantA);
+        $service = new TenantCommunicationSettingsService(
+            $context,
+            $this->db,
+            new TenantSecretCipher($context, self::APP_KEY)
+        );
+
+        $input = [
+            'smtp_host' => 'mail.google.com',
+            'smtp_port' => '587',
+            'smtp_crypto' => 'tls',
+            'smtp_user' => 'mailer@example.test',
+            'smtp_password' => 'synthetic-smtp-password-2026',
+            'email_from_address' => 'mailer@example.test',
+            'email_from_name' => 'Portail de test',
+        ];
+
+        $diagnostic = $service->testForActor(
+            $this->adminA,
+            'email',
+            $input,
+            'recipient@example.test'
+        );
+
+        $this->assertFalse($diagnostic['ok']);
+        $this->assertSame('smtp_gmail_host_invalid', $diagnostic['failure_code']);
+
+        $service->saveForActor($this->adminA, $input + ['email_enabled' => '1']);
+        $service->deleteForActor($this->adminA, 'email');
+        $public = $service->readForActor($this->adminA);
+
+        $this->assertFalse($public['email_enabled']);
+        $this->assertFalse($public['email_configured']);
+        $this->assertFalse($public['smtp_secret_set']);
+        $this->assertSame('untested', $public['email_validation_status']);
     }
 
     private function insertTenant(string $slug, string $name): int
