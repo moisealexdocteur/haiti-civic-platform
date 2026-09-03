@@ -108,6 +108,15 @@ services:
     ports:
       - "${LOCAL_HTTP_BIND:-127.0.0.1}:${LOCAL_HTTP_PORT:-18090}:80"
 
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:-false}"
+      - "traefik.http.routers.civic-platform.rule=Host(`${CIVIC_PUBLIC_HOST:-localhost}`)"
+      - "traefik.http.routers.civic-platform.entrypoints=websecure"
+      - "traefik.http.routers.civic-platform.tls=true"
+      - "traefik.http.routers.civic-platform.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.civic-platform.service=civic-platform"
+      - "traefik.http.services.civic-platform.loadbalancer.server.port=80"
+
     networks:
       - civic-internal
 
