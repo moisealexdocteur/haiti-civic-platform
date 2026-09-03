@@ -50,6 +50,43 @@ final class OtpTransportFactory
             );
         }
 
+        $emailProvider = strtolower(self::env('EMAIL_PROVIDER'));
+
+        if ($emailProvider !== '') {
+            if ($emailProvider !== 'smtp') {
+                throw new RuntimeException(
+                    'Unsupported email OTP provider configuration.'
+                );
+            }
+
+            $port = filter_var(
+                self::required('EMAIL_SMTP_PORT'),
+                FILTER_VALIDATE_INT,
+                [
+                    'options' => [
+                        'min_range' => 1,
+                        'max_range' => 65535,
+                    ],
+                ]
+            );
+
+            if ($port === false) {
+                throw new RuntimeException(
+                    'OTP email SMTP port is invalid.'
+                );
+            }
+
+            $transports[] = new SmtpEmailOtpTransport(
+                self::required('EMAIL_SMTP_HOST'),
+                (int) $port,
+                strtolower(self::env('EMAIL_SMTP_CRYPTO')),
+                self::required('EMAIL_SMTP_USER'),
+                self::required('EMAIL_SMTP_PASSWORD'),
+                self::required('EMAIL_FROM_ADDRESS'),
+                self::required('EMAIL_FROM_NAME')
+            );
+        }
+
         return new OtpChannelRouter($transports);
     }
 
