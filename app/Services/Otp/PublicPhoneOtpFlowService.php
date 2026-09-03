@@ -38,8 +38,22 @@ final class PublicPhoneOtpFlowService
      */
     public function request(
         string $phone,
-        ?string $requestFingerprint = null
+        ?string $requestFingerprint = null,
+        ?string $email = null
     ): array {
+        $normalizedEmail = $this->normalizeEmail($email);
+
+        if (
+            $normalizedEmail === null
+            && ! $this->router->hasTransport(OtpChannel::WHATSAPP)
+            && ! $this->router->hasTransport(OtpChannel::SMS)
+            && $this->router->hasTransport(OtpChannel::EMAIL)
+        ) {
+            throw new InvalidArgumentException(
+                'OTP email recipient is required.'
+            );
+        }
+
         $issued = $this->challenges->issue(
             $phone,
             OtpChallengeService::PURPOSE_CITIZEN_PHONE,
@@ -56,7 +70,8 @@ final class PublicPhoneOtpFlowService
                 new OtpDeliveryRequest(
                     $normalizedPhone,
                     $code,
-                    (int) $issued['ttl_seconds']
+                    (int) $issued['ttl_seconds'],
+                    $normalizedEmail
                 )
             );
 
@@ -65,6 +80,12 @@ final class PublicPhoneOtpFlowService
                     $challengeUuid,
                     $delivery->failureCode ?? 'delivery_rejected'
                 );
+
+                if ($delivery->failureCode === 'email_recipient_missing') {
+                    throw new InvalidArgumentException(
+                        'OTP email recipient is required.'
+                    );
+                }
 
                 throw new RuntimeException(
                     'OTP delivery is temporarily unavailable.'
@@ -78,7 +99,9 @@ final class PublicPhoneOtpFlowService
 
             $this->proofs->rememberIssued(
                 $challengeUuid,
-                $normalizedPhone
+                $normalizedPhone,
+                $normalizedEmail,
+                $delivery->channel
             );
 
             return [
@@ -142,6 +165,30 @@ final class PublicPhoneOtpFlowService
     public function proofService(): PublicPhoneOtpProofService
     {
         return $this->proofs;
+    }
+
+    private function normalizeEmail(?string $email): ?string
+    {
+        if ($email === null) {
+            return null;
+        }
+
+        $email = strtolower(trim($email));
+
+        if ($email === '') {
+            return null;
+        }
+
+        if (
+            strlen($email) > 254
+            || filter_var($email, FILTER_VALIDATE_EMAIL) === false
+        ) {
+            throw new InvalidArgumentException(
+                'OTP email recipient is invalid.'
+            );
+        }
+
+        return $email;
     }
 
     private function forget(string &$value): void
