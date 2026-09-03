@@ -88,6 +88,7 @@ final class CitizenPortal extends BaseController
 
         try {
             $phone = trim((string) $this->request->getPost('phone'));
+            $email = trim((string) $this->request->getPost('email'));
             $tenantContext = $this->tenantContext($tenant);
             $flow = new PublicPhoneOtpFlowService(
                 $tenantContext,
@@ -96,12 +97,15 @@ final class CitizenPortal extends BaseController
 
             $result = $flow->request(
                 $phone,
-                $this->otpRequestFingerprint((int) $tenant['id'])
+                $this->otpRequestFingerprint((int) $tenant['id']),
+                $email === '' ? null : $email
             );
 
-            $messageKey = $result['delivered_channel'] === 'sms'
-                ? 'CitizenPortal.otpSentSms'
-                : 'CitizenPortal.otpSentWhatsApp';
+            $messageKey = match ($result['delivered_channel']) {
+                'sms' => 'CitizenPortal.otpSentSms',
+                'email' => 'CitizenPortal.otpSentEmail',
+                default => 'CitizenPortal.otpSentWhatsApp',
+            };
 
             return $this->otpJson([
                 'ok' => true,
@@ -110,10 +114,18 @@ final class CitizenPortal extends BaseController
                 'ttl_seconds' => (int) $result['ttl_seconds'],
                 'message' => lang($messageKey),
             ]);
-        } catch (InvalidArgumentException) {
+        } catch (InvalidArgumentException $exception) {
+            $messageKey = match ($exception->getMessage()) {
+                'OTP email recipient is required.' =>
+                    'CitizenPortal.otpEmailRequired',
+                'OTP email recipient is invalid.' =>
+                    'CitizenPortal.otpEmailInvalid',
+                default => 'CitizenPortal.otpPhoneInvalid',
+            };
+
             return $this->otpJson([
                 'ok' => false,
-                'message' => lang('CitizenPortal.otpPhoneInvalid'),
+                'message' => lang($messageKey),
             ], 422);
         } catch (RuntimeException $exception) {
             $rateLimited = in_array(
@@ -221,16 +233,22 @@ final class CitizenPortal extends BaseController
             $phoneInput = trim(
                 (string) $this->request->getPost('phone')
             );
+            $emailInput = trim(
+                (string) $this->request->getPost('email')
+            );
 
             if ($phoneInput === '') {
                 throw new InvalidArgumentException(
-                    'Phone OTP verification is required.'
+                    'Contact OTP verification is required.'
                 );
             }
 
             $tenantContext = $this->tenantContext($tenant);
-            $phoneProof = new PublicPhoneOtpProofService($tenantContext);
-            $phoneProof->assertVerifiedPhone($phoneInput);
+            $contactProof = new PublicPhoneOtpProofService($tenantContext);
+            $contactProof->assertVerifiedContact(
+                $phoneInput,
+                $emailInput === '' ? null : $emailInput
+            );
 
             $documents = [
                 VerificationDocumentWriteService::CIN_FRONT =>
@@ -250,7 +268,7 @@ final class CitizenPortal extends BaseController
                 $documents
             );
 
-            $phoneProof->clear();
+            $contactProof->clear();
 
             return view(
                 'citizen_portal/confirmation',
@@ -393,8 +411,9 @@ final class CitizenPortal extends BaseController
                 lang('CitizenPortal.consentRequired'),
             'document_invalid' =>
                 lang('CitizenPortal.documentInvalid'),
-            'Phone OTP verification is required.' =>
-                lang('CitizenPortal.phoneVerificationRequired'),
+            'Phone OTP verification is required.',
+            'Contact OTP verification is required.' =>
+                lang('CitizenPortal.contactVerificationRequired'),
             'Citizen identity already exists in the current tenant.' =>
                 lang('CitizenPortal.duplicateIdentity'),
             default =>
