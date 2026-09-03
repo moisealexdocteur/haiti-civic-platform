@@ -86,7 +86,18 @@
                     placeholder="<?= esc(lang('CitizenPortal.phonePlaceholder')) ?>"
                     required
                 >
-                <p class="field-help"><?= esc(lang('CitizenPortal.phoneVerificationHelp')) ?></p>
+
+                <label for="email"><?= esc(lang('CitizenPortal.emailLabel')) ?></label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    maxlength="254"
+                    autocomplete="email"
+                    placeholder="<?= esc(lang('CitizenPortal.emailPlaceholder')) ?>"
+                >
+
+                <p class="field-help"><?= esc(lang('CitizenPortal.contactVerificationHelp')) ?></p>
 
                 <div class="otp-actions">
                     <button
