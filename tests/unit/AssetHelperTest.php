@@ -21,4 +21,19 @@ final class AssetHelperTest extends CIUnitTestCase
             versioned_asset('assets/does-not-exist.css')
         );
     }
+
+    public function testAdminStylesheetCanBeDeliveredInline(): void
+    {
+        $stylesheet = inline_stylesheet('/assets/admin.css');
+
+        $this->assertStringContainsString('.admin-shell', $stylesheet);
+        $this->assertStringContainsString('@media (max-width: 620px)', $stylesheet);
+    }
+
+    public function testInlineStylesheetRejectsPathTraversal(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        inline_stylesheet('../.env');
+    }
 }

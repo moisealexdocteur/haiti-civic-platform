@@ -21,9 +21,9 @@ $nav = [
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?> | <?= esc(lang('Admin.productName')) ?></title>
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
-    <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/admin.css'), 'attr') ?>">
+    <style data-admin-styles="inline"><?= inline_stylesheet('/assets/admin.css') ?></style>
 </head>
-<body>
+<body class="admin-page">
 <a class="skip-link" href="#main-content"><?= esc(lang('Admin.skipToContent')) ?></a>
 <div class="admin-shell">
     <aside class="admin-sidebar">
