@@ -198,6 +198,21 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
         $this->assertSame($identityA['uuid'], $queue[0]['uuid']);
         $this->assertSame(3, (int) $queue[0]['document_count']);
 
+        $page = $readA->pageForActor(
+            (int) $adminA['user_id'],
+            'all',
+            null,
+            'reference',
+            'desc',
+            1,
+            25
+        );
+
+        $this->assertSame(1, $page['total']);
+        $this->assertSame(1, $page['pages']);
+        $this->assertSame('reference', $page['sort']);
+        $this->assertSame('desc', $page['direction']);
+
         $detail = $readA->detailForActorByUuid(
             (int) $adminA['user_id'],
             $identityA['uuid']

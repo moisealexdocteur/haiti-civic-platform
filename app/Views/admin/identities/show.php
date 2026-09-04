@@ -1,6 +1,16 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('topActions') ?>
+<?php $actionUuid = rawurlencode((string) $identity['uuid']); ?>
+<a class="btn btn-ghost" href="/admin/identites/<?= $actionUuid ?>/confirmation" target="_blank" rel="noopener">
+    <?= esc(lang('Admin.printConfirmation')) ?>
+</a>
+<?php if ($canManage): ?>
+    <form method="post" action="/admin/identites/<?= $actionUuid ?>/confirmation/renvoyer">
+        <?= csrf_field() ?>
+        <button class="btn btn-ghost" type="submit"><?= esc(lang('Admin.resendConfirmation')) ?></button>
+    </form>
+<?php endif; ?>
 <a class="btn btn-ghost" href="/admin/identites"><?= esc(lang('Admin.backToQueue')) ?></a>
 <?= $this->endSection() ?>
 
@@ -32,6 +42,9 @@ $eventLabels = [
     'identity.status_changed' => lang('Admin.eventIdentityStatus'),
     'document.uploaded' => lang('Admin.eventDocumentUploaded'),
     'document.revised' => lang('Admin.eventDocumentRevised'),
+    'citizen_identity.confirmation_printed' => lang('Admin.eventConfirmationPrinted'),
+    'citizen_identity.confirmation_resent' => lang('Admin.eventConfirmationResent'),
+    'citizen_identity.list_exported' => lang('Admin.eventIdentityListExported'),
 ];
 
 $reasonCodes = [
@@ -58,6 +71,14 @@ $contactStatus = (string) $identity['contact_verification_status'];
 
 <?php if ($decisionOk): ?>
     <p class="alert alert-ok"><?= esc(lang('Admin.decisionSaved')) ?></p>
+<?php endif; ?>
+
+<?php if (is_string($confirmationSent) && $confirmationSent !== ''): ?>
+    <p class="alert alert-ok" role="status"><?= esc($confirmationSent) ?></p>
+<?php endif; ?>
+
+<?php if (is_string($confirmationError) && $confirmationError !== ''): ?>
+    <p class="alert" role="alert"><?= esc($confirmationError) ?></p>
 <?php endif; ?>
 
 <?php if (is_string($decisionError) && $decisionError !== ''): ?>

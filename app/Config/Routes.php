@@ -142,6 +142,11 @@ $routes->get(
     ['filter' => ['adminauth', 'adminperm:identity.view']]
 );
 $routes->get(
+    'admin/identites/export/(:segment)',
+    'AdminIdentities::export/$1',
+    ['filter' => ['adminauth', 'adminperm:identity.view']]
+);
+$routes->get(
     'admin/carte',
     'AdminMap::index',
     ['filter' => ['adminauth', 'adminperm:identity.view']]
@@ -150,6 +155,16 @@ $routes->get(
     'admin/identites/(:segment)/documents/(:segment)',
     'AdminIdentities::document/$1/$2',
     ['filter' => ['adminauth', 'adminperm:identity.view']]
+);
+$routes->get(
+    'admin/identites/(:segment)/confirmation',
+    'AdminIdentities::confirmation/$1',
+    ['filter' => ['adminauth', 'adminperm:identity.view']]
+);
+$routes->post(
+    'admin/identites/(:segment)/confirmation/renvoyer',
+    'AdminIdentities::resendConfirmation/$1',
+    ['filter' => ['adminauth', 'adminperm:identity.manage', 'csrf']]
 );
 $routes->post(
     'admin/identites/(:segment)/statut',
