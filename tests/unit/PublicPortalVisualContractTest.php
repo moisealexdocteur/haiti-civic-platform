@@ -82,6 +82,50 @@ final class PublicPortalVisualContractTest extends CIUnitTestCase
         );
     }
 
+    public function testAdminMapLoadsLeafletLocallyWithItsLayoutStyles(): void
+    {
+        $view = $this->readProjectFile('app/Views/admin/map/index.php');
+
+        $this->assertStringContainsString(
+            "inline_stylesheet('/assets/leaflet.css')",
+            $view
+        );
+        $this->assertStringContainsString(
+            "versioned_asset('/assets/leaflet.js')",
+            $view
+        );
+        $this->assertStringNotContainsString('unpkg.com', $view);
+        $this->assertStringNotContainsString('cdnjs.cloudflare.com', $view);
+        $this->assertFileExists(ROOTPATH . 'public/assets/LEAFLET-LICENSE.txt');
+    }
+
+    public function testAdminMapRepairsItsSizeAfterResponsiveLayoutChanges(): void
+    {
+        $script = $this->readProjectFile('public/assets/admin-map.js');
+
+        $this->assertStringContainsString('map.invalidateSize', $script);
+        $this->assertStringContainsString('ResizeObserver', $script);
+    }
+
+    public function testOfficialIdentityCheckRemainsManualAndAudited(): void
+    {
+        $view = $this->readProjectFile(
+            'app/Views/admin/identities/show.php'
+        );
+        $routes = $this->readProjectFile('app/Config/Routes.php');
+
+        $this->assertStringContainsString(
+            'https://delidoc.gouv.ht/DemandePasseport/Client/Demande',
+            $view
+        );
+        $this->assertStringContainsString('name="outcome"', $view);
+        $this->assertStringContainsString('/controle-oni', $view);
+        $this->assertStringContainsString(
+            'AdminIdentities::recordAuthorityCheck/$1',
+            $routes
+        );
+    }
+
     private function readProjectFile(string $path): string
     {
         $contents = file_get_contents(ROOTPATH . $path);

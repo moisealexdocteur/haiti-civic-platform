@@ -47,6 +47,7 @@ final class AdminIdentityDecisionService
         }
 
         $identityUuid = $this->normalizeUuid($identityUuid);
+        $toStatus = strtolower(trim($toStatus));
         $row = $this->db
             ->table('citizen_identities')
             ->select('id, contact_verification_status')
@@ -63,8 +64,7 @@ final class AdminIdentityDecisionService
         }
 
         if (
-            strtolower(trim($toStatus))
-                === IdentityVerificationStateMachine::VERIFIED
+            $toStatus === IdentityVerificationStateMachine::VERIFIED
             && (string) $row['contact_verification_status']
                 === ContactVerificationStatus::MANUAL_REVIEW
             && ! $manualContactReviewed
@@ -74,10 +74,19 @@ final class AdminIdentityDecisionService
             );
         }
 
+        if (
+            $toStatus === IdentityVerificationStateMachine::VERIFIED
+            && ! $this->hasConfirmedAuthorityCheck((int) $row['id'])
+        ) {
+            throw new InvalidArgumentException(
+                'A confirmed identity authority check is required.'
+            );
+        }
+
         $this->identityWrite->transitionVerificationStatus(
             $actorUserId,
             (int) $row['id'],
-            strtolower(trim($toStatus)),
+            $toStatus,
             $reasonCode === null ? null : trim($reasonCode),
             additionalContext: [
                 'manual_contact_reviewed' =>
@@ -86,6 +95,31 @@ final class AdminIdentityDecisionService
                     && $manualContactReviewed,
             ]
         );
+    }
+
+    private function hasConfirmedAuthorityCheck(int $identityId): bool
+    {
+        $row = $this->db->table('identity_verification_events')
+            ->select('context_json')
+            ->where('tenant_id', $this->tenantContext->id())
+            ->where('citizen_identity_id', $identityId)
+            ->where('event_type', 'identity.authority_checked')
+            ->orderBy('occurred_at', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getFirstRow('array');
+
+        if ($row === null) {
+            return false;
+        }
+
+        $context = json_decode((string) $row['context_json'], true);
+
+        return is_array($context)
+            && ($context['provider'] ?? null) === 'oni_delidoc'
+            && ($context['outcome'] ?? null) === 'confirmed'
+            && ($context['automated'] ?? null) === false;
     }
 
     private function normalizeUuid(string $uuid): string

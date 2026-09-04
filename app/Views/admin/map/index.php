@@ -1,12 +1,7 @@
 <?= $this->extend('layouts/admin') ?>
 
 <?= $this->section('head') ?>
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIINfQ3ynhZWD8yyItPD2h49HHDrcp6Z0Os="
-    crossorigin=""
->
+<style data-leaflet-styles="inline"><?= inline_stylesheet('/assets/leaflet.css') ?></style>
 <?= $this->endSection() ?>
 
 <?= $this->section('main') ?>
@@ -87,11 +82,6 @@ $mapped = count(array_filter(
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-    defer
-></script>
+<script src="<?= esc(versioned_asset('/assets/leaflet.js'), 'attr') ?>" defer></script>
 <script src="<?= esc(versioned_asset('/assets/admin-map.js'), 'attr') ?>" defer></script>
 <?= $this->endSection() ?>
