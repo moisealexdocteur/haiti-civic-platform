@@ -13,10 +13,10 @@
     <form method="post" action="/swiv" class="card tracking-lookup-form" autocomplete="off">
         <?= csrf_field() ?>
         <div class="field">
-            <label for="tracking-reference"><?= esc(lang('CitizenPortal.referenceLabel')) ?></label>
+            <label for="tracking-reference"><?= esc(lang('CitizenPortal.trackingIdentifierLabel')) ?></label>
             <input
                 id="tracking-reference"
-                name="reference"
+                name="identifier"
                 type="text"
                 inputmode="text"
                 autocapitalize="characters"
@@ -24,6 +24,20 @@
                 placeholder="DOS-7K4M-9P2R-X8CW"
                 required
             >
+            <p class="hint"><?= esc(lang('CitizenPortal.trackingIdentifierHint')) ?></p>
+        </div>
+        <div class="field">
+            <label for="tracking-organisation"><?= esc(lang('CitizenPortal.trackingOrganizationLabel')) ?></label>
+            <input
+                id="tracking-organisation"
+                name="organisation"
+                type="text"
+                inputmode="text"
+                autocapitalize="none"
+                maxlength="80"
+                placeholder="demo-citoyen"
+            >
+            <p class="hint"><?= esc(lang('CitizenPortal.trackingOrganizationHint')) ?></p>
         </div>
         <button type="submit" class="btn"><?= esc(lang('CitizenPortal.trackingOpen')) ?></button>
     </form>

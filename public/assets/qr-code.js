@@ -1289,10 +1289,16 @@ module.exports = QRCode;
         element.innerHTML = parts.join('');
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function init() {
         document.querySelectorAll('[data-qr]').forEach(function (element) {
             var value = element.getAttribute('data-value');
             if (value) renderQr(element, value);
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 }());

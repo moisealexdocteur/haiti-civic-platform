@@ -40,6 +40,11 @@ $slug = rawurlencode((string) $tenant['slug']);
             <li><?= view('partials/icon_check') ?><span><?= esc(lang('CitizenPortal.introPoint2')) ?></span></li>
             <li><?= view('partials/icon_check') ?><span><?= esc(lang('CitizenPortal.introPoint3')) ?></span></li>
         </ul>
+        <aside class="purpose-card">
+            <h2><?= esc(lang('CitizenPortal.introWhyTitle')) ?></h2>
+            <p><?= esc(lang('CitizenPortal.introWhyText')) ?></p>
+            <p class="hint"><?= esc(lang('CitizenPortal.introBoundary')) ?></p>
+        </aside>
         <div class="spacer"></div>
         <button type="button" class="btn" data-go="s-ninu"><?= esc(lang('CitizenPortal.introStart')) ?></button>
     </section>
@@ -67,6 +72,25 @@ $slug = rawurlencode((string) $tenant['slug']);
             <p class="hint" id="ninu-hint"><?= esc(lang('CitizenPortal.ninuHint')) ?></p>
             <p class="field-error" data-error-for="ninu" hidden></p>
         </div>
+
+        <aside class="scan-card">
+            <div>
+                <h2><?= esc(lang('CitizenPortal.scanNinuTitle')) ?></h2>
+                <p><?= esc(lang('CitizenPortal.scanNinuLead')) ?></p>
+            </div>
+            <button type="button" class="btn btn-ghost" id="scan-ninu">
+                <?= esc(lang('CitizenPortal.scanNinuAction')) ?>
+            </button>
+            <input
+                type="file"
+                class="sr-only"
+                id="ninu-scan-file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+            >
+            <p class="scan-status" data-scan-status role="status" aria-live="polite"></p>
+            <p class="hint"><?= esc(lang('CitizenPortal.scanNinuPrivacy')) ?></p>
+        </aside>
 
         <div class="spacer"></div>
         <button type="button" class="btn" data-validate="ninu" data-go="s-phone"><?= esc(lang('CitizenPortal.continue')) ?></button>
@@ -206,9 +230,9 @@ $slug = rawurlencode((string) $tenant['slug']);
 
     <?php
     $pieces = [
-        'cin_front' => ['step' => 1, 'title' => 'frontTitle', 'guide' => 'frontGuide', 'art' => 'card', 'next' => 's-cin_back'],
-        'cin_back' => ['step' => 2, 'title' => 'backTitle', 'guide' => 'backGuide', 'art' => 'card', 'next' => 's-portrait'],
-        'portrait' => ['step' => 3, 'title' => 'portraitTitle', 'guide' => 'portraitGuide', 'art' => 'face', 'next' => 's-consent'],
+        'cin_front' => ['step' => 1, 'title' => 'frontTitle', 'guide' => 'frontGuide', 'art' => 'card', 'previous' => 's-why', 'next' => 's-cin_back'],
+        'cin_back' => ['step' => 2, 'title' => 'backTitle', 'guide' => 'backGuide', 'art' => 'card', 'previous' => 's-cin_front', 'next' => 's-portrait'],
+        'portrait' => ['step' => 3, 'title' => 'portraitTitle', 'guide' => 'portraitGuide', 'art' => 'face', 'previous' => 's-cin_back', 'next' => 's-consent'],
     ];
     ?>
     <?php foreach ($pieces as $field => $piece): ?>
@@ -243,6 +267,7 @@ $slug = rawurlencode((string) $tenant['slug']);
                 class="sr-only"
                 name="<?= esc($field, 'attr') ?>"
                 id="file-<?= esc($field, 'attr') ?>"
+                data-piece-input
                 accept="image/jpeg,image/png,image/webp"
                 <?= $field === 'portrait' ? 'capture="user"' : 'capture="environment"' ?>
             >
@@ -257,6 +282,11 @@ $slug = rawurlencode((string) $tenant['slug']);
             <div class="btn-row" data-role="review-actions" hidden>
                 <button type="button" class="btn btn-ghost" data-retake="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.retake')) ?></button>
                 <button type="button" class="btn" data-accept="<?= esc($field, 'attr') ?>"><?= esc(lang('CitizenPortal.usePhoto')) ?></button>
+            </div>
+
+            <div class="journey-actions">
+                <button type="button" data-go="<?= esc($piece['previous'], 'attr') ?>"><?= esc(lang('CitizenPortal.back')) ?></button>
+                <button type="button" data-abandon><?= esc(lang('CitizenPortal.abandon')) ?></button>
             </div>
         </section>
     <?php endforeach; ?>

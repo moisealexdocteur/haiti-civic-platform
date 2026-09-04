@@ -6,6 +6,7 @@ use App\Services\AuditService;
 use App\Services\ContactVerificationStatus;
 use App\Services\IdentityCryptoService;
 use App\Services\PublicIdentitySubmissionService;
+use App\Services\PublicIdentityTrackingService;
 use App\Services\TenantContext;
 use App\Services\VerificationDocumentWriteService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -184,6 +185,31 @@ final class PublicIdentitySubmissionServiceTest
         ))->verifyCurrentTenantChain();
 
         $this->assertTrue($verification['valid']);
+    }
+
+    public function testTrackingReferenceCanBeRecoveredByTenantAndNinu(): void
+    {
+        $result = $this->service($this->tenantA)->submit(
+            self::NINU,
+            self::PHONE,
+            'public-test-v1',
+            $this->documents
+        );
+        $tracking = new PublicIdentityTrackingService($this->db);
+
+        $this->assertSame(
+            $result['public_reference'],
+            $tracking->referenceForNinu(
+                '__public_submission_a__',
+                self::NINU
+            )
+        );
+        $this->assertNull(
+            $tracking->referenceForNinu(
+                '__public_submission_b__',
+                self::NINU
+            )
+        );
     }
 
     public function testSameNinuIsIsolatedByTenant(): void

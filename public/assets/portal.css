@@ -68,6 +68,46 @@
 
 .tick svg { width: 30px; height: 30px; display: block; }
 
+.purpose-card,
+.scan-card {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    text-align: left;
+}
+
+.purpose-card h2,
+.scan-card h2 {
+    margin: 0 0 6px;
+    font-size: var(--t-base);
+}
+
+.purpose-card p,
+.scan-card p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+}
+
+.purpose-card .hint,
+.scan-card .hint { margin-top: 8px; }
+
+.scan-card {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.scan-card .btn { width: 100%; }
+
+.scan-status {
+    min-height: 1.35em;
+    color: var(--accent) !important;
+    font-weight: 700;
+}
+
 /* ---------- téléphone ---------- */
 
 .telrow { display: flex; gap: 8px; }
@@ -234,6 +274,27 @@
     letter-spacing: .04em;
 }
 
+.journey-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.journey-actions button {
+    min-height: var(--tap);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: 700 var(--t-xs) var(--font);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.journey-actions button:last-child { color: var(--critical); }
+
 .thumbs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -375,6 +436,7 @@
 
 .qr-code {
     width: 132px;
+    min-height: 132px;
     aspect-ratio: 1;
     padding: 7px;
     border: 1px solid var(--line);

@@ -59,6 +59,9 @@ return [
     'introPoint1' => 'Votre numéro sert seulement à éviter deux dossiers pour la même personne.',
     'introPoint2' => 'Une personne autorisée regarde vos photos. Aucune machine ne reconnaît votre visage.',
     'introPoint3' => 'Vous gardez une référence pour suivre votre dossier.',
+    'introWhyTitle' => 'Pourquoi ce portail existe',
+    'introWhyText' => 'Il aide votre parti ou groupement politique à recevoir vos pièces de façon protégée et à organiser une vérification humaine.',
+    'introBoundary' => 'Ce portail ne remplace ni le CEP ni l’ONI. La décision appartient aux personnes autorisées de la structure politique.',
     'introStart' => 'Commencer',
 
     // --- identité ---
@@ -67,6 +70,14 @@ return [
     'ninuLabel' => 'NINU ou CIN',
     'ninuHint' => 'Les 10 chiffres inscrits sur votre carte.',
     'ninuRequired' => 'Entrez exactement les 10 chiffres inscrits sur votre carte.',
+    'scanNinuTitle' => 'Lire le numéro sur la carte',
+    'scanNinuLead' => 'Sur un téléphone compatible, photographiez le devant de la carte pour remplir les 10 chiffres.',
+    'scanNinuAction' => 'Scanner le devant de la carte',
+    'scanNinuPrivacy' => 'Cette photo sert uniquement à lire le numéro sur cet appareil. Elle n’est pas envoyée.',
+    'scanNinuReading' => 'Lecture de la carte en cours…',
+    'scanNinuSuccess' => 'Les 10 chiffres ont été lus. Vérifiez-les avant de continuer.',
+    'scanNinuNotFound' => 'Le numéro n’a pas pu être lu. Placez la carte à plat, sans reflet, ou entrez les 10 chiffres.',
+    'scanNinuUnsupported' => 'La lecture automatique n’est pas disponible sur ce téléphone. Entrez les 10 chiffres.',
 
     // --- contact ---
     'phoneTitle' => 'Comment vous joindre ?',
@@ -134,6 +145,10 @@ return [
     'usePhoto' => 'Utiliser',
     'fileNotImage' => 'Ce fichier n’est pas une photo.',
     'fileTooLarge' => 'Cette photo est trop lourde. Reprenez-la avec l’appareil photo.',
+    'fileTooSmall' => 'Cette photo est trop petite. Rapprochez la carte ou le visage, puis reprenez-la.',
+    'fileUnreadable' => 'Cette photo ne peut pas être lue. Utilisez une photo JPG, PNG ou WebP nette et bien éclairée.',
+    'abandon' => 'Abandonner la demande',
+    'abandonConfirm' => 'Abandonner cette demande et supprimer les photos préparées sur cet appareil ?',
     'piecesMissing' => 'Il manque une photo.',
 
     // --- consentement et envoi ---
@@ -169,7 +184,11 @@ return [
     'trackingEyebrow' => 'Suivi du dossier',
     'trackingTitle' => 'Où en est votre dossier ?',
     'trackingLookupTitle' => 'Retrouvez votre dossier',
-    'trackingLookupLead' => 'Entrez la référence remise à la fin de votre demande.',
+    'trackingLookupLead' => 'Entrez votre référence ou les 10 chiffres de votre NINU.',
+    'trackingIdentifierLabel' => 'Référence ou NINU',
+    'trackingIdentifierHint' => 'Le NINU permet seulement de retrouver la référence. Le code envoyé à votre contact reste obligatoire.',
+    'trackingOrganizationLabel' => 'Code du portail',
+    'trackingOrganizationHint' => 'Obligatoire uniquement si vous utilisez le NINU.',
     'trackingOpen' => 'Ouvrir le suivi',
     'trackingAnother' => 'Suivre un autre dossier',
     'trackingProtectTitle' => 'Confirmez que ce dossier est le vôtre',
@@ -181,7 +200,7 @@ return [
     'trackingVerify' => 'Afficher l’état du dossier',
     'trackingCodeInvalid' => 'Ce code est faux, expiré ou déjà utilisé.',
     'trackingUnavailable' => 'Le code ne peut pas être envoyé pour le moment. Réessayez plus tard.',
-    'trackingReferenceInvalid' => 'Cette référence est introuvable ou mal écrite.',
+    'trackingReferenceInvalid' => 'La référence ou le NINU est introuvable ou mal écrit.',
     'trackingPrivacy' => 'Le QR et la référence ne contiennent aucune donnée d’identité.',
     'trackingCurrentStatus' => 'État actuel',
     'trackingStatusPending' => 'Votre dossier attend une vérification humaine.',

@@ -46,4 +46,19 @@ final class AssetHelperTest extends CIUnitTestCase
 
         inline_stylesheet('../.env');
     }
+
+    public function testQrScriptCanBeDeliveredInline(): void
+    {
+        $script = inline_script('/assets/qr-code.js');
+
+        $this->assertStringContainsString('data-qr', $script);
+        $this->assertStringContainsString('renderQr', $script);
+    }
+
+    public function testInlineScriptRejectsPathTraversal(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        inline_script('../composer.json');
+    }
 }

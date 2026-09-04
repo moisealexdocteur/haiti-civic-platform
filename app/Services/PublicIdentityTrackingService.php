@@ -21,11 +21,15 @@ final class PublicIdentityTrackingService
     private BaseConnection $db;
     private Session $session;
     private PublicReferenceGenerator $references;
+    private IdentityInputNormalizer $normalizer;
+    private PublicTenantResolver $tenants;
 
     public function __construct(
         ?BaseConnection $db = null,
         ?Session $session = null,
-        ?PublicReferenceGenerator $references = null
+        ?PublicReferenceGenerator $references = null,
+        ?IdentityInputNormalizer $normalizer = null,
+        ?PublicTenantResolver $tenants = null
     ) {
         $this->db = $db ?? Database::connect();
         $resolvedSession = $session ?? service('session');
@@ -36,6 +40,43 @@ final class PublicIdentityTrackingService
 
         $this->session = $resolvedSession;
         $this->references = $references ?? new PublicReferenceGenerator();
+        $this->normalizer = $normalizer ?? new IdentityInputNormalizer();
+        $this->tenants = $tenants ?? new PublicTenantResolver($this->db);
+    }
+
+    public function referenceForNinu(
+        string $tenantSlug,
+        string $ninu
+    ): ?string {
+        $tenant = $this->tenants->bySlug($tenantSlug);
+
+        if ($tenant === null) {
+            return null;
+        }
+
+        $normalized = $this->normalizer->normalizeNinu($ninu);
+        $context = (new TenantContext())->set((int) $tenant['id']);
+        $fingerprint = (new IdentityCryptoService($context))
+            ->ninuFingerprint($normalized);
+
+        try {
+            $row = $this->db->table('citizen_identities')
+                ->select('public_reference')
+                ->where('tenant_id', (int) $tenant['id'])
+                ->where('ninu_fingerprint', $fingerprint)
+                ->limit(1)
+                ->get()
+                ->getFirstRow('array');
+
+            return is_array($row)
+                ? (string) $row['public_reference']
+                : null;
+        } finally {
+            if (function_exists('sodium_memzero')) {
+                sodium_memzero($normalized);
+                sodium_memzero($fingerprint);
+            }
+        }
     }
 
     public function dossier(string $reference): ?array

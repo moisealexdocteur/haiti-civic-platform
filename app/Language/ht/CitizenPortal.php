@@ -62,6 +62,9 @@ return [
     'introPoint1' => 'Nimewo w la sèvi sèlman pou evite de dosye pou menm moun nan.',
     'introPoint2' => 'Se yon moun ki otorize k ap gade foto w yo. Pa gen okenn machin k ap rekonèt figi w.',
     'introPoint3' => 'W ap gen yon referans pou swiv dosye w.',
+    'introWhyTitle' => 'Poukisa pòtal sa a egziste',
+    'introWhyText' => 'Li ede pati oswa gwoupman politik ou a resevwa pyès ou yo yon fason ki pwoteje epi òganize verifikasyon yon moun ap fè.',
+    'introBoundary' => 'Pòtal sa a pa ranplase ni CEP ni ONI. Se moun ki otorize nan estrikti politik la ki pran desizyon an.',
     'introStart' => 'Kòmanse',
 
     // --- idantite ---
@@ -70,6 +73,14 @@ return [
     'ninuLabel' => 'NINU oswa CIN',
     'ninuHint' => '10 chif ki make sou kat ou a.',
     'ninuRequired' => 'Antre 10 chif ki make sou kat ou a.',
+    'scanNinuTitle' => 'Li nimewo ki sou kat la',
+    'scanNinuLead' => 'Sou yon telefòn ki ka fè sa, pran foto devan kat la pou ranpli 10 chif yo.',
+    'scanNinuAction' => 'Eskane devan kat la',
+    'scanNinuPrivacy' => 'Foto sa a sèvi sèlman pou li nimewo a sou aparèy sa a. Nou pa voye li.',
+    'scanNinuReading' => 'N ap li kat la…',
+    'scanNinuSuccess' => 'Nou li 10 chif yo. Tcheke yo anvan ou kontinye.',
+    'scanNinuNotFound' => 'Nou pa rive li nimewo a. Mete kat la plat, san reflè, oswa antre 10 chif yo.',
+    'scanNinuUnsupported' => 'Telefòn sa a pa ka li nimewo a otomatikman. Antre 10 chif yo.',
 
     // --- kontak ---
     'phoneTitle' => 'Ki jan pou nou jwenn ou?',
@@ -137,6 +148,10 @@ return [
     'usePhoto' => 'Sèvi ak li',
     'fileNotImage' => 'Fichye sa a se pa yon foto.',
     'fileTooLarge' => 'Foto sa a twò gwo. Pran l ankò ak aparèy la.',
+    'fileTooSmall' => 'Foto sa a twò piti. Pwoche kat la oswa figi a, epi pran foto a ankò.',
+    'fileUnreadable' => 'Nou pa ka li foto sa a. Sèvi ak yon foto JPG, PNG oswa WebP ki klè epi ki gen bon limyè.',
+    'abandon' => 'Kite demann lan',
+    'abandonConfirm' => 'Kite demann sa a epi efase foto ki prepare sou aparèy sa a?',
     'piecesMissing' => 'Gen yon foto ki manke.',
 
     // --- konsantman ak voye ---
@@ -172,7 +187,11 @@ return [
     'trackingEyebrow' => 'Swivi dosye',
     'trackingTitle' => 'Nan ki etap dosye ou a ye?',
     'trackingLookupTitle' => 'Jwenn dosye ou a',
-    'trackingLookupLead' => 'Antre referans ou te resevwa lè ou te fini demann lan.',
+    'trackingLookupLead' => 'Antre referans ou oswa 10 chif NINU ou.',
+    'trackingIdentifierLabel' => 'Referans oswa NINU',
+    'trackingIdentifierHint' => 'NINU a sèvi sèlman pou jwenn referans lan. Kòd nou voye sou kontak ou a toujou obligatwa.',
+    'trackingOrganizationLabel' => 'Kòd pòtal la',
+    'trackingOrganizationHint' => 'Li obligatwa sèlman si w ap sèvi ak NINU a.',
     'trackingOpen' => 'Louvri swivi a',
     'trackingAnother' => 'Swiv yon lòt dosye',
     'trackingProtectTitle' => 'Konfime dosye sa a se pou ou',
@@ -184,7 +203,7 @@ return [
     'trackingVerify' => 'Montre etap dosye a',
     'trackingCodeInvalid' => 'Kòd sa a pa bon, li fini oswa yo deja sèvi avè l.',
     'trackingUnavailable' => 'Nou pa ka voye kòd la kounye a. Eseye ankò pita.',
-    'trackingReferenceInvalid' => 'Nou pa jwenn referans sa a oswa li pa ekri byen.',
+    'trackingReferenceInvalid' => 'Nou pa jwenn referans oswa NINU sa a, oubyen li pa ekri byen.',
     'trackingPrivacy' => 'Kòd QR la ak referans lan pa gen okenn enfòmasyon idantite ladan yo.',
     'trackingCurrentStatus' => 'Etap dosye a',
     'trackingStatusPending' => 'Dosye ou a ap tann yon moun verifye l.',

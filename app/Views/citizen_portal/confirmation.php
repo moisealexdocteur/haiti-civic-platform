@@ -39,5 +39,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="<?= esc(versioned_asset('/assets/qr-code.js'), 'attr') ?>" defer></script>
+<script><?= inline_script('/assets/qr-code.js') ?></script>
 <?= $this->endSection() ?>

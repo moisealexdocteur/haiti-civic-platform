@@ -33,6 +33,6 @@
     </section>
     <div class="actions"><button type="button" onclick="window.print()"><?= esc(lang('Admin.printNow')) ?></button></div>
 </main>
-<script src="<?= esc(versioned_asset('/assets/qr-code.js'), 'attr') ?>" defer></script>
+<script><?= inline_script('/assets/qr-code.js') ?></script>
 </body>
 </html>
