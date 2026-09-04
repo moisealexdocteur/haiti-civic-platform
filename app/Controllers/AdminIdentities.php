@@ -10,6 +10,7 @@ use App\Services\AdminIdentityReadService;
 use App\Services\AuditService;
 use App\Services\AuthorizationService;
 use App\Services\HaitiDepartmentCatalog;
+use App\Services\ManualIdentityAuthorityCheckService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -272,6 +273,8 @@ final class AdminIdentities extends BaseController
             'decisionError' => $session->getFlashdata('decision_error'),
             'confirmationSent' => $session->getFlashdata('confirmation_sent'),
             'confirmationError' => $session->getFlashdata('confirmation_error'),
+            'authorityCheckSaved' => $session->getFlashdata('authority_check_saved'),
+            'authorityCheckError' => $session->getFlashdata('authority_check_error'),
             'departments' => (new HaitiDepartmentCatalog())
                 ->options($context['locale']),
             ]
@@ -358,7 +361,12 @@ final class AdminIdentities extends BaseController
         } catch (InvalidArgumentException $exception) {
             $session->setFlashdata(
                 'decision_error',
-                lang('Admin.decisionInvalid')
+                lang(
+                    $exception->getMessage()
+                        === 'A confirmed identity authority check is required.'
+                        ? 'Admin.authorityCheckRequired'
+                        : 'Admin.decisionInvalid'
+                )
             );
 
             return redirect()->to(
@@ -381,6 +389,57 @@ final class AdminIdentities extends BaseController
 
         return redirect()->to(
             '/admin/identites/' . rawurlencode($identityUuid) . '?decision=ok'
+        );
+    }
+
+    public function recordAuthorityCheck(string $identityUuid)
+    {
+        $context = $this->adminContext();
+        $session = $context['session'];
+
+        try {
+            (new ManualIdentityAuthorityCheckService(
+                $context['tenantContext']
+            ))->record(
+                $context['userId'],
+                rawurldecode($identityUuid),
+                (string) $this->request->getPost('outcome'),
+                (string) $this->request->getPost('evidence_reference'),
+                (string) $this->request->getPost('note')
+            );
+            $session->setFlashdata(
+                'authority_check_saved',
+                lang('Admin.authorityCheckSaved')
+            );
+        } catch (RuntimeException $exception) {
+            if (str_starts_with($exception->getMessage(), 'Permission denied:')) {
+                return $this->forbidden();
+            }
+
+            $session->setFlashdata(
+                'authority_check_error',
+                lang('Admin.authorityCheckFailed')
+            );
+        } catch (InvalidArgumentException) {
+            $session->setFlashdata(
+                'authority_check_error',
+                lang('Admin.authorityCheckInvalid')
+            );
+        } catch (Throwable $exception) {
+            log_message(
+                'error',
+                'Manual identity authority check failed: {type}',
+                ['type' => $exception::class]
+            );
+            $session->setFlashdata(
+                'authority_check_error',
+                lang('Admin.authorityCheckFailed')
+            );
+        }
+
+        return redirect()->to(
+            '/admin/identites/' . rawurlencode($identityUuid)
+            . '#authority-check'
         );
     }
 

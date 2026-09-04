@@ -30,7 +30,8 @@
     }
 
     var map = window.L.map(mapNode, {
-        scrollWheelZoom: false
+        scrollWheelZoom: false,
+        preferCanvas: true
     }).setView([18.95, -72.68], 7);
 
     window.L.tileLayer(
@@ -74,6 +75,18 @@
 
     if (bounds.length > 1) {
         map.fitBounds(bounds, { padding: [28, 28], maxZoom: 8 });
+    }
+
+    map.whenReady(function () {
+        window.requestAnimationFrame(function () {
+            map.invalidateSize({ pan: false });
+        });
+    });
+
+    if ('ResizeObserver' in window) {
+        new ResizeObserver(function () {
+            map.invalidateSize({ pan: false });
+        }).observe(mapNode);
     }
 
     statusNode.hidden = true;

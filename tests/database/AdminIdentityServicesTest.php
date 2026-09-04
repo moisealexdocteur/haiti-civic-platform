@@ -8,6 +8,7 @@ use App\Services\AdminIdentityDecisionService;
 use App\Services\AdminIdentityMapService;
 use App\Services\AdminIdentityReadService;
 use App\Services\ContactVerificationStatus;
+use App\Services\ManualIdentityAuthorityCheckService;
 use App\Services\PublicIdentitySubmissionService;
 use App\Services\TenantContext;
 use App\Services\VerificationDocumentWriteService;
@@ -416,6 +417,16 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
 
         $this->assertInstanceOf(InvalidArgumentException::class, $exception);
 
+        (new ManualIdentityAuthorityCheckService(
+            (new TenantContext())->set($this->tenantA),
+            $this->db
+        ))->record(
+            (int) $admin['user_id'],
+            $identity['uuid'],
+            'confirmed',
+            'CTRL-TEST-1'
+        );
+
         $decision->transition(
             (int) $admin['user_id'],
             $identity['uuid'],
@@ -445,6 +456,98 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
             '"manual_contact_reviewed":true',
             (string) $event['context_json']
         );
+    }
+
+    public function testManualAuthorityCheckIsAuditedAndTenantScoped(): void
+    {
+        $adminA = $this->bootstrapA();
+        $this->bootstrapB();
+        $identityA = $this->submitIdentity($this->tenantA, self::NINU);
+        $identityB = $this->submitIdentity($this->tenantB, self::NINU);
+        $contextA = (new TenantContext())->set($this->tenantA);
+        $checks = new ManualIdentityAuthorityCheckService(
+            $contextA,
+            $this->db
+        );
+        $approvalWithoutCheck = $this->captureException(
+            fn () => (new AdminIdentityDecisionService(
+                $contextA,
+                $this->db
+            ))->transition(
+                (int) $adminA['user_id'],
+                $identityA['uuid'],
+                'verified'
+            )
+        );
+        $this->assertInstanceOf(
+            InvalidArgumentException::class,
+            $approvalWithoutCheck
+        );
+        $this->assertSame(
+            'A confirmed identity authority check is required.',
+            $approvalWithoutCheck->getMessage()
+        );
+
+        $result = $checks->record(
+            (int) $adminA['user_id'],
+            $identityA['uuid'],
+            'confirmed',
+            'CTRL-TEST-2',
+            'Le nom et le prénom sont cohérents.'
+        );
+
+        $this->assertSame('oni_delidoc', $result['provider']);
+        $this->assertSame('confirmed', $result['outcome']);
+
+        $detail = (new AdminIdentityReadService($contextA, $this->db))
+            ->detailForActorByUuid(
+                (int) $adminA['user_id'],
+                $identityA['uuid']
+            );
+
+        $this->assertNotNull($detail);
+        $this->assertCount(1, $detail['authority_checks']);
+        $this->assertSame(
+            'CTRL-TEST-2',
+            $detail['authority_checks'][0]['evidence_reference']
+        );
+
+        $checks->record(
+            (int) $adminA['user_id'],
+            $identityA['uuid'],
+            'unavailable'
+        );
+        $staleConfirmation = $this->captureException(
+            fn () => (new AdminIdentityDecisionService(
+                $contextA,
+                $this->db
+            ))->transition(
+                (int) $adminA['user_id'],
+                $identityA['uuid'],
+                'verified'
+            )
+        );
+        $this->assertInstanceOf(
+            InvalidArgumentException::class,
+            $staleConfirmation
+        );
+
+        $crossTenant = $this->captureException(
+            fn () => $checks->record(
+                (int) $adminA['user_id'],
+                $identityB['uuid'],
+                'confirmed'
+            )
+        );
+        $this->assertInstanceOf(InvalidArgumentException::class, $crossTenant);
+
+        $audit = $this->db->table('audit_logs')
+            ->where('tenant_id', $this->tenantA)
+            ->where('event', 'citizen_identity.authority_checked')
+            ->where('entity_id', (string) $identityA['id'])
+            ->get()
+            ->getFirstRow('array');
+        $this->assertNotNull($audit);
     }
 
     public function testMapSummaryIsAggregatedAndTenantScoped(): void

@@ -45,7 +45,18 @@ $eventLabels = [
     'citizen_identity.confirmation_printed' => lang('Admin.eventConfirmationPrinted'),
     'citizen_identity.confirmation_resent' => lang('Admin.eventConfirmationResent'),
     'citizen_identity.list_exported' => lang('Admin.eventIdentityListExported'),
+    'identity.authority_checked' => lang('Admin.eventAuthorityChecked'),
 ];
+
+$authorityOutcomeLabels = [
+    'confirmed' => lang('Admin.authorityConfirmed'),
+    'not_confirmed' => lang('Admin.authorityNotConfirmed'),
+    'unavailable' => lang('Admin.authorityUnavailable'),
+];
+$authorityChecks = is_array($identity['authority_checks'] ?? null)
+    ? $identity['authority_checks']
+    : [];
+$delidocUrl = 'https://delidoc.gouv.ht/DemandePasseport/Client/Demande';
 
 $reasonCodes = [
     'document_illisible' => lang('Admin.reasonDocumentUnreadable'),
@@ -85,6 +96,14 @@ $contactStatus = (string) $identity['contact_verification_status'];
     <p class="alert" role="alert"><?= esc($decisionError) ?></p>
 <?php endif; ?>
 
+<?php if (is_string($authorityCheckSaved) && $authorityCheckSaved !== ''): ?>
+    <p class="alert alert-ok" role="status"><?= esc($authorityCheckSaved) ?></p>
+<?php endif; ?>
+
+<?php if (is_string($authorityCheckError) && $authorityCheckError !== ''): ?>
+    <p class="alert" role="alert"><?= esc($authorityCheckError) ?></p>
+<?php endif; ?>
+
 <section class="panel">
     <h2><?= esc(lang('Admin.compareTitle')) ?></h2>
     <p class="panel-note"><?= esc(lang('Admin.compareHelp')) ?></p>
@@ -109,6 +128,84 @@ $contactStatus = (string) $identity['contact_verification_status'];
                 <?php endif; ?>
             </figure>
         <?php endforeach; ?>
+    </div>
+</section>
+
+<section class="panel" id="authority-check">
+    <div class="panel-heading-row">
+        <div>
+            <h2><?= esc(lang('Admin.authorityTitle')) ?></h2>
+            <p class="panel-note"><?= esc(lang('Admin.authorityLead')) ?></p>
+        </div>
+        <a
+            class="btn btn-ghost"
+            href="<?= esc($delidocUrl, 'attr') ?>"
+            target="_blank"
+            rel="noopener noreferrer"
+        ><?= esc(lang('Admin.authorityOpenOfficial')) ?></a>
+    </div>
+
+    <div class="authority-layout">
+        <div class="authority-instructions">
+            <h3><?= esc(lang('Admin.authorityInstructionsTitle')) ?></h3>
+            <ol>
+                <li><?= esc(lang('Admin.authorityInstructionOne')) ?></li>
+                <li><?= esc(lang('Admin.authorityInstructionTwo')) ?></li>
+                <li><?= esc(lang('Admin.authorityInstructionThree')) ?></li>
+            </ol>
+            <p class="hint"><?= esc(lang('Admin.authorityBoundary')) ?></p>
+        </div>
+
+        <?php if ($canManage): ?>
+            <form method="post" action="/admin/identites/<?= $uuid ?>/controle-oni" class="authority-form">
+                <?= csrf_field() ?>
+                <div class="field">
+                    <label for="authority_outcome"><?= esc(lang('Admin.authorityResult')) ?></label>
+                    <select id="authority_outcome" name="outcome" required>
+                        <option value=""><?= esc(lang('Admin.authorityChooseResult')) ?></option>
+                        <?php foreach ($authorityOutcomeLabels as $value => $label): ?>
+                            <option value="<?= esc($value, 'attr') ?>"><?= esc($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="authority_reference"><?= esc(lang('Admin.authorityEvidenceReference')) ?></label>
+                    <input id="authority_reference" name="evidence_reference" type="text" maxlength="120" autocomplete="off">
+                    <p class="hint"><?= esc(lang('Admin.authorityEvidenceHint')) ?></p>
+                </div>
+                <div class="field">
+                    <label for="authority_note"><?= esc(lang('Admin.authorityNote')) ?></label>
+                    <textarea id="authority_note" name="note" rows="3" maxlength="500"></textarea>
+                    <p class="hint"><?= esc(lang('Admin.authorityNoteHint')) ?></p>
+                </div>
+                <button type="submit" class="btn"><?= esc(lang('Admin.authorityRecord')) ?></button>
+            </form>
+        <?php endif; ?>
+    </div>
+
+    <div class="authority-history">
+        <h3><?= esc(lang('Admin.authorityHistory')) ?></h3>
+        <?php if ($authorityChecks === []): ?>
+            <p class="empty"><?= esc(lang('Admin.authorityNoCheck')) ?></p>
+        <?php else: ?>
+            <ol class="timeline">
+                <?php foreach ($authorityChecks as $check): ?>
+                    <?php $outcome = (string) ($check['outcome'] ?? ''); ?>
+                    <li>
+                        <b><?= esc($authorityOutcomeLabels[$outcome] ?? $outcome) ?></b>
+                        <span><?= esc(lang('Admin.authorityProvider')) ?>: ONI / DELIDOC</span>
+                        <span><?= esc(lang('Admin.authorityCheckedAt')) ?>: <?= esc((string) $check['occurred_at']) ?> UTC</span>
+                        <span><?= esc(lang('Admin.authorityCheckedBy')) ?>: <?= esc((string) ($check['actor_display_name'] ?? lang('Admin.notProvided'))) ?></span>
+                        <?php if (is_string($check['evidence_reference'] ?? null) && $check['evidence_reference'] !== ''): ?>
+                            <span><?= esc(lang('Admin.authorityEvidenceReference')) ?>: <?= esc($check['evidence_reference']) ?></span>
+                        <?php endif; ?>
+                        <?php if (is_string($check['note'] ?? null) && $check['note'] !== ''): ?>
+                            <span><?= esc(lang('Admin.authorityNote')) ?>: <?= esc($check['note']) ?></span>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -167,6 +264,7 @@ $contactStatus = (string) $identity['contact_verification_status'];
 
     <section class="panel">
         <h2><?= esc(lang('Admin.decisionTitle')) ?></h2>
+        <p class="panel-note"><?= esc(lang('Admin.authorityCheckRequired')) ?></p>
 
         <?php if (! $canManage): ?>
             <p class="empty"><?= esc(lang('Admin.viewOnly')) ?></p>

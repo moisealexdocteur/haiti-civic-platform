@@ -310,6 +310,45 @@ final class AdminIdentityReadService
             ->get()
             ->getResultArray();
 
+        $authorityRows = $this->db
+            ->table('identity_verification_events ive')
+            ->select([
+                'ive.context_json',
+                'ive.occurred_at',
+                'u.display_name AS actor_display_name',
+            ])
+            ->join('users u', 'u.id = ive.actor_user_id', 'left')
+            ->where('ive.tenant_id', $tenantId)
+            ->where('ive.citizen_identity_id', $identityId)
+            ->where('ive.event_type', 'identity.authority_checked')
+            ->orderBy('ive.occurred_at', 'DESC')
+            ->orderBy('ive.id', 'DESC')
+            ->get()
+            ->getResultArray();
+        $identity['authority_checks'] = [];
+
+        foreach ($authorityRows as $authorityRow) {
+            $authorityContext = json_decode(
+                (string) $authorityRow['context_json'],
+                true
+            );
+
+            if (! is_array($authorityContext)) {
+                continue;
+            }
+
+            $identity['authority_checks'][] = [
+                'provider' => (string) ($authorityContext['provider'] ?? ''),
+                'outcome' => (string) ($authorityContext['outcome'] ?? ''),
+                'evidence_reference' =>
+                    $authorityContext['evidence_reference'] ?? null,
+                'note' => $authorityContext['note'] ?? null,
+                'occurred_at' => (string) $authorityRow['occurred_at'],
+                'actor_display_name' =>
+                    $authorityRow['actor_display_name'] ?? null,
+            ];
+        }
+
         $identity['audit'] = $this->db
             ->table('audit_logs al')
             ->select([

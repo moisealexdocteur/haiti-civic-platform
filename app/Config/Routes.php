@@ -167,6 +167,11 @@ $routes->post(
     ['filter' => ['adminauth', 'adminperm:identity.manage', 'csrf']]
 );
 $routes->post(
+    'admin/identites/(:segment)/controle-oni',
+    'AdminIdentities::recordAuthorityCheck/$1',
+    ['filter' => ['adminauth', 'adminperm:identity.manage', 'csrf']]
+);
+$routes->post(
     'admin/identites/(:segment)/statut',
     'AdminIdentities::transition/$1',
     ['filter' => ['adminauth', 'adminperm:identity.manage', 'csrf']]
