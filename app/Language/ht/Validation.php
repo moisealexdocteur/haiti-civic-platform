@@ -1,0 +1,35 @@
+<?php
+
+// Mesaj validasyon framework la, an kreyòl.
+
+return [
+    'required' => 'Ou dwe ranpli {field}.',
+    'is_not_unique' => '{field} dwe egziste nan baz done a.',
+    'is_unique' => '{field} dwe inik.',
+    'matches' => '{field} pa menm ak {param}.',
+    'differs' => '{field} dwe diferan de {param}.',
+    'min_length' => '{field} dwe gen omwen {param} karaktè.',
+    'max_length' => '{field} pa ka gen plis pase {param} karaktè.',
+    'exact_length' => '{field} dwe gen egzakteman {param} karaktè.',
+    'alpha' => '{field} ka gen sèlman lèt.',
+    'alpha_numeric' => '{field} ka gen sèlman lèt ak chif.',
+    'alpha_numeric_space' => '{field} ka gen sèlman lèt, chif ak espas.',
+    'alpha_dash' => '{field} ka gen sèlman lèt, chif, tirè ak anba tirè.',
+    'numeric' => '{field} ka gen sèlman chif.',
+    'integer' => '{field} dwe yon nonm antye.',
+    'decimal' => '{field} dwe yon nonm desimal.',
+    'is_natural' => '{field} dwe yon nonm pozitif.',
+    'is_natural_no_zero' => '{field} dwe pi gwo pase zewo.',
+    'greater_than' => '{field} dwe pi gwo pase {param}.',
+    'less_than' => '{field} dwe pi piti pase {param}.',
+    'in_list' => '{field} dwe youn nan valè sa yo: {param}.',
+    'valid_email' => '{field} dwe yon imel ki bon.',
+    'valid_url' => '{field} dwe yon adrès entènèt ki bon.',
+    'valid_date' => '{field} dwe yon dat ki bon.',
+    'uploaded' => 'Ou dwe voye yon fichye pou {field}.',
+    'max_size' => 'Fichye {field} la twò gwo.',
+    'is_image' => 'Fichye {field} la dwe yon imaj.',
+    'mime_in' => 'Kalite fichye {field} la pa otorize.',
+    'ext_in' => 'Ekstansyon fichye {field} la pa otorize.',
+    'max_dims' => 'Fichye {field} la depase dimansyon otorize yo.',
+];

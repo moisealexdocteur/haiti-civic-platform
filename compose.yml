@@ -1,0 +1,263 @@
+name: haiti-civic-platform
+
+services:
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+    command:
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=50
+      - --performance-schema=OFF
+      - --skip-name-resolve
+
+    volumes:
+      - civic-db-data:/var/lib/mysql
+
+    networks:
+      - civic-internal
+
+    mem_limit: 384m
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "healthcheck.sh --connect --innodb_initialized"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+
+  app:
+    build:
+      context: .
+      target: app
+
+    restart: unless-stopped
+
+    environment:
+      CI_ENVIRONMENT: ${CI_ENVIRONMENT}
+
+      APP_KEY: ${APP_KEY}
+      NINU_HMAC_KEY: ${NINU_HMAC_KEY}
+
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-}
+      WHATSAPP_GRAPH_VERSION: ${WHATSAPP_GRAPH_VERSION:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_OTP_TEMPLATE: ${WHATSAPP_OTP_TEMPLATE:-}
+      WHATSAPP_OTP_TEMPLATE_LANG: ${WHATSAPP_OTP_TEMPLATE_LANG:-}
+
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
+
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-587}
+      EMAIL_SMTP_CRYPTO: ${EMAIL_SMTP_CRYPTO:-tls}
+      EMAIL_SMTP_USER: ${EMAIL_SMTP_USER:-}
+      EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:-}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Portail citoyen}
+
+      app.baseURL: ${APP_BASE_URL}
+
+      database.default.hostname: db
+      database.default.database: ${DB_DATABASE}
+      database.default.username: ${DB_USERNAME}
+      database.default.password: ${DB_PASSWORD}
+      database.default.DBDriver: MySQLi
+      database.default.port: "3306"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    volumes:
+      - civic-writable:/var/www/html/writable
+
+    networks:
+      - civic-internal
+
+    mem_limit: 320m
+
+
+  web:
+    build:
+      context: .
+      target: web
+
+    restart: unless-stopped
+
+    depends_on:
+      - app
+
+    ports:
+      - "${LOCAL_HTTP_BIND:-127.0.0.1}:${LOCAL_HTTP_PORT:-18090}:80"
+
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:-false}"
+      - "traefik.http.routers.civic-platform.rule=Host(`${CIVIC_PUBLIC_HOST:-localhost}`)"
+      - "traefik.http.routers.civic-platform.entrypoints=websecure"
+      - "traefik.http.routers.civic-platform.tls=true"
+      - "traefik.http.routers.civic-platform.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.civic-platform.service=civic-platform"
+      - "traefik.http.services.civic-platform.loadbalancer.server.port=80"
+
+    networks:
+      - civic-internal
+
+    mem_limit: 64m
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/health"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+
+
+  test-db-init:
+    profiles:
+      - test
+
+    image: mariadb:11.4
+
+    restart: "no"
+
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TEST_DATABASE: ${DB_DATABASE}_test
+
+      TEST_RUNTIME_USERNAME: ${TEST_RUNTIME_DB_USERNAME}
+      TEST_RUNTIME_PASSWORD: ${TEST_RUNTIME_DB_PASSWORD}
+
+      TEST_MIGRATION_USERNAME: ${TEST_MIGRATION_DB_USERNAME}
+      TEST_MIGRATION_PASSWORD: ${TEST_MIGRATION_DB_PASSWORD}
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - civic-internal
+
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        mariadb \
+          -h db \
+          -uroot \
+          -p"$$MARIADB_ROOT_PASSWORD" <<SQL
+        CREATE DATABASE IF NOT EXISTS \`$$TEST_DATABASE\`
+          CHARACTER SET utf8mb4
+          COLLATE utf8mb4_unicode_ci;
+
+        DROP USER IF EXISTS
+          '$$TEST_RUNTIME_USERNAME'@'%';
+
+        DROP USER IF EXISTS
+          '$$TEST_MIGRATION_USERNAME'@'%';
+
+        CREATE USER
+          '$$TEST_RUNTIME_USERNAME'@'%'
+          IDENTIFIED BY '$$TEST_RUNTIME_PASSWORD';
+
+        CREATE USER
+          '$$TEST_MIGRATION_USERNAME'@'%'
+          IDENTIFIED BY '$$TEST_MIGRATION_PASSWORD';
+
+        GRANT
+          SELECT,
+          INSERT,
+          UPDATE,
+          DELETE
+        ON \`$$TEST_DATABASE\`.*
+        TO '$$TEST_RUNTIME_USERNAME'@'%';
+
+        GRANT ALL PRIVILEGES
+        ON \`$$TEST_DATABASE\`.*
+        TO '$$TEST_MIGRATION_USERNAME'@'%';
+
+        FLUSH PRIVILEGES;
+        SQL
+
+
+  test:
+    profiles:
+      - test
+
+    build:
+      context: .
+      target: test
+
+    environment:
+      CI_ENVIRONMENT: testing
+
+      APP_KEY: ${TEST_APP_KEY}
+      NINU_HMAC_KEY: ${TEST_NINU_HMAC_KEY}
+
+      app.baseURL: http://localhost/
+
+      TEST_DATABASE: ${DB_DATABASE}_test
+
+      RUNTIME_DB_USERNAME: ${TEST_RUNTIME_DB_USERNAME}
+      RUNTIME_DB_PASSWORD: ${TEST_RUNTIME_DB_PASSWORD}
+
+      MIGRATION_DB_USERNAME: ${TEST_MIGRATION_DB_USERNAME}
+      MIGRATION_DB_PASSWORD: ${TEST_MIGRATION_DB_PASSWORD}
+
+      database.tests.hostname: db
+      database.tests.database: ${DB_DATABASE}_test
+      database.tests.username: ${TEST_RUNTIME_DB_USERNAME}
+      database.tests.password: ${TEST_RUNTIME_DB_PASSWORD}
+      database.tests.DBDriver: MySQLi
+      database.tests.DBPrefix: ""
+      database.tests.port: "3306"
+      database.tests.charset: utf8mb4
+      database.tests.DBCollat: utf8mb4_unicode_ci
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+      test-db-init:
+        condition: service_completed_successfully
+
+    networks:
+      - civic-internal
+
+    mem_limit: 320m
+
+    command:
+      - sh
+      - docker/test/run-tests.sh
+
+
+networks:
+  civic-internal:
+    driver: bridge
+
+
+volumes:
+  civic-db-data:
+  civic-writable:
