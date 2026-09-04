@@ -21,6 +21,9 @@ $eventLabels = [
     'identity.verified' => lang('Admin.eventIdentityVerified'),
     'identity.rejected' => lang('Admin.eventIdentityRejected'),
     'identity.reopened' => lang('Admin.eventIdentityReopened'),
+    'citizen_identity.confirmation_printed' => lang('Admin.eventConfirmationPrinted'),
+    'citizen_identity.confirmation_resent' => lang('Admin.eventConfirmationResent'),
+    'citizen_identity.list_exported' => lang('Admin.eventIdentityListExported'),
 ];
 ?>
 <section class="page-intro">

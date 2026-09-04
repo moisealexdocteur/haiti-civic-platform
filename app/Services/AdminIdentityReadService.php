@@ -12,6 +12,7 @@ final class AdminIdentityReadService
     private const VIEW_PERMISSION = 'identity.view';
 
     private const STATUSES = [
+        'all',
         IdentityVerificationStateMachine::PENDING,
         IdentityVerificationStateMachine::VERIFIED,
         IdentityVerificationStateMachine::REJECTED,
@@ -40,16 +41,92 @@ final class AdminIdentityReadService
         int $actorUserId,
         string $status = IdentityVerificationStateMachine::PENDING
     ): array {
-        $this->requireView($actorUserId);
-        $status = strtolower(trim($status));
+        return $this->exportForActor($actorUserId, $status);
+    }
 
-        if (! in_array($status, self::STATUSES, true)) {
-            throw new InvalidArgumentException(
-                'Unknown identity verification status.'
-            );
+    /**
+     * Return one bounded page for the administration queue.
+     *
+     * @return array{rows:array,total:int,page:int,perPage:int,pages:int,status:string,department:?string,sort:string,direction:string}
+     */
+    public function pageForActor(
+        int $actorUserId,
+        string $status = IdentityVerificationStateMachine::PENDING,
+        ?string $department = null,
+        string $sort = 'submitted',
+        string $direction = 'asc',
+        int $page = 1,
+        int $perPage = 50
+    ): array {
+        $this->requireView($actorUserId);
+        [$status, $department, $sort, $direction] = $this->normalizeListOptions(
+            $status,
+            $department,
+            $sort,
+            $direction
+        );
+
+        if (! in_array($perPage, [25, 50, 100], true)) {
+            throw new InvalidArgumentException('Unsupported page size.');
         }
 
-        return $this->db
+        $page = max(1, $page);
+        $count = $this->db->table('citizen_identities ci')
+            ->where('ci.tenant_id', $this->tenantContext->id());
+
+        $this->applyListFilters($count, $status, $department);
+        $total = (int) $count->countAllResults();
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $pages);
+
+        $rows = $this->listQuery($status, $department)
+            ->orderBy($this->sortColumn($sort), strtoupper($direction))
+            ->orderBy('ci.id', strtoupper($direction))
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->get()
+            ->getResultArray();
+
+        return compact(
+            'rows',
+            'total',
+            'page',
+            'perPage',
+            'pages',
+            'status',
+            'department',
+            'sort',
+            'direction'
+        );
+    }
+
+    /**
+     * Return the complete filtered set used by privacy-safe exports.
+     */
+    public function exportForActor(
+        int $actorUserId,
+        string $status = 'all',
+        ?string $department = null,
+        string $sort = 'submitted',
+        string $direction = 'asc'
+    ): array {
+        $this->requireView($actorUserId);
+        [$status, $department, $sort, $direction] = $this->normalizeListOptions(
+            $status,
+            $department,
+            $sort,
+            $direction
+        );
+
+        return $this->listQuery($status, $department)
+            ->orderBy($this->sortColumn($sort), strtoupper($direction))
+            ->orderBy('ci.id', strtoupper($direction))
+            ->get()
+            ->getResultArray();
+    }
+
+    private function listQuery(string $status, ?string $department)
+    {
+        $query = $this->db
             ->table('citizen_identities ci')
             ->select([
                 'ci.uuid',
@@ -70,8 +147,11 @@ final class AdminIdentityReadService
                 . " AND vd.status = 'active'",
                 'left'
             )
-            ->where('ci.tenant_id', $this->tenantContext->id())
-            ->where('ci.verification_status', $status)
+            ->where('ci.tenant_id', $this->tenantContext->id());
+
+        $this->applyListFilters($query, $status, $department);
+
+        return $query
             ->groupBy([
                 'ci.id',
                 'ci.uuid',
@@ -83,11 +163,56 @@ final class AdminIdentityReadService
                 'ci.verified_at',
                 'ci.created_at',
                 'ci.updated_at',
-            ])
-            ->orderBy('ci.created_at', 'ASC')
-            ->orderBy('ci.id', 'ASC')
-            ->get()
-            ->getResultArray();
+            ]);
+    }
+
+    private function applyListFilters($query, string $status, ?string $department): void
+    {
+        if ($status !== 'all') {
+            $query->where('ci.verification_status', $status);
+        }
+
+        if ($department !== null) {
+            $query->where('ci.department_code', $department);
+        }
+    }
+
+    private function normalizeListOptions(
+        string $status,
+        ?string $department,
+        string $sort,
+        string $direction
+    ): array {
+        $status = strtolower(trim($status));
+
+        if (! in_array($status, self::STATUSES, true)) {
+            throw new InvalidArgumentException(
+                'Unknown identity verification status.'
+            );
+        }
+
+        $department = (new HaitiDepartmentCatalog())->normalize($department);
+        $sort = strtolower(trim($sort));
+        $direction = strtolower(trim($direction));
+
+        if (! in_array($sort, ['reference', 'department', 'submitted'], true)) {
+            throw new InvalidArgumentException('Unsupported identity list sort.');
+        }
+
+        if (! in_array($direction, ['asc', 'desc'], true)) {
+            throw new InvalidArgumentException('Unsupported identity list direction.');
+        }
+
+        return [$status, $department, $sort, $direction];
+    }
+
+    private function sortColumn(string $sort): string
+    {
+        return match ($sort) {
+            'reference' => 'ci.public_reference',
+            'department' => 'ci.department_code',
+            default => 'ci.created_at',
+        };
     }
 
     public function detailForActorByUuid(
@@ -139,6 +264,8 @@ final class AdminIdentityReadService
                 (string) $identity['phone_ciphertext'],
                 $uuid
             );
+
+        $identity['record_id'] = $identityId;
 
         unset(
             $identity['id'],

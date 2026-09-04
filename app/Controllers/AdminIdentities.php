@@ -4,7 +4,10 @@ namespace App\Controllers;
 
 use App\Controllers\Concerns\AdminPage;
 use App\Services\AdminIdentityDecisionService;
+use App\Services\AdminIdentityConfirmationService;
+use App\Services\AdminIdentityExportService;
 use App\Services\AdminIdentityReadService;
+use App\Services\AuditService;
 use App\Services\AuthorizationService;
 use App\Services\HaitiDepartmentCatalog;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -27,16 +30,35 @@ final class AdminIdentities extends BaseController
         $session = $context['session'];
         $status = strtolower(trim((string) $this->request->getGet('status')));
         $status = $status === '' ? 'pending' : $status;
+        $department = trim((string) $this->request->getGet('department'));
+        $sort = strtolower(trim((string) $this->request->getGet('sort')));
+        $direction = strtolower(trim((string) $this->request->getGet('direction')));
+        $page = max(1, (int) $this->request->getGet('page'));
+        $perPage = (int) $this->request->getGet('per_page');
+        $sort = $sort === '' ? 'submitted' : $sort;
+        $direction = $direction === '' ? 'asc' : $direction;
+        $perPage = $perPage === 0 ? 50 : $perPage;
 
         try {
-            $rows = (new AdminIdentityReadService($tenantContext))
-                ->listForActor($actorUserId, $status);
+            $listing = (new AdminIdentityReadService($tenantContext))
+                ->pageForActor(
+                    $actorUserId,
+                    $status,
+                    $department === '' ? null : $department,
+                    $sort,
+                    $direction,
+                    $page,
+                    $perPage
+                );
         } catch (RuntimeException $exception) {
             return $this->forbidden();
         } catch (InvalidArgumentException $exception) {
             $this->response->setStatusCode(400);
-            $rows = [];
-            $status = 'pending';
+            $listing = [
+                'rows' => [], 'total' => 0, 'page' => 1, 'perPage' => 50,
+                'pages' => 1, 'status' => 'pending', 'department' => null,
+                'sort' => 'submitted', 'direction' => 'asc',
+            ];
         }
 
         $authorization = new AuthorizationService($tenantContext);
@@ -46,16 +68,169 @@ final class AdminIdentities extends BaseController
             'Admin.identitiesTitle',
             'identities',
             [
-            'rows' => $rows,
-            'status' => $status,
+            'listing' => $listing,
             'canManage' => $authorization->userHasPermission(
                 $actorUserId,
                 'identity.manage'
             ),
             'departments' => (new HaitiDepartmentCatalog())
                 ->options($context['locale']),
+            'confirmationSent' => $session->getFlashdata('confirmation_sent'),
+            'confirmationError' => $session->getFlashdata('confirmation_error'),
             ]
         ));
+    }
+
+    public function export(string $format)
+    {
+        $this->noStore();
+        $context = $this->adminContext();
+        $format = strtolower(trim(rawurldecode($format)));
+
+        if (! in_array($format, ['pdf', 'xls'], true)) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        $status = strtolower(trim((string) $this->request->getGet('status')));
+        $department = trim((string) $this->request->getGet('department'));
+        $sort = strtolower(trim((string) $this->request->getGet('sort')));
+        $direction = strtolower(trim((string) $this->request->getGet('direction')));
+        $status = $status === '' ? 'all' : $status;
+        $sort = $sort === '' ? 'submitted' : $sort;
+        $direction = $direction === '' ? 'asc' : $direction;
+
+        try {
+            $rows = (new AdminIdentityReadService($context['tenantContext']))
+                ->exportForActor(
+                    $context['userId'],
+                    $status,
+                    $department === '' ? null : $department,
+                    $sort,
+                    $direction
+                );
+        } catch (RuntimeException $exception) {
+            return $this->forbidden();
+        } catch (InvalidArgumentException $exception) {
+            return $this->response->setStatusCode(400)->setBody(lang('Admin.exportInvalid'));
+        }
+
+        $statuses = [
+            'pending' => lang('Admin.statusPending'),
+            'verified' => lang('Admin.statusVerified'),
+            'rejected' => lang('Admin.statusRejected'),
+        ];
+        $labels = [
+            'sheet' => lang('Admin.exportSheet'),
+            'title' => lang('Admin.exportTitle'),
+            'page' => lang('Admin.exportPage'),
+            'reference' => lang('Admin.reference'),
+            'status' => lang('Admin.status'),
+            'department' => lang('Admin.department'),
+            'documents' => lang('Admin.documents'),
+            'submitted' => lang('Admin.submittedAt'),
+            'notProvided' => lang('Admin.notProvided'),
+            'statuses' => $statuses,
+        ];
+        $departments = (new HaitiDepartmentCatalog())->options($context['locale']);
+        $tenantName = (string) $context['session']->get('admin_tenant_name');
+        $exporter = new AdminIdentityExportService();
+        $body = $format === 'pdf'
+            ? $exporter->pdf($rows, $labels, $departments, $tenantName)
+            : $exporter->xls($rows, $labels, $departments);
+
+        (new AuditService($context['tenantContext']))->record(
+            event: 'citizen_identity.list_exported',
+            actorUserId: $context['userId'],
+            entityType: 'citizen_identity_list',
+            entityId: $context['tenantId'],
+            context: [
+                'format' => $format,
+                'status' => $status,
+                'department' => $department === '' ? null : $department,
+                'sort' => $sort,
+                'direction' => $direction,
+                'row_count' => count($rows),
+                'sensitive_fields_included' => false,
+            ]
+        );
+
+        $date = gmdate('Ymd-His');
+        $contentType = $format === 'pdf'
+            ? 'application/pdf'
+            : 'application/vnd.ms-excel; charset=UTF-8';
+
+        return $this->response
+            ->setHeader('Content-Type', $contentType)
+            ->setHeader('Content-Disposition', 'attachment; filename="dossiers-' . $date . '.' . $format . '"')
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setBody($body);
+    }
+
+    public function confirmation(string $identityUuid)
+    {
+        $this->noStore();
+        $context = $this->adminContext();
+
+        try {
+            $identity = (new AdminIdentityReadService($context['tenantContext']))
+                ->detailForActorByUuid($context['userId'], rawurldecode($identityUuid));
+        } catch (RuntimeException $exception) {
+            return $this->forbidden();
+        } catch (InvalidArgumentException $exception) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        if ($identity === null) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        (new AuditService($context['tenantContext']))->record(
+            event: 'citizen_identity.confirmation_printed',
+            actorUserId: $context['userId'],
+            entityType: 'citizen_identity',
+            entityId: (int) $identity['record_id'],
+            context: ['sensitive_fields_included' => false]
+        );
+
+        return view('admin/identities/confirmation', [
+            'locale' => $context['locale'],
+            'tenantName' => (string) $context['session']->get('admin_tenant_name'),
+            'reference' => (string) $identity['public_reference'],
+            'submittedAt' => (string) $identity['created_at'],
+            'trackingUrl' => site_url('swiv/' . rawurlencode((string) $identity['public_reference']))
+                . '?lang=' . rawurlencode($context['locale']),
+        ]);
+    }
+
+    public function resendConfirmation(string $identityUuid)
+    {
+        $context = $this->adminContext();
+        $session = $context['session'];
+
+        try {
+            (new AdminIdentityConfirmationService($context['tenantContext']))->resend(
+                $context['userId'],
+                rawurldecode($identityUuid),
+                rtrim(site_url(), '/')
+            );
+            $session->setFlashdata('confirmation_sent', lang('Admin.confirmationResent'));
+        } catch (RuntimeException | InvalidArgumentException $exception) {
+            if (str_starts_with($exception->getMessage(), 'Permission denied:')) {
+                return $this->forbidden();
+            }
+
+            log_message('warning', 'Admin confirmation resend failed: {reason}', [
+                'reason' => $exception->getMessage(),
+            ]);
+            $session->setFlashdata('confirmation_error', lang('Admin.confirmationResendFailed'));
+        } catch (Throwable $exception) {
+            log_message('error', 'Admin confirmation resend failed: {type}', [
+                'type' => $exception::class,
+            ]);
+            $session->setFlashdata('confirmation_error', lang('Admin.confirmationResendFailed'));
+        }
+
+        return redirect()->to('/admin/identites/' . rawurlencode($identityUuid));
     }
 
     public function show(string $identityUuid)
@@ -95,6 +270,8 @@ final class AdminIdentities extends BaseController
             ),
             'decisionOk' => $this->request->getGet('decision') === 'ok',
             'decisionError' => $session->getFlashdata('decision_error'),
+            'confirmationSent' => $session->getFlashdata('confirmation_sent'),
+            'confirmationError' => $session->getFlashdata('confirmation_error'),
             'departments' => (new HaitiDepartmentCatalog())
                 ->options($context['locale']),
             ]

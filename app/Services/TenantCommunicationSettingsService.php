@@ -286,6 +286,11 @@ final class TenantCommunicationSettingsService
         return $this->runtimeConfiguration()['email'];
     }
 
+    public function smsConfiguration(): ?array
+    {
+        return $this->runtimeConfiguration()['sms'];
+    }
+
     private function runtimeConfiguration(): array
     {
         $row = $this->row();
