@@ -126,6 +126,43 @@ final class PublicPortalVisualContractTest extends CIUnitTestCase
         );
     }
 
+    public function testCitizenIdentityScannerStaysInsideTheIdentityField(): void
+    {
+        $view = $this->readProjectFile(
+            'app/Views/citizen_portal/register.php'
+        );
+
+        $this->assertStringContainsString('class="input-action"', $view);
+        $this->assertStringContainsString('id="scan-ninu"', $view);
+        $this->assertStringNotContainsString('class="scan-card"', $view);
+        $this->assertStringContainsString('name="first_name"', $view);
+        $this->assertStringContainsString('name="last_name"', $view);
+    }
+
+    public function testCitizenContactStepExposesOnlyServerApprovedChoices(): void
+    {
+        $view = $this->readProjectFile(
+            'app/Views/citizen_portal/register.php'
+        );
+        $controller = $this->readProjectFile(
+            'app/Controllers/CitizenPortal.php'
+        );
+
+        $this->assertStringContainsString(
+            'name="contact_channel"',
+            $view
+        );
+        $this->assertStringContainsString('id="email-field"', $view);
+        $this->assertStringContainsString(
+            'OtpChannel::EMAIL',
+            $controller
+        );
+        $this->assertStringContainsString(
+            "'channels' => \$channels",
+            $controller
+        );
+    }
+
     private function readProjectFile(string $path): string
     {
         $contents = file_get_contents(ROOTPATH . $path);

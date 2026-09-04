@@ -66,7 +66,10 @@ final class PublicIdentitySubmissionServiceTest
             self::NINU,
             self::PHONE,
             'public-test-v1',
-            $this->documents
+            $this->documents,
+            email: 'citizen@example.test',
+            firstName: 'Marie',
+            lastName: 'D’Haïti'
         );
 
         $identity = $this->identity(
@@ -86,6 +89,10 @@ final class PublicIdentitySubmissionServiceTest
             '+509' . self::PHONE,
             $identity['phone_ciphertext']
         );
+        $this->assertNotSame(
+            'citizen@example.test',
+            $identity['email_ciphertext']
+        );
         $this->assertSame(64, strlen($identity['ninu_fingerprint']));
 
         $crypto = new IdentityCryptoService(
@@ -103,6 +110,27 @@ final class PublicIdentitySubmissionServiceTest
             '+509' . self::PHONE,
             $crypto->decryptPhone(
                 $identity['phone_ciphertext'],
+                $identity['uuid']
+            )
+        );
+        $this->assertSame(
+            'citizen@example.test',
+            $crypto->decryptEmail(
+                $identity['email_ciphertext'],
+                $identity['uuid']
+            )
+        );
+        $this->assertSame(
+            'Marie',
+            $crypto->decryptFirstName(
+                $identity['first_name_ciphertext'],
+                $identity['uuid']
+            )
+        );
+        $this->assertSame(
+            'D’Haïti',
+            $crypto->decryptLastName(
+                $identity['last_name_ciphertext'],
                 $identity['uuid']
             )
         );

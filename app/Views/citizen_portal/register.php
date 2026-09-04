@@ -3,6 +3,24 @@
 <?= $this->section('main') ?>
 <?php
 $slug = rawurlencode((string) $tenant['slug']);
+$availableChannels = array_keys(array_filter(
+    is_array($channels ?? null) ? $channels : []
+));
+$defaultChannel = $availableChannels[0] ?? 'manual';
+$channelCopy = [
+    'whatsapp' => [
+        lang('CitizenPortal.channelWhatsApp'),
+        lang('CitizenPortal.channelWhatsAppHelp'),
+    ],
+    'sms' => [
+        lang('CitizenPortal.channelSms'),
+        lang('CitizenPortal.channelSmsHelp'),
+    ],
+    'email' => [
+        lang('CitizenPortal.channelEmail'),
+        lang('CitizenPortal.channelEmailHelp'),
+    ],
+];
 ?>
 <noscript>
     <div class="alert" role="alert"><?= esc(lang('CitizenPortal.noscriptText')) ?></div>
@@ -57,30 +75,35 @@ $slug = rawurlencode((string) $tenant['slug']);
 
         <div class="field">
             <label for="ninu"><?= esc(lang('CitizenPortal.ninuLabel')) ?></label>
-            <input
-                id="ninu"
-                name="ninu"
-                type="text"
-                inputmode="numeric"
-                autocomplete="off"
-                minlength="10"
-                maxlength="10"
-                pattern="[0-9]{10}"
-                enterkeyhint="next"
-                aria-describedby="ninu-hint"
-            >
+            <div class="input-action">
+                <input
+                    id="ninu"
+                    name="ninu"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    required
+                    minlength="10"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    enterkeyhint="next"
+                    aria-describedby="ninu-hint scan-status"
+                >
+                <button
+                    type="button"
+                    class="input-action-button"
+                    id="scan-ninu"
+                    aria-label="<?= esc(lang('CitizenPortal.scanNinuAction'), 'attr') ?>"
+                    title="<?= esc(lang('CitizenPortal.scanNinuAction'), 'attr') ?>"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                        <path d="M8.5 6.5 10 4.5h4l1.5 2h2A2.5 2.5 0 0 1 20 9v7.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5V9a2.5 2.5 0 0 1 2.5-2.5h2Z"/>
+                        <circle cx="12" cy="12.5" r="3.25"/>
+                    </svg>
+                </button>
+            </div>
             <p class="hint" id="ninu-hint"><?= esc(lang('CitizenPortal.ninuHint')) ?></p>
             <p class="field-error" data-error-for="ninu" hidden></p>
-        </div>
-
-        <aside class="scan-card">
-            <div>
-                <h2><?= esc(lang('CitizenPortal.scanNinuTitle')) ?></h2>
-                <p><?= esc(lang('CitizenPortal.scanNinuLead')) ?></p>
-            </div>
-            <button type="button" class="btn btn-ghost" id="scan-ninu">
-                <?= esc(lang('CitizenPortal.scanNinuAction')) ?>
-            </button>
             <input
                 type="file"
                 class="sr-only"
@@ -88,9 +111,23 @@ $slug = rawurlencode((string) $tenant['slug']);
                 accept="image/jpeg,image/png,image/webp"
                 capture="environment"
             >
-            <p class="scan-status" data-scan-status role="status" aria-live="polite"></p>
-            <p class="hint"><?= esc(lang('CitizenPortal.scanNinuPrivacy')) ?></p>
-        </aside>
+            <p class="scan-status" id="scan-status" data-scan-status role="status" aria-live="polite"></p>
+            <p class="hint"><?= esc(lang('CitizenPortal.scanNinuInlineHelp')) ?></p>
+        </div>
+
+        <div class="field-grid">
+            <div class="field">
+                <label for="first-name"><?= esc(lang('CitizenPortal.firstNameLabel')) ?></label>
+                <input id="first-name" name="first_name" type="text" autocomplete="given-name" maxlength="100" required>
+                <p class="field-error" data-error-for="first_name" hidden></p>
+            </div>
+            <div class="field">
+                <label for="last-name"><?= esc(lang('CitizenPortal.lastNameLabel')) ?></label>
+                <input id="last-name" name="last_name" type="text" autocomplete="family-name" maxlength="100" required>
+                <p class="field-error" data-error-for="last_name" hidden></p>
+            </div>
+        </div>
+        <p class="hint identity-review-hint"><?= esc(lang('CitizenPortal.identityReviewHint')) ?></p>
 
         <div class="spacer"></div>
         <button type="button" class="btn" data-validate="ninu" data-go="s-phone"><?= esc(lang('CitizenPortal.continue')) ?></button>
@@ -101,6 +138,26 @@ $slug = rawurlencode((string) $tenant['slug']);
         <p class="eyebrow"><?= esc(lang('CitizenPortal.stepOfFour', [2])) ?></p>
         <h1><?= esc(lang('CitizenPortal.phoneTitle')) ?></h1>
         <p class="lead"><?= esc(lang('CitizenPortal.phoneLead')) ?></p>
+
+        <?php if ($availableChannels !== []): ?>
+            <fieldset class="contact-methods">
+                <legend><?= esc(lang('CitizenPortal.contactMethodLegend')) ?></legend>
+                <?php foreach ($availableChannels as $channel): ?>
+                    <label class="contact-method">
+                        <input
+                            type="radio"
+                            name="contact_channel"
+                            value="<?= esc($channel, 'attr') ?>"
+                            <?= $channel === $defaultChannel ? 'checked' : '' ?>
+                        >
+                        <span>
+                            <b><?= esc($channelCopy[$channel][0]) ?></b>
+                            <small><?= esc($channelCopy[$channel][1]) ?></small>
+                        </span>
+                    </label>
+                <?php endforeach; ?>
+            </fieldset>
+        <?php endif; ?>
 
         <div class="field">
             <label for="phone-local"><?= esc(lang('CitizenPortal.phoneLabel')) ?></label>
@@ -118,6 +175,13 @@ $slug = rawurlencode((string) $tenant['slug']);
             <input type="hidden" name="phone" id="phone">
             <p class="hint" id="phone-hint"><?= esc(lang('CitizenPortal.phoneHint')) ?></p>
             <p class="field-error" data-error-for="phone-local" hidden></p>
+        </div>
+
+        <div class="field" id="email-field"<?= $defaultChannel === 'email' ? '' : ' hidden' ?>>
+            <label for="email"><?= esc(lang('CitizenPortal.emailLabel')) ?></label>
+            <input id="email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" aria-describedby="email-hint">
+            <p class="hint" id="email-hint"><?= esc(lang('CitizenPortal.emailHint')) ?></p>
+            <p class="field-error" data-error-for="email" hidden></p>
         </div>
 
         <aside class="fallback-card" id="otp-fallback" hidden>
@@ -158,17 +222,7 @@ $slug = rawurlencode((string) $tenant['slug']);
         <p class="field-error" data-error-for="code" role="alert" hidden></p>
         <span class="note"><?= esc(lang('CitizenPortal.codeNote')) ?></span>
 
-        <details class="field">
-            <summary><?= esc(lang('CitizenPortal.codeMissingTitle')) ?></summary>
-            <div class="channels">
-                <button type="button" data-channel="whatsapp"><?= esc(lang('CitizenPortal.codeResendWhatsApp')) ?></button>
-                <button type="button" data-channel="email"><?= esc(lang('CitizenPortal.codeUseEmail')) ?></button>
-            </div>
-            <div class="field" id="email-field" hidden>
-                <label for="email"><?= esc(lang('CitizenPortal.emailLabel')) ?></label>
-                <input id="email" name="email" type="email" autocomplete="email" maxlength="191">
-            </div>
-        </details>
+        <p class="hint"><?= esc(lang('CitizenPortal.codeChangeMethod')) ?></p>
 
         <div class="spacer"></div>
         <div class="btn-row">
@@ -297,10 +351,12 @@ $slug = rawurlencode((string) $tenant['slug']);
         <h1><?= esc(lang('CitizenPortal.consentTitle')) ?></h1>
 
         <dl class="kv">
+            <dt><?= esc(lang('CitizenPortal.summaryName')) ?></dt>
+            <dd id="summary-name"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
             <dt><?= esc(lang('CitizenPortal.summaryNumber')) ?></dt>
             <dd id="summary-ninu"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
-            <dt><?= esc(lang('CitizenPortal.summaryPhone')) ?></dt>
-            <dd id="summary-phone"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
+            <dt><?= esc(lang('CitizenPortal.summaryContact')) ?></dt>
+            <dd id="summary-contact"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
             <dt><?= esc(lang('CitizenPortal.summaryDepartment')) ?></dt>
             <dd id="summary-department"><?= esc(lang('CitizenPortal.summaryEmpty')) ?></dd>
             <dt><?= esc(lang('CitizenPortal.summaryPhotos')) ?></dt>

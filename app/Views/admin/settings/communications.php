@@ -18,6 +18,30 @@
     <p class="alert" role="alert"><?= esc($errorMessage) ?></p>
 <?php endif; ?>
 
+<aside class="channel-contract" aria-labelledby="channel-contract-title">
+    <div>
+        <h2 id="channel-contract-title"><?= esc(lang('Admin.citizenChannelsTitle')) ?></h2>
+        <p><?= esc(lang('Admin.citizenChannelsHelp')) ?></p>
+    </div>
+    <ul>
+        <?php foreach (['whatsapp', 'sms', 'email'] as $channel): ?>
+            <?php $ready = $settings[$channel . '_enabled'] && $settings[$channel . '_validation_status'] === 'valid'; ?>
+            <li
+                class="<?= $ready ? 'is-ready' : '' ?>"
+                data-citizen-channel="<?= esc($channel, 'attr') ?>"
+            >
+                <span aria-hidden="true"></span>
+                <?= esc(lang(match ($channel) {
+                    'whatsapp' => 'Admin.whatsappTitle',
+                    'sms' => 'Admin.smsTitle',
+                    default => 'Admin.emailTitle',
+                })) ?>
+                <small><?= esc(lang($ready ? 'Admin.visibleToCitizens' : 'Admin.hiddenFromCitizens')) ?></small>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+</aside>
+
 <form method="post" action="/admin/communications" class="settings-form" autocomplete="off">
     <?= csrf_field() ?>
     <section class="settings-card">
@@ -237,6 +261,8 @@
         data-failed-label="<?= esc(lang('Admin.channelFailed'), 'attr') ?>"
         data-testing-label="<?= esc(lang('Admin.channelTesting'), 'attr') ?>"
         data-untested-label="<?= esc(lang('Admin.channelUntested'), 'attr') ?>"
+        data-visible-label="<?= esc(lang('Admin.visibleToCitizens'), 'attr') ?>"
+        data-hidden-label="<?= esc(lang('Admin.hiddenFromCitizens'), 'attr') ?>"
         data-run-label="<?= esc(lang('Admin.runTest'), 'attr') ?>"
         data-delete-template="<?= esc(lang('Admin.deleteChannelConfirm', ['{channel}']), 'attr') ?>"
         defer

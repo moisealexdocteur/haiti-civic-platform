@@ -17,6 +17,12 @@ final class IdentityCryptoService
 
     private const FIELD_PHONE = 'phone';
 
+    private const FIELD_EMAIL = 'email';
+
+    private const FIELD_FIRST_NAME = 'first_name';
+
+    private const FIELD_LAST_NAME = 'last_name';
+
     private const ENCRYPTION_KEY_INFO =
         'civic.identity.encryption.v1';
 
@@ -96,6 +102,68 @@ final class IdentityCryptoService
     ): string {
         return $this->decryptField(
             self::FIELD_PHONE,
+            $payload,
+            $subjectUuid
+        );
+    }
+
+    public function encryptEmail(string $email, string $subjectUuid): string
+    {
+        return $this->encryptField(
+            self::FIELD_EMAIL,
+            $email,
+            $subjectUuid
+        );
+    }
+
+    public function decryptEmail(string $payload, string $subjectUuid): string
+    {
+        return $this->decryptField(
+            self::FIELD_EMAIL,
+            $payload,
+            $subjectUuid
+        );
+    }
+
+    public function encryptFirstName(
+        string $firstName,
+        string $subjectUuid
+    ): string {
+        return $this->encryptField(
+            self::FIELD_FIRST_NAME,
+            $firstName,
+            $subjectUuid
+        );
+    }
+
+    public function decryptFirstName(
+        string $payload,
+        string $subjectUuid
+    ): string {
+        return $this->decryptField(
+            self::FIELD_FIRST_NAME,
+            $payload,
+            $subjectUuid
+        );
+    }
+
+    public function encryptLastName(
+        string $lastName,
+        string $subjectUuid
+    ): string {
+        return $this->encryptField(
+            self::FIELD_LAST_NAME,
+            $lastName,
+            $subjectUuid
+        );
+    }
+
+    public function decryptLastName(
+        string $payload,
+        string $subjectUuid
+    ): string {
+        return $this->decryptField(
+            self::FIELD_LAST_NAME,
             $payload,
             $subjectUuid
         );

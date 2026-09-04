@@ -138,4 +138,53 @@ final class IdentityInputNormalizer
 
         return $normalized;
     }
+
+    public function normalizePersonName(string $value): string
+    {
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+
+        if (! is_string($value) || $value === '') {
+            throw new InvalidArgumentException(
+                'Person name cannot be empty.'
+            );
+        }
+
+        if (
+            mb_strlen($value) > 100
+            || preg_match(
+                "/^[\\p{L}\\p{M}][\\p{L}\\p{M} .'’\\-]*$/uD",
+                $value
+            ) !== 1
+        ) {
+            throw new InvalidArgumentException(
+                'Person name contains unsupported characters.'
+            );
+        }
+
+        return $value;
+    }
+
+    public function normalizeEmail(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = strtolower(trim($value));
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (
+            strlen($value) > 254
+            || filter_var($value, FILTER_VALIDATE_EMAIL) === false
+        ) {
+            throw new InvalidArgumentException(
+                'Email address is invalid.'
+            );
+        }
+
+        return $value;
+    }
 }
