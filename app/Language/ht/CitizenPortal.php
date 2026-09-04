@@ -98,7 +98,7 @@ return [
     'channelSmsHelp' => 'Pa mesaj tèks sou telefòn ou.',
     'channelEmailHelp' => 'Nan bwat imel ou.',
     'phoneLabel' => 'Telefòn',
-    'phoneHint' => '8 chif. Ou pa bezwen ekri +509.',
+    'phoneHint' => '8 chif. Ou pa bezwen ekri +509. Nimewo sa a rete kontak dosye a, menm lè kòd la rive pa imel.',
     'phoneRequired' => 'Antre 8 chif nimewo w la.',
     'emailHint' => 'Nou sèvi ak imel sa a sèlman pou dosye w ak mesaj sou dosye a.',
     'emailRequired' => 'Antre imel ou pou resevwa kòd la.',

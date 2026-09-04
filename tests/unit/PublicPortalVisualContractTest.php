@@ -80,6 +80,10 @@ final class PublicPortalVisualContractTest extends CIUnitTestCase
             "inline_script('/assets/qr-code.js')",
             $confirmation
         );
+        $this->assertStringNotContainsString(
+            "lang('CitizenPortal.channelWhatsApp')",
+            $confirmation
+        );
     }
 
     public function testAdminMapLoadsLeafletLocallyWithItsLayoutStyles(): void

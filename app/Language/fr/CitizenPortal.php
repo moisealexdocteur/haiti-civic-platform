@@ -95,7 +95,7 @@ return [
     'channelSmsHelp' => 'Par message texte sur votre téléphone.',
     'channelEmailHelp' => 'Dans votre boîte de réception.',
     'phoneLabel' => 'Téléphone',
-    'phoneHint' => '8 chiffres. N’écrivez pas +509.',
+    'phoneHint' => '8 chiffres. N’écrivez pas +509. Ce numéro reste le contact du dossier, même si le code arrive par courriel.',
     'phoneRequired' => 'Entrez les 8 chiffres de votre numéro.',
     'emailHint' => 'Nous utilisons ce courriel uniquement pour votre dossier et ses notifications.',
     'emailRequired' => 'Entrez votre courriel pour recevoir le code.',

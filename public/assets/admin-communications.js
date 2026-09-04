@@ -84,7 +84,10 @@
         }
 
         setStatus(activeChannel, payload.ok ? 'valid' : 'failed', payload.ok ? validLabel : failedLabel);
-        setCitizenVisibility(activeChannel, payload.ok);
+
+        if (payload.ok) {
+            setCitizenVisibility(activeChannel, true);
+        }
 
         if (payload.ok) {
             var enabledName = activeChannel === 'email' ? 'email_enabled' : activeChannel + '_enabled';
