@@ -191,6 +191,9 @@ img { max-width: 100%; }
     white-space: nowrap;
 }
 
+.brand > span { display: grid; line-height: 1.15; }
+.brand small { color: var(--ink-3); font-size: var(--t-xs); font-weight: 500; }
+
 .product-mark {
     display: block;
     width: 32px;

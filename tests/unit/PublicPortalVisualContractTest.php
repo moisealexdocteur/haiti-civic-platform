@@ -33,6 +33,55 @@ final class PublicPortalVisualContractTest extends CIUnitTestCase
         $this->assertStringContainsString('class="dirtable"', $view);
     }
 
+    public function testInstalledApplicationKeepsOneProductIdentity(): void
+    {
+        $layout = $this->readProjectFile('app/Views/layouts/public.php');
+        $manifest = json_decode(
+            $this->readProjectFile('public/manifest.webmanifest'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
+
+        $this->assertStringContainsString(
+            '<link rel="manifest" href="/manifest.webmanifest">',
+            $layout
+        );
+        $this->assertStringContainsString(
+            'apple-mobile-web-app-title',
+            $layout
+        );
+        $this->assertSame(
+            'Portail de vérification citoyenne',
+            $manifest['name']
+        );
+        $this->assertFileExists(ROOTPATH . 'public/assets/portal-mark-192.png');
+        $this->assertFileExists(ROOTPATH . 'public/assets/portal-mark-512.png');
+    }
+
+    public function testServiceWorkerCachesOnlyStaticAssets(): void
+    {
+        $worker = $this->readProjectFile('public/service-worker.js');
+
+        $this->assertStringContainsString(
+            "requestUrl.pathname.indexOf('/assets/') !== 0",
+            $worker
+        );
+        $this->assertStringNotContainsString('caches.addAll', $worker);
+    }
+
+    public function testMobileConfirmationEmbedsQrRenderer(): void
+    {
+        $confirmation = $this->readProjectFile(
+            'app/Views/citizen_portal/confirmation.php'
+        );
+
+        $this->assertStringContainsString(
+            "inline_script('/assets/qr-code.js')",
+            $confirmation
+        );
+    }
+
     private function readProjectFile(string $path): string
     {
         $contents = file_get_contents(ROOTPATH . $path);

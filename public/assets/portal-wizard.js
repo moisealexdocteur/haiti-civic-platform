@@ -33,6 +33,7 @@
     }
 
     var slug = form.getAttribute('data-slug');
+    var locale = form.getAttribute('data-locale') === 'ht' ? 'ht' : 'fr';
     var screens = Array.prototype.slice.call(
         form.querySelectorAll('.screen')
     );
@@ -44,6 +45,7 @@
     var MAX_EDGE = 1600;
     var JPEG_QUALITY = 0.72;
     var MAX_ORIGINAL_BYTES = 12 * 1024 * 1024;
+    var MIN_IMAGE_EDGE = 480;
 
     var state = {
         current: 's-intro',
@@ -51,6 +53,7 @@
         channel: null,
         verified: false,
         manualPending: false,
+        abandoning: false,
         expiresAt: 0,
         resendAt: 0,
         pieces: {}
@@ -207,6 +210,108 @@
             .slice(0, 10);
         setError('ninu', '');
     });
+
+    /* ---------------- lecture locale du NINU ---------------- */
+
+    var scanButton = document.getElementById('scan-ninu');
+    var scanInput = document.getElementById('ninu-scan-file');
+    var scanStatus = form.querySelector('[data-scan-status]');
+
+    scanButton.addEventListener('click', function () {
+        scanInput.value = '';
+        scanInput.click();
+    });
+
+    scanInput.addEventListener('change', function () {
+        var file = scanInput.files && scanInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+            scanStatus.textContent = t('fileNotImage');
+            return;
+        }
+
+        if (file.size > MAX_ORIGINAL_BYTES) {
+            scanStatus.textContent = t('fileTooLarge');
+            return;
+        }
+
+        scanButton.disabled = true;
+        scanStatus.textContent = t('scanNinuReading');
+
+        loadBitmap(file).then(function (source) {
+            return detectNinu(source).finally(function () {
+                if (source.close) {
+                    source.close();
+                }
+            });
+        }).then(function (result) {
+            scanButton.disabled = false;
+
+            if (result.value) {
+                document.getElementById('ninu').value = result.value;
+                setError('ninu', '');
+                scanStatus.textContent = t('scanNinuSuccess');
+                return;
+            }
+
+            scanStatus.textContent = result.supported
+                ? t('scanNinuNotFound')
+                : t('scanNinuUnsupported');
+        }).catch(function () {
+            scanButton.disabled = false;
+            scanStatus.textContent = t('fileUnreadable');
+        });
+    });
+
+    function detectNinu(source) {
+        var supported = false;
+        var barcode = Promise.resolve([]);
+
+        if ('BarcodeDetector' in window) {
+            try {
+                supported = true;
+                barcode = new window.BarcodeDetector().detect(source)
+                    .catch(function () { return []; });
+            } catch (error) {
+                supported = false;
+            }
+        }
+
+        return barcode.then(function (codes) {
+            var value = digitsFromDetections(codes);
+
+            if (value || !('TextDetector' in window)) {
+                return { value: value, supported: supported };
+            }
+
+            try {
+                supported = true;
+                return new window.TextDetector().detect(source)
+                    .catch(function () { return []; })
+                    .then(function (lines) {
+                        return {
+                            value: digitsFromDetections(lines),
+                            supported: supported
+                        };
+                    });
+            } catch (error) {
+                return { value: '', supported: supported };
+            }
+        });
+    }
+
+    function digitsFromDetections(detections) {
+        var text = (detections || []).map(function (item) {
+            return String(item.rawValue || item.text || '');
+        }).join(' ');
+        var match = text.match(/(?:^|\D)(\d{10})(?:\D|$)/);
+
+        return match ? match[1] : '';
+    }
 
     var departmentInput = document.getElementById('department-code');
 
@@ -576,7 +681,7 @@
     });
 
     Array.prototype.slice.call(
-        form.querySelectorAll('input[type="file"]')
+        form.querySelectorAll('input[data-piece-input]')
     ).forEach(function (input) {
         input.addEventListener('change', function () {
             var field = input.name;
@@ -588,7 +693,7 @@
 
             setError(field, '');
 
-            if (!/^image\//.test(file.type)) {
+            if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
                 setError(field, t('fileNotImage'));
 
                 return;
@@ -602,36 +707,68 @@
 
             compress(file).then(function (blob) {
                 showPreview(field, blob || file);
-            }).catch(function () {
-                showPreview(field, file);
+            }).catch(function (error) {
+                setError(
+                    field,
+                    error && error.message === 'too_small'
+                        ? t('fileTooSmall')
+                        : t('fileUnreadable')
+                );
+                input.value = '';
             });
         });
     });
 
     function compress(file) {
-        if (!window.HTMLCanvasElement || !HTMLCanvasElement.prototype.toBlob) {
-            return Promise.resolve(null);
-        }
-
         return loadBitmap(file).then(function (source) {
             var width = source.width;
             var height = source.height;
+
+            if (Math.min(width, height) < MIN_IMAGE_EDGE) {
+                if (source.close) {
+                    source.close();
+                }
+
+                throw new Error('too_small');
+            }
+
+            if (!window.HTMLCanvasElement || !HTMLCanvasElement.prototype.toBlob) {
+                if (source.close) {
+                    source.close();
+                }
+
+                return null;
+            }
+
             var scale = Math.min(1, MAX_EDGE / Math.max(width, height));
             var canvas = document.createElement('canvas');
 
             canvas.width = Math.round(width * scale);
             canvas.height = Math.round(height * scale);
 
-            canvas
-                .getContext('2d')
-                .drawImage(source, 0, 0, canvas.width, canvas.height);
+            var context = canvas.getContext('2d');
+
+            if (!context) {
+                if (source.close) {
+                    source.close();
+                }
+
+                throw new Error('canvas');
+            }
+
+            context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
             if (source.close) {
                 source.close();
             }
 
-            return new Promise(function (resolve) {
+            return new Promise(function (resolve, reject) {
                 canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        reject(new Error('encode'));
+                        return;
+                    }
+
                     resolve(blob);
                 }, 'image/jpeg', JPEG_QUALITY);
             });
@@ -705,6 +842,13 @@
 
     function resetPiece(field) {
         var screen = pieceScreen(field);
+        var image = screen.querySelector('[data-role="preview-image"]');
+        var previous = image.getAttribute('src');
+
+        if (previous) {
+            URL.revokeObjectURL(previous);
+            image.removeAttribute('src');
+        }
 
         screen.querySelector('[data-role="preview"]').hidden = true;
         screen.querySelector('[data-role="capture"]').hidden = false;
@@ -714,8 +858,23 @@
             t('title_' + field);
 
         delete state.pieces[field];
+        document.getElementById('file-' + field).value = '';
         markChecks();
     }
+
+    Array.prototype.slice.call(
+        form.querySelectorAll('[data-abandon]')
+    ).forEach(function (button) {
+        button.addEventListener('click', function () {
+            if (!window.confirm(t('abandonConfirm'))) {
+                return;
+            }
+
+            state.abandoning = true;
+            Object.keys(state.pieces).forEach(resetPiece);
+            window.location.assign('/?lang=' + encodeURIComponent(locale));
+        });
+    });
 
     Array.prototype.slice.call(
         form.querySelectorAll('[data-accept]')
@@ -886,6 +1045,10 @@
     /* ---------------- garde de sortie ---------------- */
 
     window.addEventListener('beforeunload', function (event) {
+        if (state.abandoning) {
+            return;
+        }
+
         if (state.current === 's-intro' || state.current === 's-ninu') {
             return;
         }

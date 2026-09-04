@@ -63,3 +63,31 @@ if (! function_exists('inline_stylesheet')) {
         return $contents;
     }
 }
+
+if (! function_exists('inline_script')) {
+    /**
+     * Read a repository-owned script for deterministic inline delivery.
+     */
+    function inline_script(string $path): string
+    {
+        $urlPath = '/' . ltrim($path, '/');
+
+        if (str_contains($urlPath, '..') || ! str_ends_with($urlPath, '.js')) {
+            throw new InvalidArgumentException('Invalid script path.');
+        }
+
+        $fullPath = FCPATH . ltrim($urlPath, '/');
+
+        if (! is_file($fullPath)) {
+            throw new RuntimeException('Script not found: ' . $urlPath);
+        }
+
+        $contents = file_get_contents($fullPath);
+
+        if (! is_string($contents) || $contents === '') {
+            throw new RuntimeException('Script could not be read: ' . $urlPath);
+        }
+
+        return str_replace('</script', '<\\/script', $contents);
+    }
+}

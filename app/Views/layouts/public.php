@@ -13,6 +13,7 @@
 
 $theme = in_array($theme ?? '', ['light', 'dark'], true) ? $theme : null;
 $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
+$installedAppName = 'Portail de vérification citoyenne';
 ?>
 <!doctype html>
 <html lang="<?= esc($locale) ?>"<?= $theme === null ? '' : ' data-theme="' . esc($theme, 'attr') . '"' ?>>
@@ -22,8 +23,13 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#15398C" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
-    <title><?= esc($pageTitle) ?></title>
+    <title><?= esc($pageTitle) ?> | <?= esc(lang('CitizenPortal.brand')) ?></title>
     <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="<?= esc(versioned_asset('/assets/portal-mark-192.png'), 'attr') ?>">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="application-name" content="<?= esc($installedAppName, 'attr') ?>">
+    <meta name="apple-mobile-web-app-title" content="<?= esc($installedAppName, 'attr') ?>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <style data-portal-styles="inline"><?= inline_stylesheet('/assets/portal.css') ?></style>
     <?= $this->renderSection('head') ?>
@@ -33,7 +39,12 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     <header class="topbar">
         <p class="brand">
             <img class="product-mark" src="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" alt="">
-            <span><?= esc($brandName ?? lang('CitizenPortal.brand')) ?></span>
+            <span>
+                <b><?= esc(lang('CitizenPortal.brand')) ?></b>
+                <?php if (is_string($brandName ?? null) && $brandName !== '' && $brandName !== lang('CitizenPortal.brand')): ?>
+                    <small><?= esc($brandName) ?></small>
+                <?php endif; ?>
+            </span>
         </p>
         <nav class="langswitch" aria-label="<?= esc(lang('CitizenPortal.languageSwitch')) ?>">
             <a href="<?= esc($langUrls['ht'], 'attr') ?>" hreflang="ht"<?= $locale === 'ht' ? ' aria-current="true"' : '' ?>><?= esc(lang('CitizenPortal.languageHt')) ?></a>
@@ -55,5 +66,6 @@ $langUrls = $langUrls ?? ['fr' => '/?lang=fr', 'ht' => '/?lang=ht'];
     </footer>
 </div>
 <?= $this->renderSection('scripts') ?>
+<script src="<?= esc(versioned_asset('/assets/pwa.js'), 'attr') ?>" defer></script>
 </body>
 </html>

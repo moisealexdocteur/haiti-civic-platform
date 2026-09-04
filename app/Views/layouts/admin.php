@@ -10,6 +10,7 @@ $nav = [
     ['audit', '/admin/audit', 'Admin.navAudit', $can('audit.view')],
     ['security', '/admin/securite', 'Admin.navSecurity', true],
 ];
+$installedAppName = 'Portail de vérification citoyenne';
 ?>
 <!doctype html>
 <html lang="<?= esc($locale) ?>"<?= $theme === null ? '' : ' data-theme="' . esc($theme, 'attr') . '"' ?>>
@@ -22,6 +23,11 @@ $nav = [
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title><?= esc($pageTitle) ?> | <?= esc(lang('Admin.productName')) ?></title>
     <link rel="icon" href="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="<?= esc(versioned_asset('/assets/portal-mark-192.png'), 'attr') ?>">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="application-name" content="<?= esc($installedAppName, 'attr') ?>">
+    <meta name="apple-mobile-web-app-title" content="<?= esc($installedAppName, 'attr') ?>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="<?= esc(versioned_asset('/assets/tokens.css'), 'attr') ?>">
     <style data-admin-styles="inline"><?= inline_stylesheet('/assets/admin.css') ?></style>
     <?= $this->renderSection('head') ?>
@@ -89,5 +95,6 @@ $nav = [
     </div>
 </div>
 <?= $this->renderSection('scripts') ?>
+<script src="<?= esc(versioned_asset('/assets/pwa.js'), 'attr') ?>" defer></script>
 </body>
 </html>

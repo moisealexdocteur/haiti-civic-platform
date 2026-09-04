@@ -73,15 +73,35 @@ final class CitizenTracking extends BaseController
     public function locate(): RedirectResponse
     {
         $locale = $this->resolveLocale();
+        $identifier = trim((string) (
+            $this->request->getPost('identifier')
+            ?? $this->request->getPost('reference')
+        ));
 
         try {
-            $reference = (new PublicReferenceGenerator())->normalize(
-                (string) $this->request->getPost('reference')
-            );
-            return redirect()->to('/swiv/' . rawurlencode($reference) . '?lang=' . rawurlencode($locale));
+            $reference = (new PublicReferenceGenerator())->normalize($identifier);
         } catch (InvalidArgumentException) {
-            return redirect()->to('/swiv?lang=' . rawurlencode($locale) . '&erreur=reference');
+            try {
+                $reference = (new PublicIdentityTrackingService())
+                    ->referenceForNinu(
+                        (string) $this->request->getPost('organisation'),
+                        $identifier
+                    );
+            } catch (InvalidArgumentException) {
+                $reference = null;
+            }
         }
+
+        if (! is_string($reference) || $reference === '') {
+            return redirect()->to(
+                '/swiv?lang=' . rawurlencode($locale) . '&erreur=reference'
+            );
+        }
+
+        return redirect()->to(
+            '/swiv/' . rawurlencode($reference)
+            . '?lang=' . rawurlencode($locale)
+        );
     }
 
     public function requestCode(string $reference): ResponseInterface
