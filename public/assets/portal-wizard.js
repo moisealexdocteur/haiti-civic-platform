@@ -175,7 +175,7 @@
 
         var validate = goButton.getAttribute('data-validate');
 
-        if (validate === 'ninu' && !validateNinu()) {
+        if (validate === 'ninu' && !validateIdentity()) {
             return;
         }
 
@@ -204,11 +204,55 @@
         return true;
     }
 
+    function validateIdentity() {
+        var valid = validateNinu();
+        var firstName = document.getElementById('first-name');
+        var lastName = document.getElementById('last-name');
+        var personName = /^[\p{L}\p{M}][\p{L}\p{M} .'’\-]*$/u;
+
+        firstName.value = firstName.value.trim().replace(/\s+/g, ' ');
+        lastName.value = lastName.value.trim().replace(/\s+/g, ' ');
+
+        if (!personName.test(firstName.value)) {
+            setError('first_name', t('firstNameRequired'));
+            valid = false;
+        } else {
+            setError('first_name', '');
+        }
+
+        if (!personName.test(lastName.value)) {
+            setError('last_name', t('lastNameRequired'));
+            valid = false;
+        } else {
+            setError('last_name', '');
+        }
+
+        if (!valid) {
+            var firstError = form.querySelector(
+                '#s-ninu .field-error:not([hidden])'
+            );
+            var errorField = firstError && firstError.closest('.field');
+            var errorInput = errorField && errorField.querySelector('input');
+
+            if (errorInput) {
+                errorInput.focus();
+            }
+        }
+
+        return valid;
+    }
+
     document.getElementById('ninu').addEventListener('input', function (event) {
         event.target.value = event.target.value
             .replace(/\D+/g, '')
             .slice(0, 10);
         setError('ninu', '');
+    });
+
+    ['first-name', 'last-name'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', function () {
+            setError(id === 'first-name' ? 'first_name' : 'last_name', '');
+        });
     });
 
     /* ---------------- lecture locale du NINU ---------------- */
@@ -251,10 +295,23 @@
         }).then(function (result) {
             scanButton.disabled = false;
 
-            if (result.value) {
-                document.getElementById('ninu').value = result.value;
+            if (result.ninu) {
+                document.getElementById('ninu').value = result.ninu;
+
+                if (result.firstName) {
+                    document.getElementById('first-name').value =
+                        result.firstName;
+                }
+
+                if (result.lastName) {
+                    document.getElementById('last-name').value =
+                        result.lastName;
+                }
+
                 setError('ninu', '');
-                scanStatus.textContent = t('scanNinuSuccess');
+                scanStatus.textContent = result.firstName || result.lastName
+                    ? t('scanIdentitySuccess')
+                    : t('scanNinuSuccess');
                 return;
             }
 
@@ -282,10 +339,11 @@
         }
 
         return barcode.then(function (codes) {
-            var value = digitsFromDetections(codes);
+            var result = identityFromDetections(codes);
 
-            if (value || !('TextDetector' in window)) {
-                return { value: value, supported: supported };
+            if (result.ninu || !('TextDetector' in window)) {
+                result.supported = supported;
+                return result;
             }
 
             try {
@@ -293,24 +351,59 @@
                 return new window.TextDetector().detect(source)
                     .catch(function () { return []; })
                     .then(function (lines) {
-                        return {
-                            value: digitsFromDetections(lines),
-                            supported: supported
-                        };
+                        var details = identityFromDetections(lines);
+                        details.supported = supported;
+                        return details;
                     });
             } catch (error) {
-                return { value: '', supported: supported };
+                return {
+                    ninu: '',
+                    firstName: '',
+                    lastName: '',
+                    supported: supported
+                };
             }
         });
     }
 
-    function digitsFromDetections(detections) {
-        var text = (detections || []).map(function (item) {
+    function identityFromDetections(detections) {
+        var lines = (detections || []).map(function (item) {
             return String(item.rawValue || item.text || '');
-        }).join(' ');
+        }).filter(Boolean);
+        var text = lines.join(' ');
         var match = text.match(/(?:^|\D)(\d{10})(?:\D|$)/);
 
-        return match ? match[1] : '';
+        return {
+            ninu: match ? match[1] : '',
+            firstName: labelledName(lines, /(?:PR[ÉE]NOM|GIVEN\s+NAMES?|FIRST\s+NAME)/i),
+            lastName: labelledName(lines, /(?:NOM|SURNAME|LAST\s+NAME)/i)
+        };
+    }
+
+    function labelledName(lines, label) {
+        for (var index = 0; index < lines.length; index += 1) {
+            var current = lines[index].replace(label, '').replace(/^\s*[:\-]\s*/, '').trim();
+
+            if (label.test(lines[index]) && validDetectedName(current)) {
+                return current;
+            }
+
+            if (
+                label.test(lines[index])
+                && lines[index + 1]
+                && validDetectedName(lines[index + 1].trim())
+            ) {
+                return lines[index + 1].trim();
+            }
+        }
+
+        return '';
+    }
+
+    function validDetectedName(value) {
+        return value.length > 1
+            && value.length <= 100
+            && /^[\p{L}\p{M}][\p{L}\p{M} .'’\-]*$/u.test(value);
     }
 
     var departmentInput = document.getElementById('department-code');
@@ -371,27 +464,42 @@
 
     var emailField = document.getElementById('email-field');
     var emailInput = document.getElementById('email');
+    var channelInputs = Array.prototype.slice.call(
+        form.querySelectorAll('input[name="contact_channel"]')
+    );
 
-    Array.prototype.slice.call(
-        form.querySelectorAll('[data-channel]')
-    ).forEach(function (button) {
-        button.addEventListener('click', function () {
-            var channel = button.getAttribute('data-channel');
-
-            if (channel === 'email') {
-                emailField.hidden = false;
-                emailInput.focus();
-
-                if (emailInput.value.trim() === '') {
-                    return;
-                }
-            }
-
-            requestCode(channel);
+    function selectedContactChannel() {
+        var selected = channelInputs.find(function (input) {
+            return input.checked;
         });
+
+        return selected ? selected.value : null;
+    }
+
+    function updateContactFields() {
+        var channel = selectedContactChannel();
+
+        emailField.hidden = channel !== 'email';
+        setError('email', '');
+        state.verified = false;
+        state.manualPending = false;
+        state.challenge = null;
+    }
+
+    channelInputs.forEach(function (input) {
+        input.addEventListener('change', updateContactFields);
+    });
+
+    updateContactFields();
+
+    emailInput.addEventListener('input', function () {
+        setError('email', '');
+        state.verified = false;
+        state.challenge = null;
     });
 
     function requestCode(channel) {
+        channel = channel || selectedContactChannel();
         var digits = phoneDigits();
 
         if (digits.length !== 8) {
@@ -400,6 +508,24 @@
             phoneLocal.focus();
 
             return;
+        }
+
+        if (channel === 'email') {
+            emailInput.value = emailInput.value.trim().toLowerCase();
+
+            if (emailInput.value === '') {
+                setError('email', t('emailRequired'));
+                show('s-phone');
+                emailInput.focus();
+                return;
+            }
+
+            if (!emailInput.checkValidity()) {
+                setError('email', t('emailInvalid'));
+                show('s-phone');
+                emailInput.focus();
+                return;
+            }
         }
 
         setError('phone-local', '');
@@ -413,11 +539,9 @@
 
         var payload = { phone: phoneHidden.value };
 
-        if (channel) {
-            payload.channel = channel;
-        }
+        payload.channel = channel || 'whatsapp';
 
-        if (emailInput.value.trim() !== '') {
+        if (channel === 'email' && emailInput.value.trim() !== '') {
             payload.email = emailInput.value.trim();
         }
 
@@ -429,7 +553,10 @@
             button.textContent = t('phoneSend');
 
             if (!response.ok) {
-                setError('phone-local', response.message || t('networkError'));
+                setError(
+                    channel === 'email' ? 'email' : 'phone-local',
+                    response.message || t('networkError')
+                );
                 setError('code', response.message || t('networkError'));
 
                 if (response.fallback_available === true) {
@@ -448,7 +575,12 @@
 
             document.getElementById('code-lead').textContent = t('codeLead')
                 .replace('{0}', channelName(response.delivered_channel))
-                .replace('{1}', maskedPhone());
+                .replace(
+                    '{1}',
+                    response.delivered_channel === 'email'
+                        ? maskedEmail()
+                        : maskedPhone()
+                );
 
             setError('code', '');
             clearCode();
@@ -506,6 +638,20 @@
         }
 
         return t('channelWhatsApp');
+    }
+
+    function maskedEmail() {
+        var parts = emailInput.value.trim().split('@');
+
+        if (parts.length !== 2) {
+            return emailInput.value.trim();
+        }
+
+        return parts[0].slice(0, 2) + '•••@' + parts[1];
+    }
+
+    function maskedContact() {
+        return state.channel === 'email' ? maskedEmail() : maskedPhone();
     }
 
     /* ---------------- code à 6 chiffres ---------------- */
@@ -575,7 +721,7 @@
     var resendButton = document.getElementById('code-resend');
 
     resendButton.addEventListener('click', function () {
-        requestCode('whatsapp');
+        requestCode(state.channel || selectedContactChannel());
     });
 
     function tick() {
@@ -649,7 +795,8 @@
             state.expiresAt = 0;
             document.getElementById('verified-title').textContent =
                 t('verifiedTitle');
-            document.getElementById('verified-phone').textContent = maskedPhone();
+            document.getElementById('verified-phone').textContent =
+                maskedContact();
             show('s-verified');
         });
     }
@@ -903,9 +1050,12 @@
     function updateSummary() {
         var count = Object.keys(state.pieces).length;
 
+        document.getElementById('summary-name').textContent =
+            document.getElementById('first-name').value + ' '
+            + document.getElementById('last-name').value;
         document.getElementById('summary-ninu').textContent =
             '•• •• •• ' + document.getElementById('ninu').value.slice(-2);
-        document.getElementById('summary-phone').textContent = maskedPhone();
+        document.getElementById('summary-contact').textContent = maskedContact();
         document.getElementById('summary-department').textContent =
             departmentInput.options[departmentInput.selectedIndex].text;
         document.getElementById('summary-photos').textContent =
@@ -974,10 +1124,12 @@
 
         data.append('consent', '1');
         data.append('ninu', document.getElementById('ninu').value);
+        data.append('first_name', document.getElementById('first-name').value);
+        data.append('last_name', document.getElementById('last-name').value);
         data.append('phone', phoneHidden.value);
         data.append('department_code', departmentInput.value);
 
-        if (emailInput.value.trim() !== '') {
+        if (state.channel === 'email' && emailInput.value.trim() !== '') {
             data.append('email', emailInput.value.trim());
         }
 

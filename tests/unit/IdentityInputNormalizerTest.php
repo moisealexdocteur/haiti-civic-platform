@@ -185,6 +185,33 @@ final class IdentityInputNormalizerTest
             );
     }
 
+    public function testPersonNamesPreserveAccentsAndNormalizeSpaces(): void
+    {
+        $this->assertSame(
+            'Jean Baptiste',
+            $this->normalizer->normalizePersonName('  Jean   Baptiste ')
+        );
+        $this->assertSame(
+            'D’Haïti',
+            $this->normalizer->normalizePersonName('D’Haïti')
+        );
+    }
+
+    public function testPersonNameRejectsDigits(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->normalizer->normalizePersonName('Jean2');
+    }
+
+    public function testEmailIsNormalizedAndValidated(): void
+    {
+        $this->assertSame(
+            'citoyen@example.test',
+            $this->normalizer->normalizeEmail(' Citoyen@Example.Test ')
+        );
+        $this->assertNull($this->normalizer->normalizeEmail(''));
+    }
+
     public function testWrongHaitiLengthIsRejected(): void
     {
         $this->expectException(

@@ -6,6 +6,7 @@ use App\Controllers\Concerns\PublicPage;
 use App\Services\ContactVerificationStatus;
 use App\Services\HaitiDepartmentCatalog;
 use App\Services\Otp\OtpChannelRouter;
+use App\Services\Otp\OtpChannel;
 use App\Services\Otp\OtpTransportFactory;
 use App\Services\Otp\PublicContactFallbackService;
 use App\Services\Otp\PublicPhoneOtpFlowService;
@@ -360,6 +361,12 @@ final class CitizenPortal extends BaseController
             $emailInput = trim(
                 (string) $this->request->getPost('email')
             );
+            $firstName = trim(
+                (string) $this->request->getPost('first_name')
+            );
+            $lastName = trim(
+                (string) $this->request->getPost('last_name')
+            );
             $departmentCode = trim(
                 (string) $this->request->getPost('department_code')
             );
@@ -412,7 +419,10 @@ final class CitizenPortal extends BaseController
                 self::CONSENT_VERSION,
                 $documents,
                 contactVerificationStatus: $contactStatus,
-                departmentCode: $departmentCode
+                departmentCode: $departmentCode,
+                email: $emailInput === '' ? null : $emailInput,
+                firstName: $firstName,
+                lastName: $lastName
             );
 
             $contactProof->clear();
@@ -501,6 +511,31 @@ final class CitizenPortal extends BaseController
     ): string {
         helper(['form', 'security']);
 
+        $channels = [
+            'whatsapp' => false,
+            'sms' => false,
+            'email' => false,
+        ];
+
+        try {
+            $router = OtpTransportFactory::forTenant(
+                $this->tenantContext($tenant)
+            );
+            $channels = [
+                'whatsapp' => $router->hasTransport(
+                    OtpChannel::WHATSAPP
+                ),
+                'sms' => $router->hasTransport(
+                    OtpChannel::SMS
+                ),
+                'email' => $router->hasTransport(
+                    OtpChannel::EMAIL
+                ),
+            ];
+        } catch (Throwable) {
+            // Le parcours proposera le contrôle manuel si aucun canal ne répond.
+        }
+
         return view(
             'citizen_portal/register',
             $this->pageData(
@@ -517,6 +552,7 @@ final class CitizenPortal extends BaseController
                     'departments' => (new HaitiDepartmentCatalog())
                         ->options($locale),
                     'strings' => $this->wizardStrings(),
+                    'channels' => $channels,
                 ]
             )
         );
@@ -544,7 +580,9 @@ final class CitizenPortal extends BaseController
     private function wizardStrings(): array
     {
         $keys = [
-            'stepAnnounce', 'ninuRequired', 'phoneRequired', 'sendingCode',
+            'stepAnnounce', 'ninuRequired', 'firstNameRequired',
+            'lastNameRequired', 'phoneRequired', 'emailRequired',
+            'emailInvalid', 'sendingCode',
             'phoneSend', 'codeLead', 'channelWhatsApp', 'channelSms',
             'channelEmail', 'codeExpires', 'codeExpired', 'codeResend',
             'codeResendIn', 'codeIncomplete', 'networkError', 'fileNotImage',
@@ -552,6 +590,7 @@ final class CitizenPortal extends BaseController
             'fileTooSmall', 'fileUnreadable', 'piecesMissing',
             'scanNinuReading', 'scanNinuSuccess', 'scanNinuNotFound',
             'scanNinuUnsupported', 'abandonConfirm',
+            'scanIdentitySuccess',
             'verifiedTitle',
             'departmentRequired',
             'manualTitle', 'manualLead', 'manualAction',
@@ -669,6 +708,11 @@ final class CitizenPortal extends BaseController
             'Department is required.',
             'Unknown Haiti department code.' =>
                 lang('CitizenPortal.departmentRequired'),
+            'Person name cannot be empty.',
+            'Person name contains unsupported characters.' =>
+                lang('CitizenPortal.identityNameInvalid'),
+            'Email address is invalid.' =>
+                lang('CitizenPortal.emailInvalid'),
             'Citizen identity already exists in the current tenant.' =>
                 lang('CitizenPortal.duplicateIdentity'),
             default =>

@@ -231,6 +231,9 @@ final class AdminIdentityReadService
                 'ci.public_reference',
                 'ci.ninu_ciphertext',
                 'ci.phone_ciphertext',
+                'ci.email_ciphertext',
+                'ci.first_name_ciphertext',
+                'ci.last_name_ciphertext',
                 'ci.contact_verification_status',
                 'ci.department_code',
                 'ci.verification_status',
@@ -265,12 +268,34 @@ final class AdminIdentityReadService
                 $uuid
             );
 
+        $identity['email'] = $identity['email_ciphertext'] === null
+            ? null
+            : $this->crypto->decryptEmail(
+                (string) $identity['email_ciphertext'],
+                $uuid
+            );
+        $identity['first_name'] = $identity['first_name_ciphertext'] === null
+            ? null
+            : $this->crypto->decryptFirstName(
+                (string) $identity['first_name_ciphertext'],
+                $uuid
+            );
+        $identity['last_name'] = $identity['last_name_ciphertext'] === null
+            ? null
+            : $this->crypto->decryptLastName(
+                (string) $identity['last_name_ciphertext'],
+                $uuid
+            );
+
         $identity['record_id'] = $identityId;
 
         unset(
             $identity['id'],
             $identity['ninu_ciphertext'],
-            $identity['phone_ciphertext']
+            $identity['phone_ciphertext'],
+            $identity['email_ciphertext'],
+            $identity['first_name_ciphertext'],
+            $identity['last_name_ciphertext']
         );
 
         $identity['documents'] = $this->db

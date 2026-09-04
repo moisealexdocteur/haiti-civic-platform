@@ -77,6 +77,16 @@ $uuid = rawurlencode((string) $identity['uuid']);
 $status = (string) $identity['verification_status'];
 $ninu = (string) $identity['ninu'];
 $phone = (string) ($identity['phone'] ?? '');
+$email = (string) ($identity['email'] ?? '');
+$firstName = (string) ($identity['first_name'] ?? '');
+$lastName = (string) ($identity['last_name'] ?? '');
+$maskedName = static function (string $value): string {
+    if ($value === '') {
+        return '';
+    }
+
+    return mb_substr($value, 0, 1) . '••••';
+};
 $contactStatus = (string) $identity['contact_verification_status'];
 ?>
 
@@ -216,6 +226,34 @@ $contactStatus = (string) $identity['contact_verification_status'];
 
         <dl class="details">
             <div>
+                <dt><?= esc(lang('Admin.firstName')) ?></dt>
+                <dd>
+                    <?php if ($firstName === ''): ?>
+                        <span class="masked"><?= esc(lang('Admin.notProvided')) ?></span>
+                    <?php else: ?>
+                        <span class="masked"><?= esc($maskedName($firstName)) ?></span>
+                        <details class="sensitive">
+                            <summary><?= esc(lang('Admin.show')) ?></summary>
+                            <span class="value"><?= esc($firstName) ?></span>
+                        </details>
+                    <?php endif; ?>
+                </dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.lastName')) ?></dt>
+                <dd>
+                    <?php if ($lastName === ''): ?>
+                        <span class="masked"><?= esc(lang('Admin.notProvided')) ?></span>
+                    <?php else: ?>
+                        <span class="masked"><?= esc($maskedName($lastName)) ?></span>
+                        <details class="sensitive">
+                            <summary><?= esc(lang('Admin.show')) ?></summary>
+                            <span class="value"><?= esc($lastName) ?></span>
+                        </details>
+                    <?php endif; ?>
+                </dd>
+            </div>
+            <div>
                 <dt><?= esc(lang('Admin.reference')) ?></dt>
                 <dd class="masked"><?= esc((string) $identity['public_reference']) ?></dd>
             </div>
@@ -239,6 +277,20 @@ $contactStatus = (string) $identity['contact_verification_status'];
                         <details class="sensitive">
                             <summary><?= esc(lang('Admin.show')) ?></summary>
                             <span class="value"><?= esc($phone) ?></span>
+                        </details>
+                    <?php endif; ?>
+                </dd>
+            </div>
+            <div>
+                <dt><?= esc(lang('Admin.email')) ?></dt>
+                <dd>
+                    <?php if ($email === ''): ?>
+                        <span class="masked"><?= esc(lang('Admin.notProvided')) ?></span>
+                    <?php else: ?>
+                        <span class="masked"><?= esc(substr($email, 0, 2)) ?>•••@<?= esc((string) substr(strrchr($email, '@') ?: '', 1)) ?></span>
+                        <details class="sensitive">
+                            <summary><?= esc(lang('Admin.show')) ?></summary>
+                            <span class="value"><?= esc($email) ?></span>
                         </details>
                     <?php endif; ?>
                 </dd>

@@ -85,6 +85,28 @@ final class IdentityCryptoServiceTest
         );
     }
 
+    public function testContactIdentityFieldsRoundTrip(): void
+    {
+        $service = $this->service();
+
+        $email = $service->encryptEmail('citizen@example.test', self::UUID_A);
+        $firstName = $service->encryptFirstName('Marie', self::UUID_A);
+        $lastName = $service->encryptLastName('D’Haïti', self::UUID_A);
+
+        $this->assertSame(
+            'citizen@example.test',
+            $service->decryptEmail($email, self::UUID_A)
+        );
+        $this->assertSame(
+            'Marie',
+            $service->decryptFirstName($firstName, self::UUID_A)
+        );
+        $this->assertSame(
+            'D’Haïti',
+            $service->decryptLastName($lastName, self::UUID_A)
+        );
+    }
+
     public function testEncryptionIsRandomized(): void
     {
         $service = $this->service();

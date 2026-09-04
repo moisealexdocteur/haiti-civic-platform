@@ -11,6 +11,8 @@
     var failedLabel = script.getAttribute('data-failed-label') || '';
     var testingLabel = script.getAttribute('data-testing-label') || '';
     var untestedLabel = script.getAttribute('data-untested-label') || '';
+    var visibleLabel = script.getAttribute('data-visible-label') || '';
+    var hiddenLabel = script.getAttribute('data-hidden-label') || '';
     var deleteTemplate = script.getAttribute('data-delete-template') || '{channel}';
     var activeChannel = '';
 
@@ -27,6 +29,21 @@
         badge.classList.remove('is-valid', 'is-failed', 'is-untested', 'is-testing');
         badge.classList.add('is-' + state);
         badge.textContent = label;
+    }
+
+    function setCitizenVisibility(channel, ready) {
+        var item = document.querySelector(
+            '[data-citizen-channel="' + channel + '"]'
+        );
+
+        if (!item) return;
+
+        item.classList.toggle('is-ready', ready);
+        var label = item.querySelector('small');
+
+        if (label) {
+            label.textContent = ready ? visibleLabel : hiddenLabel;
+        }
     }
 
     function resetTestDialog(button) {
@@ -67,6 +84,10 @@
         }
 
         setStatus(activeChannel, payload.ok ? 'valid' : 'failed', payload.ok ? validLabel : failedLabel);
+
+        if (payload.ok) {
+            setCitizenVisibility(activeChannel, true);
+        }
 
         if (payload.ok) {
             var enabledName = activeChannel === 'email' ? 'email_enabled' : activeChannel + '_enabled';
@@ -140,7 +161,10 @@
             var card = field.closest('.settings-card');
             var button = card ? card.querySelector('[data-test-channel]') : null;
             var channel = button ? button.getAttribute('data-test-channel') : '';
-            if (channel) setStatus(channel, 'untested', untestedLabel);
+            if (channel) {
+                setStatus(channel, 'untested', untestedLabel);
+                setCitizenVisibility(channel, false);
+            }
         });
     });
 }());

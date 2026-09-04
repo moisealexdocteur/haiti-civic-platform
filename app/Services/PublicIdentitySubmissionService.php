@@ -61,7 +61,10 @@ final class PublicIdentitySubmissionService
         ?string $requestId = null,
         string $contactVerificationStatus =
             ContactVerificationStatus::OTP_VERIFIED,
-        ?string $departmentCode = null
+        ?string $departmentCode = null,
+        ?string $email = null,
+        ?string $firstName = null,
+        ?string $lastName = null
     ): array {
         $tenantId = $this->tenantContext->id();
         $consentVersion = $this->requiredString(
@@ -75,6 +78,13 @@ final class PublicIdentitySubmissionService
         );
         $departmentCode = (new HaitiDepartmentCatalog())
             ->normalize($departmentCode);
+        $normalizedEmail = $this->normalizer->normalizeEmail($email);
+        $normalizedFirstName = $firstName === null
+            ? null
+            : $this->normalizer->normalizePersonName($firstName);
+        $normalizedLastName = $lastName === null
+            ? null
+            : $this->normalizer->normalizePersonName($lastName);
 
         $lockName = $this->auditLockName($tenantId);
         $storedPaths = [];
@@ -119,6 +129,26 @@ final class PublicIdentitySubmissionService
                     $uuid
                 );
 
+            $emailCiphertext = $normalizedEmail === null
+                ? null
+                : $this->crypto->encryptEmail(
+                    $normalizedEmail,
+                    $uuid
+                );
+
+            $firstNameCiphertext = $normalizedFirstName === null
+                ? null
+                : $this->crypto->encryptFirstName(
+                    $normalizedFirstName,
+                    $uuid
+                );
+            $lastNameCiphertext = $normalizedLastName === null
+                ? null
+                : $this->crypto->encryptLastName(
+                    $normalizedLastName,
+                    $uuid
+                );
+
             $consentedAt = gmdate('Y-m-d H:i:s');
 
             $inserted = $this->db
@@ -130,6 +160,9 @@ final class PublicIdentitySubmissionService
                     'ninu_ciphertext' => $ninuCiphertext,
                     'ninu_fingerprint' => $fingerprint,
                     'phone_ciphertext' => $phoneCiphertext,
+                    'email_ciphertext' => $emailCiphertext,
+                    'first_name_ciphertext' => $firstNameCiphertext,
+                    'last_name_ciphertext' => $lastNameCiphertext,
                     'contact_verification_status' =>
                         $contactVerificationStatus,
                     'department_code' => $departmentCode,
@@ -167,6 +200,9 @@ final class PublicIdentitySubmissionService
 
             $context = [
                 'phone_present' => $normalizedPhone !== null,
+                'email_present' => $normalizedEmail !== null,
+                'name_present' => $normalizedFirstName !== null
+                    && $normalizedLastName !== null,
                 'contact_verification_status' =>
                     $contactVerificationStatus,
                 'department_code' => $departmentCode,
@@ -194,6 +230,9 @@ final class PublicIdentitySubmissionService
                 [
                     'verification_status' => self::INITIAL_STATUS,
                     'phone_present' => $normalizedPhone !== null,
+                    'email_present' => $normalizedEmail !== null,
+                    'name_present' => $normalizedFirstName !== null
+                        && $normalizedLastName !== null,
                     'contact_verification_status' =>
                         $contactVerificationStatus,
                     'department_code' => $departmentCode,

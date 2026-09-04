@@ -28,7 +28,7 @@
     <div class="card next-step-card">
         <h2><?= esc(lang('CitizenPortal.nextStepTitle')) ?></h2>
         <p class="lead next-step-lead">
-            <?= esc(lang('CitizenPortal.nextStepText', [lang('CitizenPortal.channelWhatsApp')])) ?>
+            <?= esc(lang('CitizenPortal.nextStepText')) ?>
         </p>
     </div>
 
