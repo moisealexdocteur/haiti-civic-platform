@@ -212,8 +212,11 @@ final class NotificationQueueService
     private function key(string $value, string $label): string
     {
         $value = trim($value);
+        $pattern = $label === 'template'
+            ? '/^[a-z][A-Za-z0-9._-]{1,99}$/D'
+            : '/^[a-z][a-z0-9._-]{1,99}$/D';
 
-        if (preg_match('/^[a-z][a-z0-9._-]{1,99}$/D', $value) !== 1) {
+        if (preg_match($pattern, $value) !== 1) {
             throw new InvalidArgumentException('Notification ' . $label . ' key is invalid.');
         }
 

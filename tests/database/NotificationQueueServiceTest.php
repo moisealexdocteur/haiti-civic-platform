@@ -129,6 +129,22 @@ final class NotificationQueueServiceTest extends CIUnitTestCase
 
     private function cleanupFixtures(): void
     {
+        $tenantIds = array_map(
+            'intval',
+            array_column(
+                $this->db->table('tenants')->select('id')
+                    ->whereIn('slug', [self::SLUG, self::FOREIGN_SLUG])
+                    ->get()->getResultArray(),
+                'id'
+            )
+        );
+
+        if ($tenantIds !== []) {
+            $this->db->table('notification_messages')->whereIn('tenant_id', $tenantIds)->delete();
+            $this->db->table('citizen_identities')->whereIn('tenant_id', $tenantIds)->delete();
+            $this->db->table('tenant_users')->whereIn('tenant_id', $tenantIds)->delete();
+        }
+
         $this->db->table('tenants')->whereIn('slug', [self::SLUG, self::FOREIGN_SLUG])->delete();
         $this->db->table('users')->where('email', self::FOREIGN_EMAIL)->delete();
     }
