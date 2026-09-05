@@ -153,7 +153,8 @@ final class CitizenPortal extends BaseController
                 $phone,
                 $this->otpRequestFingerprint((int) $tenant['id']),
                 $email === '' ? null : $email,
-                $channel === '' ? null : $channel
+                $channel === '' ? null : $channel,
+                $locale
             );
 
             $messageKey = match ($result['delivered_channel']) {
@@ -394,8 +395,10 @@ final class CitizenPortal extends BaseController
                 $emailInput === '' ? null : $emailInput
             )) {
                 $contactStatus = ContactVerificationStatus::OTP_VERIFIED;
+                $preferredChannel = (string) ($contactProof->snapshot()['delivered_channel'] ?? 'auto');
             } elseif ($contactFallback->hasAccepted($phoneInput)) {
                 $contactStatus = ContactVerificationStatus::MANUAL_REVIEW;
+                $preferredChannel = 'auto';
             } else {
                 throw new InvalidArgumentException(
                     'Contact verification is required.'
@@ -422,7 +425,9 @@ final class CitizenPortal extends BaseController
                 departmentCode: $departmentCode,
                 email: $emailInput === '' ? null : $emailInput,
                 firstName: $firstName,
-                lastName: $lastName
+                lastName: $lastName,
+                preferredLocale: $locale,
+                preferredNotificationChannel: $preferredChannel
             );
 
             $contactProof->clear();

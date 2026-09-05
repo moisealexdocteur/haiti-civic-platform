@@ -111,7 +111,7 @@ final class TwilioSmsMessageSender
             'accepted' => false,
             'messageId' => null,
             'failureCode' => $code,
-            'providerDetail' => $detail === null ? null : mb_substr($detail, 0, 500),
+            'providerDetail' => NotificationDeliveryService::sanitizeProviderDetail($detail),
         ];
     }
 

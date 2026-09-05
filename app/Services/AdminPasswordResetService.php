@@ -92,14 +92,27 @@ final class AdminPasswordResetService
                 'jeton' => $token,
             ], '', '&', PHP_QUERY_RFC3986);
             $resetUrl = rtrim($resetUrlBase, '?') . '?' . $query;
-            $sent = $this->deliverReset !== null
-                ? (bool) ($this->deliverReset)($membership, $resetUrl)
-                : (new AdminPasswordResetMailer((new TenantContext())->set($tenantId)))->send(
-                    (string) $membership['email'],
-                    (string) $membership['display_name'],
-                    (string) $membership['locale'],
-                    $resetUrl
-                );
+            if ($this->deliverReset !== null) {
+                $sent = (bool) ($this->deliverReset)($membership, $resetUrl);
+                $delivery = $sent ? 'email' : 'failed';
+            } else {
+                try {
+                    $notification = (new NotificationOrchestrator(
+                        (new TenantContext())->set($tenantId),
+                        $this->db
+                    ))->passwordReset($userId, $resetUrl, $uuid);
+                    $status = (new NotificationDeliveryService($this->db))
+                        ->dispatchMessage((int) $notification['id']);
+                    $sent = in_array($status, ['sent', 'retry'], true);
+                    $delivery = $status;
+                } catch (Throwable $notificationException) {
+                    log_message('error', 'Password reset notification failed: {type}', [
+                        'type' => $notificationException::class,
+                    ]);
+                    $sent = false;
+                    $delivery = 'failed';
+                }
+            }
 
             $audit = new AuditService((new TenantContext())->set($tenantId), $this->db);
 
@@ -110,7 +123,7 @@ final class AdminPasswordResetService
                     actorType: 'system',
                     entityType: 'user',
                     entityId: $userId,
-                    context: ['delivery' => 'email']
+                    context: ['delivery' => $delivery]
                 );
             } else {
                 $this->db->table('admin_password_reset_tokens')
@@ -214,6 +227,15 @@ final class AdminPasswordResetService
                 throw new RuntimeException('Could not commit password change.');
             }
 
+            try {
+                (new NotificationOrchestrator((new TenantContext())->set($tenantId), $this->db))
+                    ->passwordChanged($userId, 'reset:' . $requestUuid);
+            } catch (Throwable $notificationException) {
+                log_message('error', 'Password change notification could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
+            }
+
             return true;
         } catch (Throwable $exception) {
             $this->db->transRollback();
@@ -288,6 +310,15 @@ final class AdminPasswordResetService
                 throw new RuntimeException('Could not commit console password reset.');
             }
 
+            try {
+                (new NotificationOrchestrator((new TenantContext())->set($tenantId), $this->db))
+                    ->passwordChanged($userId, 'console:' . gmdate('YmdHis'));
+            } catch (Throwable $notificationException) {
+                log_message('error', 'Console password change notification could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
+            }
+
             return true;
         } catch (Throwable $exception) {
             $this->db->transRollback();
@@ -346,6 +377,15 @@ final class AdminPasswordResetService
 
             if (! $this->db->transStatus() || ! $this->db->transCommit()) {
                 throw new RuntimeException('Could not commit password change.');
+            }
+
+            try {
+                (new NotificationOrchestrator((new TenantContext())->set($tenantId), $this->db))
+                    ->passwordChanged($userId, 'authenticated:' . $newVersion);
+            } catch (Throwable $notificationException) {
+                log_message('error', 'Authenticated password change notification could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
             }
 
             return $newVersion;

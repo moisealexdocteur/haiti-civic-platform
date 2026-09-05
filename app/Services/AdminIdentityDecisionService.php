@@ -95,6 +95,19 @@ final class AdminIdentityDecisionService
                     && $manualContactReviewed,
             ]
         );
+
+        try {
+            (new NotificationOrchestrator($this->tenantContext, $this->db))
+                ->identityDecision(
+                    (int) $row['id'],
+                    $toStatus,
+                    $reasonCode === null ? null : trim($reasonCode)
+                );
+        } catch (\Throwable $exception) {
+            log_message('error', 'Decision notifications could not be queued: {type}', [
+                'type' => $exception::class,
+            ]);
+        }
     }
 
     private function hasConfirmedAuthorityCheck(int $identityId): bool

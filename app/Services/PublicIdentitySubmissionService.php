@@ -64,7 +64,9 @@ final class PublicIdentitySubmissionService
         ?string $departmentCode = null,
         ?string $email = null,
         ?string $firstName = null,
-        ?string $lastName = null
+        ?string $lastName = null,
+        string $preferredLocale = 'ht',
+        string $preferredNotificationChannel = 'auto'
     ): array {
         $tenantId = $this->tenantContext->id();
         $consentVersion = $this->requiredString(
@@ -85,6 +87,12 @@ final class PublicIdentitySubmissionService
         $normalizedLastName = $lastName === null
             ? null
             : $this->normalizer->normalizePersonName($lastName);
+        $preferredLocale = $preferredLocale === 'fr' ? 'fr' : 'ht';
+        $preferredNotificationChannel = strtolower(trim($preferredNotificationChannel));
+
+        if (! in_array($preferredNotificationChannel, ['auto', 'whatsapp', 'sms', 'email'], true)) {
+            $preferredNotificationChannel = 'auto';
+        }
 
         $lockName = $this->auditLockName($tenantId);
         $storedPaths = [];
@@ -163,6 +171,8 @@ final class PublicIdentitySubmissionService
                     'email_ciphertext' => $emailCiphertext,
                     'first_name_ciphertext' => $firstNameCiphertext,
                     'last_name_ciphertext' => $lastNameCiphertext,
+                    'preferred_locale' => $preferredLocale,
+                    'preferred_notification_channel' => $preferredNotificationChannel,
                     'contact_verification_status' =>
                         $contactVerificationStatus,
                     'department_code' => $departmentCode,
@@ -242,6 +252,15 @@ final class PublicIdentitySubmissionService
             );
 
             $this->commitOrFail();
+
+            try {
+                (new NotificationOrchestrator($this->tenantContext, $this->db))
+                    ->identitySubmitted($identityId);
+            } catch (Throwable $notificationException) {
+                log_message('error', 'Submission notifications could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
+            }
 
             return [
                 'id' => $identityId,

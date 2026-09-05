@@ -6,6 +6,7 @@ use App\Services\Otp\OtpChallengeDeliveryService;
 use App\Services\Otp\OtpChallengeService;
 use App\Services\Otp\OtpChannel;
 use App\Services\Otp\OtpDeliveryRequest;
+use App\Services\Otp\OtpChannelRouter;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\Session\Session;
 use Config\Database;
@@ -89,6 +90,9 @@ final class PublicIdentityTrackingService
                 'ci.uuid',
                 'ci.public_reference',
                 'ci.phone_ciphertext',
+                'ci.email_ciphertext',
+                'ci.preferred_locale',
+                'ci.preferred_notification_channel',
                 'ci.verification_status',
                 'ci.created_at',
                 'ci.updated_at',
@@ -113,6 +117,7 @@ final class PublicIdentityTrackingService
     ): array {
         $dossier = $this->requiredDossier($reference);
         $phoneCiphertext = (string) ($dossier['phone_ciphertext'] ?? '');
+        $emailCiphertext = (string) ($dossier['email_ciphertext'] ?? '');
 
         if ($phoneCiphertext === '') {
             throw new RuntimeException('Tracking contact is unavailable.');
@@ -123,11 +128,18 @@ final class PublicIdentityTrackingService
             $phoneCiphertext,
             (string) $dossier['uuid']
         );
+        $email = $emailCiphertext === ''
+            ? null
+            : (new IdentityCryptoService($context))->decryptEmail(
+                $emailCiphertext,
+                (string) $dossier['uuid']
+            );
         $router = (new TenantCommunicationSettingsService($context))->router();
-        $preference = array_values(array_filter([
-            $router->hasTransport(OtpChannel::WHATSAPP) ? OtpChannel::WHATSAPP : null,
-            $router->hasTransport(OtpChannel::SMS) ? OtpChannel::SMS : null,
-        ]));
+        $preference = $this->deliveryPreference(
+            $router,
+            (string) ($dossier['preferred_notification_channel'] ?? 'auto'),
+            $email !== null
+        );
 
         if ($preference === []) {
             throw new RuntimeException('Tracking delivery is unavailable.');
@@ -149,7 +161,8 @@ final class PublicIdentityTrackingService
                 new OtpDeliveryRequest(
                     (string) $issued['normalized_phone'],
                     $code,
-                    (int) $issued['ttl_seconds']
+                    (int) $issued['ttl_seconds'],
+                    $email
                 ),
                 $preference
             );
@@ -162,7 +175,13 @@ final class PublicIdentityTrackingService
                 throw new RuntimeException('Tracking delivery is unavailable.');
             }
 
-            $deliveries->markDelivered($challengeUuid, $delivery);
+            $deliveries->markDelivered(
+                $challengeUuid,
+                $delivery,
+                $phone,
+                $email,
+                (string) ($dossier['preferred_locale'] ?? 'ht')
+            );
             $this->session->set(self::SESSION_KEY, [
                 'tenant_id' => (int) $dossier['tenant_id'],
                 'identity_id' => (int) $dossier['id'],
@@ -190,6 +209,10 @@ final class PublicIdentityTrackingService
             if (function_exists('sodium_memzero')) {
                 sodium_memzero($code);
                 sodium_memzero($phone);
+
+                if ($email !== null) {
+                    sodium_memzero($email);
+                }
             }
         }
     }
@@ -258,5 +281,38 @@ final class PublicIdentityTrackingService
         }
 
         return $dossier;
+    }
+
+    /**
+     * @return list<OtpChannel>
+     */
+    private function deliveryPreference(
+        OtpChannelRouter $router,
+        string $preferredChannel,
+        bool $hasEmail
+    ): array {
+        $preferred = match ($preferredChannel) {
+            'email' => OtpChannel::EMAIL,
+            'sms' => OtpChannel::SMS,
+            'whatsapp' => OtpChannel::WHATSAPP,
+            default => null,
+        };
+        $ordered = [];
+
+        foreach (array_filter([
+            $preferred,
+            OtpChannel::WHATSAPP,
+            OtpChannel::SMS,
+            OtpChannel::EMAIL,
+        ]) as $channel) {
+            $ordered[$channel->value] = $channel;
+        }
+
+        return array_values(array_filter(
+            $ordered,
+            static fn (OtpChannel $channel): bool =>
+                $router->hasTransport($channel)
+                && ($channel !== OtpChannel::EMAIL || $hasEmail)
+        ));
     }
 }

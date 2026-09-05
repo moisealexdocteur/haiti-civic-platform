@@ -17,6 +17,8 @@ final class AdminBootstrapService
         'audit.view',
         'identity.view',
         'identity.manage',
+        'notifications.manage',
+        'notifications.view',
         'roles.manage',
         'roles.view',
         'settings.manage',

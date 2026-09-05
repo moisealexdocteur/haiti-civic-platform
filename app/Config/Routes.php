@@ -95,6 +95,26 @@ $routes->post(
     ['filter' => ['adminauth', 'adminperm:settings.manage', 'csrf']]
 );
 $routes->get(
+    'admin/notifications',
+    'AdminNotifications::index',
+    ['filter' => ['adminauth', 'adminperm:notifications.view']]
+);
+$routes->get(
+    'admin/notifications/(:segment)',
+    'AdminNotifications::show/$1',
+    ['filter' => ['adminauth', 'adminperm:notifications.view']]
+);
+$routes->post(
+    'admin/notifications/(:segment)/relancer',
+    'AdminNotifications::retry/$1',
+    ['filter' => ['adminauth', 'adminperm:notifications.manage', 'csrf']]
+);
+$routes->post(
+    'admin/notifications/(:segment)/annuler',
+    'AdminNotifications::cancel/$1',
+    ['filter' => ['adminauth', 'adminperm:notifications.manage', 'csrf']]
+);
+$routes->get(
     'admin/utilisateurs',
     'AdminUsers::index',
     ['filter' => ['adminauth', 'adminperm:users.view']]
@@ -107,6 +127,11 @@ $routes->post(
 $routes->post(
     'admin/utilisateurs/(:segment)/statut',
     'AdminUsers::status/$1',
+    ['filter' => ['adminauth', 'adminperm:users.manage', 'csrf']]
+);
+$routes->post(
+    'admin/utilisateurs/(:segment)/terrain',
+    'AdminUsers::fieldMode/$1',
     ['filter' => ['adminauth', 'adminperm:users.manage', 'csrf']]
 );
 $routes->get(

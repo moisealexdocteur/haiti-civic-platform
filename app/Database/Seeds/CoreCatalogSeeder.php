@@ -33,6 +33,8 @@ class CoreCatalogSeeder extends Seeder
 
             ['settings.view',       'Consulter les réglages',         'core'],
             ['settings.manage',     'Administrer les réglages',       'core'],
+            ['notifications.view',  'Consulter les notifications',    'core'],
+            ['notifications.manage','Administrer les notifications',  'core'],
         ];
 
         $permissionTable = $this->db->table('permissions');

@@ -353,6 +353,14 @@ final class RoleWriteService
             );
 
             $this->commitOrFail();
+
+            $this->notifyRoleUsers(
+                $roleId,
+                (string) $role['name'],
+                'updated',
+                'permissions:' . hash('sha256', implode('|', $permissionCodes))
+                    . ':' . gmdate('YmdHis') . ':' . bin2hex(random_bytes(4))
+            );
         } catch (Throwable $exception) {
             $this->rollbackIfNeeded();
             throw $exception;
@@ -444,11 +452,47 @@ final class RoleWriteService
             );
 
             $this->commitOrFail();
+
+            $this->notifyUserRole(
+                $userId,
+                (string) $role['name'],
+                'assigned',
+                $roleId . ':' . bin2hex(random_bytes(6))
+            );
         } catch (Throwable $exception) {
             $this->rollbackIfNeeded();
             throw $exception;
         } finally {
             $this->releaseAuditLock($lockName);
+        }
+    }
+
+    private function notifyRoleUsers(int $roleId, string $roleName, string $change, string $changeKey): void
+    {
+        try {
+            $users = $this->db->table('user_roles')->select('user_id')
+                ->where('tenant_id', $this->tenantContext->id())
+                ->where('role_id', $roleId)->get()->getResultArray();
+
+            foreach ($users as $user) {
+                $this->notifyUserRole((int) $user['user_id'], $roleName, $change, $changeKey);
+            }
+        } catch (Throwable $notificationException) {
+            log_message('error', 'Role audience notification could not be queued: {type}', [
+                'type' => $notificationException::class,
+            ]);
+        }
+    }
+
+    private function notifyUserRole(int $userId, string $roleName, string $change, string $changeKey): void
+    {
+        try {
+            (new NotificationOrchestrator($this->tenantContext, $this->db))
+                ->userRoleChanged($userId, $roleName, $change, $changeKey);
+        } catch (Throwable $notificationException) {
+            log_message('error', 'Role change notification could not be queued: {type}', [
+                'type' => $notificationException::class,
+            ]);
         }
     }
 
@@ -529,6 +573,13 @@ final class RoleWriteService
             );
 
             $this->commitOrFail();
+
+            $this->notifyUserRole(
+                $userId,
+                (string) $role['name'],
+                'removed',
+                $roleId . ':' . bin2hex(random_bytes(6))
+            );
         } catch (Throwable $exception) {
             $this->rollbackIfNeeded();
             throw $exception;

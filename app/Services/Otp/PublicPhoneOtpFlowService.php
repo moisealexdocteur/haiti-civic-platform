@@ -40,7 +40,8 @@ final class PublicPhoneOtpFlowService
         string $phone,
         ?string $requestFingerprint = null,
         ?string $email = null,
-        ?string $preferredChannel = null
+        ?string $preferredChannel = null,
+        ?string $locale = null
     ): array {
         $normalizedEmail = $this->normalizeEmail($email);
         $preferred = $this->preferredChannel($preferredChannel);
@@ -100,7 +101,10 @@ final class PublicPhoneOtpFlowService
 
             $this->deliveries->markDelivered(
                 $challengeUuid,
-                $delivery
+                $delivery,
+                $normalizedPhone,
+                $normalizedEmail,
+                $locale
             );
 
             $this->proofs->rememberIssued(

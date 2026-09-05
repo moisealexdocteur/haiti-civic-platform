@@ -10,6 +10,7 @@ final class LanguageCatalogParityTest extends CIUnitTestCase
         'Admin',
         'CitizenPortal',
         'ErrorPage',
+        'Notifications',
         'Validation',
     ];
 

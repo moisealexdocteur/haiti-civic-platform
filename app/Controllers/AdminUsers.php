@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\Concerns\AdminPage;
 use App\Services\AdminPortalReadService;
 use App\Services\AdminUserService;
+use App\Services\HaitiDepartmentCatalog;
 use CodeIgniter\HTTP\RedirectResponse;
 use InvalidArgumentException;
 use Throwable;
@@ -25,6 +26,7 @@ final class AdminUsers extends BaseController
             [
                 'users' => $reads->users($context['userId']),
                 'roles' => $reads->roles($context['userId']),
+                'departments' => (new HaitiDepartmentCatalog())->options($context['locale']),
                 'canManage' => $this->hasPermission($context, 'users.manage')
                     && $this->hasPermission($context, 'roles.manage'),
                 'saved' => session()->getFlashdata('user_saved') === true,
@@ -45,7 +47,9 @@ final class AdminUsers extends BaseController
                 (string) $this->request->getPost('locale'),
                 (string) $this->request->getPost('password'),
                 (int) $this->request->getPost('role_id'),
-                $this->request->getPost('is_owner') === '1'
+                $this->request->getPost('is_owner') === '1',
+                trim((string) $this->request->getPost('notification_phone')) ?: null,
+                (string) $this->request->getPost('preferred_notification_channel')
             );
             session()->setFlashdata('user_saved', true);
         } catch (InvalidArgumentException $exception) {
@@ -83,6 +87,36 @@ final class AdminUsers extends BaseController
             session()->setFlashdata('user_error', lang('Admin.userStatusFailed'));
         }
 
+        return redirect()->to('/admin/utilisateurs');
+    }
+
+    public function fieldMode(string $userUuid): RedirectResponse
+    {
+        $context = $this->adminContext();
+        $row = db_connect()->table('tenant_users tu')
+            ->select('u.id')->join('users u', 'u.id = tu.user_id')
+            ->where('tu.tenant_id', $context['tenantId'])
+            ->where('u.uuid', strtolower(trim($userUuid)))
+            ->limit(1)->get()->getFirstRow('array');
+
+        try {
+            if ($row === null) {
+                throw new InvalidArgumentException('Administrator does not exist.');
+            }
+            (new AdminUserService($context['tenantContext']))->setFieldMode(
+                $context['userId'],
+                (int) $row['id'],
+                $this->request->getPost('field_mode_enabled') === '1',
+                trim((string) $this->request->getPost('field_department_code')) ?: null,
+                trim((string) $this->request->getPost('notification_phone')) ?: null,
+                $this->request->getPost('clear_notification_phone') === '1',
+                (string) $this->request->getPost('preferred_notification_channel')
+            );
+            session()->setFlashdata('user_saved', true);
+        } catch (Throwable $exception) {
+            log_message('error', 'Field mode settings failed: {type}', ['type' => $exception::class]);
+            session()->setFlashdata('user_error', lang('Admin.fieldModeSaveFailed'));
+        }
         return redirect()->to('/admin/utilisateurs');
     }
 }
