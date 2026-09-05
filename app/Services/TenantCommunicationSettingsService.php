@@ -163,6 +163,46 @@ final class TenantCommunicationSettingsService
             );
         }
 
+        if (
+            $channel === 'whatsapp'
+            && $this->nullable($values['whatsapp_notification_template_name'] ?? null) !== null
+        ) {
+            $notificationResult = (new MetaWhatsAppMessageSender(
+                (string) $values['whatsapp_graph_version'],
+                (string) $values['whatsapp_phone_number_id'],
+                $this->requiredSecret(
+                    $values,
+                    'whatsapp_access_token_encrypted',
+                    'whatsapp_access_token'
+                ),
+                (string) $values['whatsapp_notification_template_name'],
+                (string) $values['whatsapp_notification_template_language']
+            ))->send(
+                $request->normalizedPhone,
+                'Tès notifikasyon / Test de notification'
+            );
+
+            if (! $notificationResult['accepted']) {
+                $this->audit->record(
+                    event: 'settings.communication_channel_test_failed',
+                    actorUserId: $actorUserId,
+                    entityType: 'tenant_communication_settings',
+                    entityId: $this->tenantContext->id(),
+                    context: [
+                        'channel' => $channel,
+                        'failure_code' => $notificationResult['failureCode'],
+                        'template_kind' => 'notification',
+                    ]
+                );
+
+                return (new CommunicationChannelDiagnostic())->failure(
+                    $channel,
+                    $notificationResult['failureCode'] ?? 'provider_rejected',
+                    $notificationResult['providerDetail']
+                );
+            }
+        }
+
         $this->saveValidatedChannel($actorUserId, $channel, $values, $input, $current);
 
         return (new CommunicationChannelDiagnostic())->success($channel);
@@ -186,6 +226,8 @@ final class TenantCommunicationSettingsService
                 'whatsapp_access_token_encrypted' => null,
                 'whatsapp_template_name' => null,
                 'whatsapp_template_language' => null,
+                'whatsapp_notification_template_name' => null,
+                'whatsapp_notification_template_language' => null,
             ],
             'sms' => [
                 'sms_enabled' => 0,
@@ -291,6 +333,12 @@ final class TenantCommunicationSettingsService
         return $this->runtimeConfiguration()['sms'];
     }
 
+    /** @return array{whatsapp:?array,sms:?array,email:?array} */
+    public function notificationConfiguration(): array
+    {
+        return $this->runtimeConfiguration();
+    }
+
     private function runtimeConfiguration(): array
     {
         $row = $this->row();
@@ -316,6 +364,12 @@ final class TenantCommunicationSettingsService
                 ),
                 'template_name' => (string) $row['whatsapp_template_name'],
                 'template_language' => (string) $row['whatsapp_template_language'],
+                'notification_template_name' => $this->nullable(
+                    $row['whatsapp_notification_template_name'] ?? null
+                ),
+                'notification_template_language' => $this->nullable(
+                    $row['whatsapp_notification_template_language'] ?? null
+                ) ?? 'ht',
             ];
         }
 
@@ -367,6 +421,16 @@ final class TenantCommunicationSettingsService
             'whatsapp_phone_number_id' => $this->text($input, 'whatsapp_phone_number_id', 30),
             'whatsapp_template_name' => $this->text($input, 'whatsapp_template_name', 512),
             'whatsapp_template_language' => $this->text($input, 'whatsapp_template_language', 10),
+            'whatsapp_notification_template_name' => $this->text(
+                $input,
+                'whatsapp_notification_template_name',
+                512
+            ),
+            'whatsapp_notification_template_language' => $this->text(
+                $input,
+                'whatsapp_notification_template_language',
+                10
+            ),
             'sms_enabled' => $smsEnabled ? 1 : 0,
             'twilio_account_sid' => $this->text($input, 'twilio_account_sid', 40),
             'twilio_from_number' => $this->text($input, 'twilio_from_number', 20),
@@ -400,13 +464,38 @@ final class TenantCommunicationSettingsService
         );
 
         if ($whatsappEnabled) {
+            $accessToken = $this->requiredSecret(
+                $values,
+                'whatsapp_access_token_encrypted',
+                'whatsapp_access_token'
+            );
             new MetaWhatsAppOtpTransport(
                 (string) $values['whatsapp_graph_version'],
                 (string) $values['whatsapp_phone_number_id'],
-                $this->requiredSecret($values, 'whatsapp_access_token_encrypted', 'whatsapp_access_token'),
+                $accessToken,
                 (string) $values['whatsapp_template_name'],
                 (string) $values['whatsapp_template_language']
             );
+
+            $notificationTemplate = $this->nullable($values['whatsapp_notification_template_name']);
+            $notificationLanguage = $this->nullable($values['whatsapp_notification_template_language']);
+            if ($notificationTemplate === null) {
+                $values['whatsapp_notification_template_language'] = null;
+                $notificationLanguage = null;
+            } elseif ($notificationLanguage === null) {
+                throw new InvalidArgumentException(
+                    'WhatsApp notification template and language must be configured together.'
+                );
+            }
+            if ($notificationTemplate !== null && $notificationLanguage !== null) {
+                new MetaWhatsAppMessageSender(
+                    (string) $values['whatsapp_graph_version'],
+                    (string) $values['whatsapp_phone_number_id'],
+                    $accessToken,
+                    $notificationTemplate,
+                    $notificationLanguage
+                );
+            }
         }
 
         if ($smsEnabled) {
@@ -475,6 +564,8 @@ final class TenantCommunicationSettingsService
             'whatsapp_phone_number_id' => (string) ($row['whatsapp_phone_number_id'] ?? ''),
             'whatsapp_template_name' => (string) ($row['whatsapp_template_name'] ?? ''),
             'whatsapp_template_language' => (string) ($row['whatsapp_template_language'] ?? 'ht'),
+            'whatsapp_notification_template_name' => (string) ($row['whatsapp_notification_template_name'] ?? ''),
+            'whatsapp_notification_template_language' => (string) ($row['whatsapp_notification_template_language'] ?? 'ht'),
             'whatsapp_secret_set' => $this->hasSecret($row, 'whatsapp_access_token_encrypted'),
             'whatsapp_configured' => $this->hasSecret($row, 'whatsapp_access_token_encrypted')
                 || (string) ($row['whatsapp_phone_number_id'] ?? '') !== '',
@@ -651,6 +742,8 @@ final class TenantCommunicationSettingsService
                 'whatsapp_enabled', 'whatsapp_graph_version',
                 'whatsapp_phone_number_id', 'whatsapp_access_token_encrypted',
                 'whatsapp_template_name', 'whatsapp_template_language',
+                'whatsapp_notification_template_name',
+                'whatsapp_notification_template_language',
             ],
             'sms' => [
                 'sms_enabled', 'twilio_account_sid', 'twilio_auth_token_encrypted',
@@ -723,6 +816,8 @@ final class TenantCommunicationSettingsService
                 'whatsapp_enabled', 'whatsapp_graph_version',
                 'whatsapp_phone_number_id', 'whatsapp_template_name',
                 'whatsapp_template_language',
+                'whatsapp_notification_template_name',
+                'whatsapp_notification_template_language',
             ],
             'sms' => [
                 'sms_enabled', 'twilio_account_sid', 'twilio_from_number',

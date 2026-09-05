@@ -97,14 +97,19 @@ final class AdminPortalReadService
         return $this->db->table('tenant_users tu')
             ->select(
                 'u.id, u.uuid, u.email, u.display_name, u.locale, u.last_login_at, '
-                . 'tu.status, tu.is_owner, GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ", ") AS roles'
+                . 'tu.status, tu.is_owner, tu.field_mode_enabled, tu.field_department_code, '
+                . 'tu.preferred_notification_channel, '
+                . '(tu.notification_phone_ciphertext IS NOT NULL) AS notification_phone_set, '
+                . 'GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ", ") AS roles'
             )
             ->join('users u', 'u.id = tu.user_id')
             ->join('user_roles ur', 'ur.tenant_id = tu.tenant_id AND ur.user_id = tu.user_id', 'left')
             ->join('roles r', 'r.id = ur.role_id AND r.tenant_id = tu.tenant_id', 'left')
             ->where('tu.tenant_id', $this->tenantContext->id())
             ->where('u.deleted_at', null)
-            ->groupBy('u.id, u.uuid, u.email, u.display_name, u.locale, u.last_login_at, tu.status, tu.is_owner')
+            ->groupBy('u.id, u.uuid, u.email, u.display_name, u.locale, u.last_login_at, '
+                . 'tu.status, tu.is_owner, tu.field_mode_enabled, tu.field_department_code, '
+                . 'tu.preferred_notification_channel, tu.notification_phone_ciphertext')
             ->orderBy('tu.is_owner', 'DESC')
             ->orderBy('u.display_name', 'ASC')
             ->get()
@@ -133,6 +138,8 @@ final class AdminPortalReadService
                 'audit.view',
                 'identity.manage',
                 'identity.view',
+                'notifications.manage',
+                'notifications.view',
                 'roles.manage',
                 'roles.view',
                 'settings.manage',

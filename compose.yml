@@ -39,6 +39,8 @@ services:
 
 
   app:
+    image: haiti-civic-platform-app
+
     build:
       context: .
       target: app
@@ -93,6 +95,18 @@ services:
       - civic-internal
 
     mem_limit: 320m
+
+
+  notifications:
+    extends:
+      service: app
+
+    command:
+      - php
+      - spark
+      - notifications:work
+
+    mem_limit: 128m
 
 
   web:

@@ -7,6 +7,7 @@ $nav = [
     ['users', '/admin/utilisateurs', 'Admin.navUsers', $can('users.view')],
     ['roles', '/admin/roles', 'Admin.navRoles', $can('roles.view')],
     ['communications', '/admin/communications', 'Admin.navCommunications', $can('settings.view')],
+    ['notifications', '/admin/notifications', 'Admin.navNotifications', $can('notifications.view')],
     ['audit', '/admin/audit', 'Admin.navAudit', $can('audit.view')],
     ['security', '/admin/securite', 'Admin.navSecurity', true],
 ];

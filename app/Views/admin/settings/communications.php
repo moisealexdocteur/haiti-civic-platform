@@ -82,6 +82,15 @@
                 <label for="wa-language"><?= esc(lang('Admin.templateLanguage')) ?></label>
                 <input id="wa-language" name="whatsapp_template_language" type="text" value="<?= esc($settings['whatsapp_template_language'], 'attr') ?>" maxlength="10" placeholder="ht" <?= $canManage ? '' : 'disabled' ?>>
             </div>
+            <div class="field">
+                <label for="wa-notification-template"><?= esc(lang('Admin.notificationTemplateName')) ?></label>
+                <input id="wa-notification-template" name="whatsapp_notification_template_name" type="text" value="<?= esc($settings['whatsapp_notification_template_name'], 'attr') ?>" maxlength="512" placeholder="civic_notification" <?= $canManage ? '' : 'disabled' ?>>
+                <p class="hint"><?= esc(lang('Admin.notificationTemplateHelp')) ?></p>
+            </div>
+            <div class="field">
+                <label for="wa-notification-language"><?= esc(lang('Admin.notificationTemplateLanguage')) ?></label>
+                <input id="wa-notification-language" name="whatsapp_notification_template_language" type="text" value="<?= esc($settings['whatsapp_notification_template_language'], 'attr') ?>" maxlength="10" placeholder="ht" <?= $canManage ? '' : 'disabled' ?>>
+            </div>
         </div>
         <?php if ($canManage): ?>
             <div class="channel-actions">

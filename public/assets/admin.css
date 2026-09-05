@@ -10,6 +10,84 @@
     grid-template-columns: 248px minmax(0, 1fr);
 }
 
+/* Notification center */
+.notification-stats {
+    margin-bottom: 1.25rem;
+}
+
+.notification-stats .stat-card {
+    color: inherit;
+    text-decoration: none;
+}
+
+.notification-filters {
+    align-items: end;
+    display: grid;
+    gap: .875rem;
+    grid-template-columns: repeat(3, minmax(10rem, 1fr)) auto;
+    margin-bottom: 1rem;
+}
+
+.notification-filters label {
+    display: grid;
+    gap: .35rem;
+}
+
+.notification-status-queued,
+.notification-status-processing,
+.notification-status-retry {
+    background: var(--warning-soft, #fff4d6);
+    color: var(--warning-text, #795500);
+}
+
+.notification-status-sent {
+    background: var(--success-soft, #e7f6ed);
+    color: var(--success-text, #17653a);
+}
+
+.notification-status-failed,
+.notification-status-cancelled {
+    background: var(--danger-soft, #fdecec);
+    color: var(--danger-text, #9c2525);
+}
+
+.notification-detail .detail-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.notification-body {
+    background: var(--surface-subtle, #f6f8fb);
+    border: 1px solid var(--border, #d6dce7);
+    border-radius: .65rem;
+    font: inherit;
+    line-height: 1.55;
+    margin: .75rem 0 1.25rem;
+    padding: 1rem;
+    white-space: pre-wrap;
+}
+
+.table-disclosure summary {
+    color: var(--link, #15398c);
+    cursor: pointer;
+    margin-top: .4rem;
+}
+
+.compact-form {
+    display: grid;
+    gap: .6rem;
+    min-width: 15rem;
+    padding: .75rem 0;
+}
+
+@media (max-width: 800px) {
+    .notification-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
 .admin-sidebar {
     position: sticky;
     top: 0;

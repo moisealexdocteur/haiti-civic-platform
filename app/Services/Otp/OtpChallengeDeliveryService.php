@@ -3,6 +3,7 @@
 namespace App\Services\Otp;
 
 use App\Services\AuditService;
+use App\Services\NotificationLedgerService;
 use App\Services\TenantContext;
 use CodeIgniter\Database\BaseConnection;
 use Config\Database;
@@ -27,7 +28,10 @@ final class OtpChallengeDeliveryService
 
     public function markDelivered(
         string $challengeUuid,
-        OtpDeliveryResult $result
+        OtpDeliveryResult $result,
+        ?string $phone = null,
+        ?string $email = null,
+        ?string $locale = null
     ): void {
         if (! $result->accepted) {
             throw new InvalidArgumentException(
@@ -88,6 +92,17 @@ final class OtpChallengeDeliveryService
             );
 
             $this->commitOrFail();
+
+            (new NotificationLedgerService($this->tenantContext, $this->db))
+                ->recordDeliveredOtp(
+                    $challengeUuid,
+                    (string) $row['purpose'],
+                    $result->channel->value,
+                    $phone,
+                    $email,
+                    $providerRef,
+                    $locale
+                );
         } catch (Throwable $exception) {
             $this->db->transRollback();
             throw $exception;

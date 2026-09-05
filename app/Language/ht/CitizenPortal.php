@@ -217,6 +217,7 @@ return [
     'trackingSending' => 'N ap voye kòd la',
     'trackingSentWhatsapp' => 'Nou voye kòd la sou WhatsApp.',
     'trackingSentSms' => 'Nou voye kòd la pa SMS.',
+    'trackingSentEmail' => 'Nou voye kòd la pa imel.',
     'trackingVerify' => 'Montre etap dosye a',
     'trackingCodeInvalid' => 'Kòd sa a pa bon, li fini oswa yo deja sèvi avè l.',
     'trackingUnavailable' => 'Nou pa ka voye kòd la kounye a. Eseye ankò pita.',

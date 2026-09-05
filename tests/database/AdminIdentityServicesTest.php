@@ -98,6 +98,8 @@ final class AdminIdentityServicesTest extends CIUnitTestCase
                 'audit.view',
                 'identity.manage',
                 'identity.view',
+                'notifications.manage',
+                'notifications.view',
                 'roles.manage',
                 'roles.view',
                 'settings.manage',

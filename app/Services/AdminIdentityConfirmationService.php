@@ -37,59 +37,38 @@ final class AdminIdentityConfirmationService
             throw new RuntimeException('Identity record was not found.');
         }
 
-        $phone = (string) ($identity['phone'] ?? '');
-
-        if ($phone === '') {
-            throw new RuntimeException('Identity record has no phone number.');
-        }
-
-        $config = (new TenantCommunicationSettingsService(
-            $this->tenantContext,
-            $this->db
-        ))->smsConfiguration();
-
-        if ($config === null) {
-            throw new RuntimeException('No validated SMS channel is available.');
-        }
-
-        $reference = (string) $identity['public_reference'];
-        $trackingUrl = rtrim($baseUrl, '/') . '/swiv/' . rawurlencode($reference);
-        $message = 'Dosye ou / Votre dossier: ' . $reference
-            . '. Swiv / Suivi: ' . $trackingUrl;
-        $sender = new TwilioSmsMessageSender(
-            $config['account_sid'],
-            $config['auth_token'],
-            $config['from_number'],
-            $config['messaging_service_sid']
-        );
-        $result = $sender->send($phone, $message);
+        $notification = (new NotificationOrchestrator($this->tenantContext, $this->db))
+            ->confirmationRequested(
+                (int) $identity['record_id'],
+                gmdate('YmdHis') . ':' . bin2hex(random_bytes(6))
+            );
+        $deliveryStatus = (new NotificationDeliveryService($this->db))
+            ->dispatchMessage((int) $notification['id']);
+        $message = $this->db->table('notification_messages')
+            ->select('delivered_channel, provider_message_id, status, last_error_code')
+            ->where('id', (int) $notification['id'])
+            ->limit(1)->get()->getFirstRow('array');
 
         $context = [
-            'channel' => 'sms',
-            'accepted' => $result['accepted'],
-            'failure_code' => $result['failureCode'],
+            'channel' => $message['delivered_channel'] ?? 'queued',
+            'delivery_status' => $deliveryStatus,
+            'failure_code' => $message['last_error_code'] ?? null,
         ];
 
         $this->audit->record(
-            event: $result['accepted']
+            event: ($message['status'] ?? null) === 'sent'
                 ? 'citizen_identity.confirmation_resent'
-                : 'citizen_identity.confirmation_resend_failed',
+                : 'citizen_identity.confirmation_queued',
             actorUserId: $actorUserId,
             entityType: 'citizen_identity',
             entityId: (int) $identity['record_id'],
             context: $context
         );
 
-        if (! $result['accepted']) {
-            throw new RuntimeException(
-                'Confirmation delivery failed: ' . ($result['failureCode'] ?? 'unknown')
-            );
-        }
-
         return [
             'identity' => $identity,
-            'channel' => 'sms',
-            'messageId' => (string) $result['messageId'],
+            'channel' => (string) ($message['delivered_channel'] ?? 'queued'),
+            'messageId' => (string) ($message['provider_message_id'] ?? $notification['uuid']),
         ];
     }
 }

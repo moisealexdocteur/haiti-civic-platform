@@ -233,6 +233,19 @@ final class TenantUserWriteService
             );
 
             $this->commitOrFail();
+
+            try {
+                (new NotificationOrchestrator($this->tenantContext, $this->db))
+                    ->userStatusChanged(
+                        $userId,
+                        $status,
+                        gmdate('YmdHis') . ':' . bin2hex(random_bytes(4))
+                    );
+            } catch (Throwable $notificationException) {
+                log_message('error', 'User status notification could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
+            }
         } catch (Throwable $exception) {
             $this->rollbackIfNeeded();
             throw $exception;
@@ -329,6 +342,18 @@ final class TenantUserWriteService
             );
 
             $this->commitOrFail();
+
+            try {
+                (new NotificationOrchestrator($this->tenantContext, $this->db))->ownershipChanged(
+                    $userId,
+                    $isOwner,
+                    gmdate('YmdHis') . ':' . bin2hex(random_bytes(4))
+                );
+            } catch (Throwable $notificationException) {
+                log_message('error', 'Ownership notification could not be queued: {type}', [
+                    'type' => $notificationException::class,
+                ]);
+            }
         } catch (Throwable $exception) {
             $this->rollbackIfNeeded();
             throw $exception;

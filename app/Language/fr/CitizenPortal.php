@@ -214,6 +214,7 @@ return [
     'trackingSending' => 'Envoi en cours',
     'trackingSentWhatsapp' => 'Code envoyé par WhatsApp.',
     'trackingSentSms' => 'Code envoyé par SMS.',
+    'trackingSentEmail' => 'Code envoyé par courriel.',
     'trackingVerify' => 'Afficher l’état du dossier',
     'trackingCodeInvalid' => 'Ce code est faux, expiré ou déjà utilisé.',
     'trackingUnavailable' => 'Le code ne peut pas être envoyé pour le moment. Réessayez plus tard.',

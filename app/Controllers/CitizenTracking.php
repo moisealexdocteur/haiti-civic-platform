@@ -38,7 +38,10 @@ final class CitizenTracking extends BaseController
                 throw new InvalidArgumentException('Not found.');
             }
 
-            $locale = $this->resolveLocale((string) $dossier['default_locale']);
+            $locale = $this->resolveLocale((string) (
+                $dossier['preferred_locale']
+                ?? $dossier['default_locale']
+            ));
             $this->request->setLocale($locale);
             $status = $service->visibleStatus($reference);
             $path = '/swiv/' . rawurlencode($reference);
@@ -60,6 +63,7 @@ final class CitizenTracking extends BaseController
                         'sending' => lang('CitizenPortal.trackingSending'),
                         'sentWhatsapp' => lang('CitizenPortal.trackingSentWhatsapp'),
                         'sentSms' => lang('CitizenPortal.trackingSentSms'),
+                        'sentEmail' => lang('CitizenPortal.trackingSentEmail'),
                         'invalid' => lang('CitizenPortal.trackingCodeInvalid'),
                         'unavailable' => lang('CitizenPortal.trackingUnavailable'),
                     ],
@@ -123,11 +127,11 @@ final class CitizenTracking extends BaseController
                 'challenge_uuid' => $result['challenge_uuid'],
                 'delivered_channel' => $result['delivered_channel'],
                 'ttl_seconds' => $result['ttl_seconds'],
-                'message' => lang(
-                    $result['delivered_channel'] === 'sms'
-                        ? 'CitizenPortal.trackingSentSms'
-                        : 'CitizenPortal.trackingSentWhatsapp'
-                ),
+                'message' => lang(match ($result['delivered_channel']) {
+                    'email' => 'CitizenPortal.trackingSentEmail',
+                    'sms' => 'CitizenPortal.trackingSentSms',
+                    default => 'CitizenPortal.trackingSentWhatsapp',
+                }),
             ]);
         } catch (InvalidArgumentException) {
             return $this->json(['ok' => false, 'message' => lang('CitizenPortal.trackingReferenceInvalid')], 404);
