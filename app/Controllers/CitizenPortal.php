@@ -72,6 +72,39 @@ final class CitizenPortal extends BaseController
         );
     }
 
+    public function scanCard(string $tenantSlug): ResponseInterface
+    {
+        $tenant = $this->resolveTenant($tenantSlug);
+        $this->request->setLocale($this->resolveLocale((string) ($tenant['default_locale'] ?? '')));
+        $key = 'oni-scan-' . hash('sha256', $this->request->getIPAddress());
+        if (! service('throttler')->check($key, 4, 60)) {
+            return $this->otpJson(['ok' => false, 'message' => lang('CitizenPortal.scanBusy')], 429);
+        }
+        $path = null;
+        try {
+            if (getenv('ONI_OCR_ENABLED') === '0') {
+                throw new RuntimeException('Scan unavailable.');
+            }
+            $file = $this->request->getFile('card');
+            if ($file === null || ! $file->isValid() || $file->hasMoved()
+                || $file->getSize() > 2 * 1024 * 1024
+                || ! in_array($file->getMimeType(), ['image/jpeg', 'image/png'], true)) {
+                return $this->otpJson(['ok' => false, 'message' => lang('CitizenPortal.fileUnreadable')], 422);
+            }
+            $path = $file->getTempName();
+            $evidence = json_decode((new \App\Services\LocalOniOcrReader())->scan($path), true, 32, JSON_THROW_ON_ERROR);
+            $result = (new \App\Services\OniCardPrefillService())->fromEvidence(is_array($evidence) ? $evidence : []);
+            return $this->otpJson(['ok' => true, 'fields' => $result]);
+        } catch (Throwable) {
+            // Neither image paths, OCR text nor identifiers are logged.
+            return $this->otpJson(['ok' => false, 'message' => lang('CitizenPortal.scanBusy')], 503);
+        } finally {
+            if (is_string($path) && is_file($path)) {
+                @unlink($path);
+            }
+        }
+    }
+
     public function register(string $tenantSlug): string
     {
         $tenant = $this->resolveTenant($tenantSlug);
@@ -598,7 +631,7 @@ final class CitizenPortal extends BaseController
             'fileTooSmall', 'fileUnreadable', 'piecesMissing',
             'scanNinuReading', 'scanNinuSuccess', 'scanNinuNotFound',
             'scanNinuUnsupported', 'abandonConfirm',
-            'scanIdentitySuccess',
+            'scanIdentitySuccess', 'scanBusy', 'scanServerConsent',
             'verifiedTitle',
             'departmentRequired',
             'manualTitle', 'manualLead', 'manualAction',
