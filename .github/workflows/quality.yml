@@ -80,6 +80,10 @@ jobs:
           docker compose -p civic-${{ github.run_id }} --profile test
           run --rm --no-deps test sh -ec
           'find app tests -type f -name "*.php" -print0 | xargs -0 -n1 php -l'
+      - name: Test offline image checks with synthetic inputs
+        run: >-
+          docker compose -p civic-${{ github.run_id }} --profile test
+          run --rm --no-deps test python3 -m unittest discover -s tests/vision
       - name: Run migrations and PHPUnit
         run: >-
           docker compose -p civic-${{ github.run_id }} --profile test
