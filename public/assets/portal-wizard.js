@@ -1196,12 +1196,16 @@
 
     /* ---------------- garde de sortie ---------------- */
 
+    var navigationDirty = false;
+    form.addEventListener('input', function () { navigationDirty = true; });
+    form.addEventListener('change', function () { navigationDirty = true; });
+
     window.addEventListener('beforeunload', function (event) {
         if (state.abandoning) {
             return;
         }
 
-        if (state.current === 's-intro' || state.current === 's-ninu') {
+        if (!navigationDirty && (state.current === 's-intro' || state.current === 's-ninu')) {
             return;
         }
 
