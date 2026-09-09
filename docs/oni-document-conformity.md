@@ -1,6 +1,6 @@
 # Acceptation automatique ONI et navigation : version 2
 
-État : code local, sans publication ni déploiement. Base main vérifiée : `7077879c93c8e03413638dbc4d9c5bde20c71683`. La branche `feature/oni-document-conformity` conserve le centre de notifications et le design existants.
+État : code publié sur la branche de travail GitHub après accord explicite, sans fusion ni déploiement. Base main vérifiée : `7077879c93c8e03413638dbc4d9c5bde20c71683`. La branche `feature/oni-document-conformity` conserve le centre de notifications et le design existants.
 
 ## Décision automatique
 
@@ -63,6 +63,6 @@ Avant fusion/déploiement : construire l’image, exécuter les migrations et te
 
 `ONI_OCR_ENABLED=0`, appliqué en recréant le service app, désactive les nouvelles décisions automatiques et conserve les dossiers déjà enregistrés. Les dossiers `auto_accepted` restent lisibles avec le code de cette version. Un retour à une ancienne version ignorant ce statut exige de prévoir leur traitement ; ne pas assimiler ces dossiers à des identités vérifiées ONI.
 
-La publication du code vers GitHub avait été bloquée par la revue automatique d’autorisation, faute d’accord explicite pour l’envoi au dépôt public. Aucune nouvelle tentative d’envoi n’a été faite. Le patch contient du code, des tests synthétiques et le modèle générique OpenCV, jamais les cartes personnelles.
+La publication sur la branche de travail du dépôt public a été explicitement autorisée le 9 septembre 2026. Le contenu publié comprend le code, les tests synthétiques et le modèle générique OpenCV, jamais les cartes personnelles, leurs recadrages ou leurs transcriptions OCR.
 
 Références techniques : [OpenCV, détection par cascade](https://docs.opencv.org/4.13.0/db/d28/tutorial_cascade_classifier.html), [Tesseract, sortie TSV et langues](https://tesseract-ocr.github.io/tessdoc/Command-Line-Usage.html).
