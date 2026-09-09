@@ -242,4 +242,11 @@ return [
     'duplicateIdentity' => 'Un dossier avec ce numéro existe déjà dans cette structure politique.',
     'submissionInvalid' => 'Une information du dossier n’est pas valide. Vérifiez et recommencez.',
     'submissionError' => 'Le dossier n’a pas pu être enregistré. Rien n’a été validé. Réessayez.',
+
+    'navigationLabel' => 'Navigation',
+    'backAdmin' => 'Administration',
+    'trackingStatusAutoAccepted' => 'Dossier accepté automatiquement',
+    'automaticTitle' => 'Votre dossier est accepté',
+    'automaticLead' => 'La carte et le portrait ont passé les contrôles automatiques.',
+    'automaticNextStep' => 'Votre dossier est accepté par l’application. Vous pouvez consulter son statut avec votre référence. Cette acceptation ne constitue pas une vérification auprès de l’ONI.',
 ];
