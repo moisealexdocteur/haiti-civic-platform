@@ -15,6 +15,10 @@
                 <span><?= esc(lang('Admin.pendingFiles')) ?></span>
                 <strong><?= esc((string) $summary['identities']['pending']) ?></strong>
             </a>
+            <a class="metric" href="/admin/identites?status=auto_accepted">
+                <span><?= esc(lang('Admin.statusAutoAccepted')) ?></span>
+                <strong><?= esc((string) $summary['identities']['auto_accepted']) ?></strong>
+            </a>
             <a class="metric" href="/admin/identites?status=verified">
                 <span><?= esc(lang('Admin.verifiedFiles')) ?></span>
                 <strong><?= esc((string) $summary['identities']['verified']) ?></strong>
