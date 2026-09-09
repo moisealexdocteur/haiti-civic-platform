@@ -8,16 +8,26 @@ final class LocalOniOcrReader implements OniOcrReader
 {
     public function read(string $path, ?string $portraitPath = null): string
     {
+        return $this->run($path, $portraitPath, false);
+    }
+
+    public function scan(string $path): string
+    {
+        return $this->run($path, null, true);
+    }
+
+    private function run(string $path, ?string $portraitPath, bool $scan): string
+    {
         $path = realpath($path) ?: '';
         if ($path === '' || ! is_file($path) || ! is_readable($path)
             || filesize($path) > PublicDocumentStorageService::MAX_BYTES) {
             throw new RuntimeException('OCR input unavailable.');
         }
-        if ($portraitPath === null || ! is_file($portraitPath)
-            || filesize($portraitPath) > PublicDocumentStorageService::MAX_BYTES) {
+        if (! $scan && ($portraitPath === null || ! is_file($portraitPath)
+            || filesize($portraitPath) > PublicDocumentStorageService::MAX_BYTES)) {
             throw new RuntimeException('Portrait unavailable.');
         }
-        $portraitPath = realpath($portraitPath);
+        $portraitPath = $scan ? null : realpath($portraitPath);
         $size = @getimagesize($path);
         if ($size === false || ! in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true)
             || $size[0] * $size[1] > 16000000) {
@@ -44,7 +54,9 @@ final class LocalOniOcrReader implements OniOcrReader
             // Array command bypasses the shell. No user text is used as an option.
             // Only PATH and thread limit are inherited; no application secrets.
             $process = @proc_open(
-                ['/usr/bin/python3', ROOTPATH . 'scripts/identity/oni_ocr.py', $path, $portraitPath],
+                $scan
+                    ? ['/usr/bin/python3', ROOTPATH . 'scripts/identity/oni_scan.py', $path]
+                    : ['/usr/bin/python3', ROOTPATH . 'scripts/identity/oni_ocr.py', $path, $portraitPath],
                 [0 => ['file', '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']],
                 $pipes,
                 null,
