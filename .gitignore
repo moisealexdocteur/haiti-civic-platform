@@ -50,3 +50,7 @@ docker-compose.override.yml
 
 # Test artifacts
 /build/
+
+# Python vision runtime
+__pycache__/
+*.pyc
