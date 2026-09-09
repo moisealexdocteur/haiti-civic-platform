@@ -14,6 +14,7 @@ $routes->get(
     'inscription/(:segment)',
     'CitizenPortal::register/$1'
 );
+$routes->post('inscription/(:segment)/carte/lire', 'CitizenPortal::scanCard/$1', ['filter' => 'csrf']);
 $routes->post(
     'inscription/(:segment)/otp/demander',
     'CitizenPortal::requestOtp/$1',
