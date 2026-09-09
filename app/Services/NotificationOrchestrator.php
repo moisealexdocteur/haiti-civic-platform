@@ -28,15 +28,33 @@ final class NotificationOrchestrator
         $reference = (string) $identity['public_reference'];
         $trackingUrl = $this->url('swiv/' . rawurlencode($reference));
         $contact = (string) $identity['contact_verification_status'];
+        $automatic = $identity['verification_status'] === IdentityVerificationStateMachine::AUTO_ACCEPTED;
 
         $this->enqueueCitizen(
             $identity,
             'identity.submitted.citizen',
-            'submissionCitizen',
+            $automatic ? 'automaticCitizen' : 'submissionCitizen',
             [$reference, $trackingUrl],
             'identity:' . $identityId . ':submission:citizen',
             80
         );
+
+        if ($automatic) {
+            $url = $this->url('admin/identites/' . rawurlencode((string) $identity['uuid']));
+            foreach ($this->administrators('identity.manage') as $user) {
+                $this->enqueueUser($user, 'identity.auto_accepted.administrator', 'automaticAdmin',
+                    [$reference, $url], 'identity:' . $identityId . ':automatic:admin:' . $user['id'],
+                    'administrator', $identityId, 70);
+            }
+            foreach ($this->fieldUsers((string) ($identity['department_code'] ?? '')) as $user) {
+                $locale = $this->locale((string) $user['locale']);
+                $this->enqueueUser($user, 'identity.auto_accepted.field', 'decisionField',
+                    [$reference, $this->department((string) ($identity['department_code'] ?? ''), $locale),
+                        lang('Admin.statusAutoAccepted', [], $locale), $url],
+                    'identity:' . $identityId . ':automatic:field:' . $user['id'], 'field', $identityId, 70);
+            }
+            return;
+        }
 
         $adminTemplate = $contact === ContactVerificationStatus::MANUAL_REVIEW
             ? 'manualReviewAdmin'

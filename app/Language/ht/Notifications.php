@@ -42,7 +42,7 @@ return [
     'fieldModeSubject' => 'Mòd teren ou mete ajou',
     'fieldModeBody' => "Bonjou {0},\n\nMòd teren : {1}\nZòn : {2}\nW ap resevwa alèt ki koresponn ak afektasyon sa a.",
     'adminDigestSubject' => 'Rapò pòtay la chak jou - {0}',
-    'adminDigestBody' => "Rapò {0}\nDosye k ap tann : {1}\nDosye verifye : {2}\nDosye rejte : {3}\nNotifikasyon ki echwe : {4}\n\nTablo kontwòl : {5}",
+    'adminDigestBody' => "Rapò {0}\nDosye k ap tann : {1}\nDosye verifye : {2}\nDosye rejte : {3}\nNotifikasyon ki echwe : {4}\n\nTablo kontwòl : {5} Aksepte otomatikman : {6}.",
     'fieldDigestSubject' => 'Rapò teren - {0}',
     'fieldDigestBody' => "Rapò {0}\nZòn : {1}\nDosye k ap tann : {2}\nNouvo dosye : {3}\n\nLouvri lis la : {4}",
     'statusActive' => 'aktif',
@@ -66,4 +66,9 @@ return [
     'rejectionPortrait' => 'pòtrè a pa konfòm',
     'rejectionMismatch' => 'enfòmasyon yo pa koresponn',
     'rejectionOther' => 'yon lòt egzamen nesesè',
+
+    'automaticCitizenSubject' => 'Nou aksepte dosye {1} ou a',
+    'automaticCitizenBody' => 'Sistèm nan aksepte dosye {1} ou a apre kontwòl kat la, NINU a ak pòtrè a. Sa pa vle di ONI verifye idantite ou. Suivi : {2}',
+    'automaticAdminSubject' => 'Dosye {0} aksepte otomatikman',
+    'automaticAdminBody' => 'Dosye {0} pase kontwòl otomatik kat la, NINU a ak pòtrè a. Estati kontak la parèt apa nan fich la. Gade : {1}',
 ];

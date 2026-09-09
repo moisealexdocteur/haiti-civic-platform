@@ -72,6 +72,10 @@ $installedAppName = 'Portail de vérification citoyenne';
                 <h1><?= esc($pageTitle) ?></h1>
             </div>
             <div class="admin-actions">
+                <a class="btn btn-ghost" href="/?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('Admin.publicPortal')) ?></a>
+                <?php if (($navigationPath ?? '') !== '/admin'): ?>
+                    <a class="btn btn-ghost" href="/admin?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('Admin.navDashboard')) ?></a>
+                <?php endif; ?>
                 <?= $this->renderSection('topActions') ?>
             </div>
         </header>

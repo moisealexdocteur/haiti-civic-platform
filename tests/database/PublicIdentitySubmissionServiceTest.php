@@ -386,6 +386,39 @@ final class PublicIdentitySubmissionServiceTest
         $this->assertSame([], $files);
     }
 
+    public function testSuccessfulChecksAcceptWithoutClaimingOniVerification(): void
+    {
+        $reader = new class implements \App\Services\OniOcrReader {
+            public function read(string $path, ?string $portraitPath = null): string
+            {
+                return json_encode(['card_detected' => true, 'portrait_detected' => true,
+                    'numbers' => [['value' => '0000000000', 'confidence' => 95]]]);
+            }
+        };
+        // The portrait must be a different upload, not a copy of the front.
+        file_put_contents($this->documents[VerificationDocumentWriteService::PORTRAIT], base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9HcAAAAASUVORK5CYII='
+        ));
+        $service = new PublicIdentitySubmissionService(
+            (new TenantContext())->set($this->tenantA), $this->db,
+            conformity: new \App\Services\OniDocumentConformityService($reader)
+        );
+        $result = $service->submit(self::NINU, self::PHONE, 'test-v1', $this->documents,
+            firstName: 'Jean', lastName: 'Exemple');
+        $this->assertSame('conformant', $result['document_conformity']['status']);
+        $this->assertSame('auto_accepted', $result['verification_status']);
+        $stored = $this->identity($this->tenantA, (int) $result['id']);
+        $this->assertSame('auto_accepted', $stored['verification_status']);
+        $this->assertNull($stored['verified_at']);
+        $event = $this->db->table('identity_verification_events')
+            ->where('tenant_id', $this->tenantA)->where('citizen_identity_id', $result['id'])
+            ->where('event_type', 'identity.public_submitted')->get()->getFirstRow('array');
+        $context = json_decode($event['context_json'], true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('auto_accepted', $event['to_status']);
+        $this->assertFalse($context['document_conformity']['authority_verified']);
+        $this->assertStringNotContainsString(self::NINU, $event['context_json']);
+    }
+
     private function service(int $tenantId): PublicIdentitySubmissionService
     {
         return new PublicIdentitySubmissionService(

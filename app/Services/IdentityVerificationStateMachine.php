@@ -8,6 +8,8 @@ final class IdentityVerificationStateMachine
 {
     public const PENDING = 'pending';
 
+    public const AUTO_ACCEPTED = 'auto_accepted';
+
     public const VERIFIED = 'verified';
 
     public const REJECTED = 'rejected';
@@ -28,6 +30,8 @@ final class IdentityVerificationStateMachine
             self::PENDING,
         ],
 
+        self::AUTO_ACCEPTED => [self::PENDING, self::VERIFIED, self::REJECTED],
+
         self::VERIFIED => [],
     ];
 
@@ -35,6 +39,7 @@ final class IdentityVerificationStateMachine
     {
         return [
             self::PENDING,
+            self::AUTO_ACCEPTED,
             self::VERIFIED,
             self::REJECTED,
         ];
@@ -96,6 +101,7 @@ final class IdentityVerificationStateMachine
         $this->assertStatus($fromStatus);
         $this->assertStatus($toStatus);
 
-        return $toStatus === self::REJECTED;
+        return $toStatus === self::REJECTED
+            || ($fromStatus === self::AUTO_ACCEPTED && $toStatus === self::PENDING);
     }
 }

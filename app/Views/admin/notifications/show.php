@@ -2,7 +2,7 @@
 
 <?= $this->section('main') ?>
 <?php $statusKey = 'Admin.notificationStatus' . ucfirst((string) $message['status']); ?>
-<a class="back-link" href="/admin/notifications">← <?= esc(lang('Admin.backToNotifications')) ?></a>
+<a class="back-link" href="<?= esc($navigationBackUrl, 'attr') ?>">← <?= esc(lang('Admin.backToNotifications')) ?></a>
 
 <section class="panel notification-detail">
     <div class="detail-heading">

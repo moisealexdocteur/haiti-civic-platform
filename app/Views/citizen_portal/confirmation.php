@@ -4,8 +4,8 @@
 <section class="screen is-active screen-center">
     <div class="tick" aria-hidden="true"><?= view('partials/icon_tick') ?></div>
 
-    <h1><?= esc(lang('CitizenPortal.confirmationTitle')) ?></h1>
-    <p class="lead"><?= esc(lang('CitizenPortal.confirmationLead')) ?></p>
+    <h1><?= esc(lang(($automaticAcceptance ?? false) ? 'CitizenPortal.automaticTitle' : 'CitizenPortal.confirmationTitle')) ?></h1>
+    <p class="lead"><?= esc(lang(($automaticAcceptance ?? false) ? 'CitizenPortal.automaticLead' : 'CitizenPortal.confirmationLead')) ?></p>
 
     <p class="eyebrow reference-eyebrow"><?= esc(lang('CitizenPortal.referenceLabel')) ?></p>
     <p class="reference" data-reference><?= esc($reference) ?></p>
@@ -28,7 +28,7 @@
     <div class="card next-step-card">
         <h2><?= esc(lang('CitizenPortal.nextStepTitle')) ?></h2>
         <p class="lead next-step-lead">
-            <?= esc(lang('CitizenPortal.nextStepText')) ?>
+            <?= esc(lang(($automaticAcceptance ?? false) ? 'CitizenPortal.automaticNextStep' : 'CitizenPortal.nextStepText')) ?>
         </p>
     </div>
 

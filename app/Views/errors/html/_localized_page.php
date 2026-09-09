@@ -8,7 +8,7 @@ $title = lang($titleKey);
 $description = isset($technicalMessage) && ENVIRONMENT !== 'production'
     ? (string) $technicalMessage
     : lang($messageKey);
-$homePath = $isAdmin ? '/admin/login' : '/';
+$homePath = $isAdmin ? '/admin' : '/';
 $homeLabel = $isAdmin ? lang('ErrorPage.backAdmin') : lang('ErrorPage.backHome');
 ?>
 <!doctype html>

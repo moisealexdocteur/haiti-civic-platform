@@ -8,6 +8,8 @@ use CodeIgniter\Test\CIUnitTestCase;
 final class NotificationTemplateCatalogTest extends CIUnitTestCase
 {
     private const TEMPLATE_ARGUMENTS = [
+        'automaticCitizen' => ['name', 'DOS-TEST', 'https://example.test/follow'],
+        'automaticAdmin' => ['DOS-TEST', 'https://example.test/admin'],
         'otpRedacted' => ['purpose'],
         'submissionCitizen' => ['name', 'DOS-TEST', 'https://example.test/follow'],
         'newSubmissionAdmin' => ['DOS-TEST', 'Nord', 'contact', 'https://example.test/admin'],
@@ -28,7 +30,7 @@ final class NotificationTemplateCatalogTest extends CIUnitTestCase
         'passwordReset' => ['name', 'https://example.test/reset'],
         'passwordChanged' => ['name', 'portal'],
         'fieldMode' => ['name', 'status', 'Nord'],
-        'adminDigest' => ['2026-09-05', 1, 2, 3, 4, 'https://example.test/admin'],
+        'adminDigest' => ['2026-09-05', 1, 2, 3, 4, 'https://example.test/admin', 5],
         'fieldDigest' => ['2026-09-05', 'Nord', 1, 2, 'https://example.test/admin'],
     ];
 

@@ -14,6 +14,7 @@
     <?php if (is_array($status)): ?>
         <?php
         $statusKey = match ((string) $status['status']) {
+            'auto_accepted' => 'CitizenPortal.trackingStatusAutoAccepted',
             'verified' => 'CitizenPortal.trackingStatusVerified',
             'rejected' => 'CitizenPortal.trackingStatusRejected',
             default => 'CitizenPortal.trackingStatusPending',

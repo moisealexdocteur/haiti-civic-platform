@@ -42,7 +42,7 @@ return [
     'fieldModeSubject' => 'Votre mode terrain a été mis à jour',
     'fieldModeBody' => "Bonjour {0},\n\nMode terrain : {1}\nZone : {2}\nVous recevrez les alertes correspondant à cette affectation.",
     'adminDigestSubject' => 'Rapport quotidien du portail - {0}',
-    'adminDigestBody' => "Rapport du {0}\nDossiers en attente : {1}\nDossiers vérifiés : {2}\nDossiers rejetés : {3}\nNotifications en échec : {4}\n\nTableau de bord : {5}",
+    'adminDigestBody' => "Rapport du {0}\nDossiers en attente : {1}\nDossiers vérifiés : {2}\nDossiers rejetés : {3}\nNotifications en échec : {4}\n\nTableau de bord : {5} Acceptés automatiquement : {6}.",
     'fieldDigestSubject' => 'Rapport terrain - {0}',
     'fieldDigestBody' => "Rapport du {0}\nZone : {1}\nDossiers en attente : {2}\nNouveaux dossiers : {3}\n\nOuvrir la file : {4}",
     'statusActive' => 'actif',
@@ -66,4 +66,9 @@ return [
     'rejectionPortrait' => 'portrait non conforme',
     'rejectionMismatch' => 'informations incohérentes',
     'rejectionOther' => 'un nouvel examen est nécessaire',
+
+    'automaticCitizenSubject' => 'Votre dossier {1} est accepté',
+    'automaticCitizenBody' => 'Votre dossier {1} a été accepté automatiquement après contrôle de la carte, du NINU et du portrait. Cette acceptation ne constitue pas une vérification ONI. Suivi : {2}',
+    'automaticAdminSubject' => 'Dossier {0} accepté automatiquement',
+    'automaticAdminBody' => 'Le dossier {0} a passé les contrôles automatiques de la carte, du NINU et du portrait. Le statut du contact est indiqué séparément dans la fiche. Consulter : {1}',
 ];

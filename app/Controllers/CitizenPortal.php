@@ -114,6 +114,7 @@ final class CitizenPortal extends BaseController
                 [
                     'tenant' => $tenant,
                     'reference' => $reference,
+                    'automaticAcceptance' => session()->getFlashdata('civic_acceptance') === 'auto_accepted',
                     'trackingUrl' => site_url(
                         'swiv/' . rawurlencode($reference)
                     ) . '?lang=' . rawurlencode($locale),
@@ -432,6 +433,8 @@ final class CitizenPortal extends BaseController
 
             $contactProof->clear();
             $contactFallback->clear();
+
+            session()->setFlashdata('civic_acceptance', $result['verification_status']);
 
             // POST-Redirect-GET : un rafraîchissement ne rejoue pas l'envoi.
             session()->setFlashdata(

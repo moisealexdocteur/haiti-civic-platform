@@ -136,6 +136,14 @@
         <img class="product-mark" src="<?= esc(versioned_asset('/assets/portal-mark.svg'), 'attr') ?>" alt="">
         <span><b><?= esc(lang('Admin.productName')) ?></b><small><?= esc(lang('Admin.adminArea')) ?></small></span>
     </header>
+    <nav class="page-navigation" aria-label="<?= esc(lang('CitizenPortal.navigationLabel'), 'attr') ?>">
+        <a href="/?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.backHome')) ?></a>
+        <?php if ($adminAvailable ?? false): ?>
+            <a href="/admin?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.backAdmin')) ?></a>
+        <?php elseif (($navigationPath ?? '') !== '/admin/login'): ?>
+            <a href="/admin/login?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('Admin.backLogin')) ?></a>
+        <?php endif; ?>
+    </nav>
     <?= $this->renderSection('main') ?>
     <?php if (empty($hidePreferences)): ?>
     <footer class="auth-footer">

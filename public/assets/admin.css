@@ -1206,3 +1206,10 @@ table.queue td.num { font-variant-numeric: tabular-nums; }
 @media (max-height: 700px) {
     .auth-shell { align-content: start; }
 }
+
+.page-navigation{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;align-items:center}.page-navigation:empty{display:none}.page-navigation a{display:inline-flex;align-items:center;min-height:44px;font-size:.875rem}
+
+.pill-auto_accepted{color:var(--accent);background:var(--surface);border:1px solid var(--line)}
+.admin-actions{flex-wrap:wrap}
+
+.document-preview{width:100%;height:75vh;border:0}.document-preview-image{display:block;max-width:100%;height:auto;margin:auto}

@@ -57,6 +57,7 @@
         title.textContent = row.name;
         details.textContent = strings.files + ': ' + row.total
             + ' | ' + strings.pending + ': ' + row.pending
+            + ' | ' + strings.auto_accepted + ': ' + row.auto_accepted
             + ' | ' + strings.verified + ': ' + row.verified
             + ' | ' + strings.rejected + ': ' + row.rejected;
         popup.appendChild(title);

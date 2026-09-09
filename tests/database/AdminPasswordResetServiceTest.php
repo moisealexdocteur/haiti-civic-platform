@@ -193,7 +193,7 @@ final class AdminPasswordResetServiceTest extends CIUnitTestCase
         ))->dashboard($this->userId);
 
         $this->assertSame(
-            ['pending' => 0, 'verified' => 0, 'rejected' => 0],
+            ['pending' => 0, 'auto_accepted' => 0, 'verified' => 0, 'rejected' => 0],
             $summary['identities']
         );
         $this->assertSame(1, $summary['members']);

@@ -11,13 +11,6 @@ final class AdminIdentityReadService
 {
     private const VIEW_PERMISSION = 'identity.view';
 
-    private const STATUSES = [
-        'all',
-        IdentityVerificationStateMachine::PENDING,
-        IdentityVerificationStateMachine::VERIFIED,
-        IdentityVerificationStateMachine::REJECTED,
-    ];
-
     private TenantContext $tenantContext;
     private BaseConnection $db;
     private AuthorizationService $authorization;
@@ -185,7 +178,7 @@ final class AdminIdentityReadService
     ): array {
         $status = strtolower(trim($status));
 
-        if (! in_array($status, self::STATUSES, true)) {
+        if ($status !== 'all' && ! (new IdentityVerificationStateMachine())->isValidStatus($status)) {
             throw new InvalidArgumentException(
                 'Unknown identity verification status.'
             );
@@ -316,6 +309,15 @@ final class AdminIdentityReadService
             ->orderBy('vd.revision_no', 'DESC')
             ->get()
             ->getResultArray();
+
+        $automaticRow = $this->db->table('identity_verification_events')
+            ->select('context_json')->where('tenant_id', $tenantId)
+            ->where('citizen_identity_id', $identityId)
+            ->where('event_type', 'identity.public_submitted')
+            ->orderBy('id', 'DESC')->limit(1)->get()->getFirstRow('array');
+        $automaticContext = json_decode((string) ($automaticRow['context_json'] ?? '{}'), true);
+        $identity['document_conformity'] = is_array($automaticContext['document_conformity'] ?? null)
+            ? $automaticContext['document_conformity'] : null;
 
         $identity['events'] = $this->db
             ->table('identity_verification_events ive')

@@ -245,4 +245,11 @@ return [
     'duplicateIdentity' => 'Gen yon dosye ak nimewo sa a deja nan estrikti politik sa a.',
     'submissionInvalid' => 'Gen yon enfòmasyon nan dosye a ki pa bon. Tcheke epi rekòmanse.',
     'submissionError' => 'Nou pa t ka anrejistre dosye a. Anyen pa valide. Eseye ankò.',
+
+    'navigationLabel' => 'Navigasyon',
+    'backAdmin' => 'Administrasyon',
+    'trackingStatusAutoAccepted' => 'Sistèm nan aksepte dosye a',
+    'automaticTitle' => 'Nou aksepte dosye ou a',
+    'automaticLead' => 'Kat la ak pòtrè a pase kontwòl otomatik yo.',
+    'automaticNextStep' => 'Sistèm nan aksepte dosye ou a. Ou ka sèvi ak referans ou pou suiv li. Sa pa vle di ONI verifye idantite ou.',
 ];

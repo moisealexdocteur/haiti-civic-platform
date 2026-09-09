@@ -13,6 +13,12 @@ RUN apk add --no-cache \
         icu-libs \
         oniguruma \
         libzip \
+        tesseract-ocr \
+        tesseract-ocr-data-eng \
+        tesseract-ocr-data-fra \
+        python3 \
+        py3-pillow \
+        py3-opencv \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
         curl-dev \
