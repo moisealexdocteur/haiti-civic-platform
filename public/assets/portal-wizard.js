@@ -262,6 +262,7 @@
     var scanStatus = form.querySelector('[data-scan-status]');
 
     scanButton.addEventListener('click', function () {
+        if (!window.confirm(t('scanServerConsent'))) { return; }
         scanInput.value = '';
         scanInput.click();
     });
@@ -273,7 +274,7 @@
             return;
         }
 
-        if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+        if (file.type && !/^image\//i.test(file.type)) {
             scanStatus.textContent = t('fileNotImage');
             return;
         }
@@ -286,17 +287,14 @@
         scanButton.disabled = true;
         scanStatus.textContent = t('scanNinuReading');
 
-        loadBitmap(file).then(function (source) {
-            return detectNinu(source).finally(function () {
-                if (source.close) {
-                    source.close();
-                }
-            });
+        compress(file, 0.92).then(function (blob) {
+            if (!blob || blob.size > 2 * 1024 * 1024) { throw new Error('scan_image'); }
+            return scanCardOnServer(blob);
         }).then(function (result) {
             scanButton.disabled = false;
 
-            if (result.ninu) {
-                document.getElementById('ninu').value = result.ninu;
+            if (result.ninu || result.firstName || result.lastName) {
+                if (result.ninu) { document.getElementById('ninu').value = result.ninu; }
 
                 if (result.firstName) {
                     document.getElementById('first-name').value =
@@ -315,95 +313,41 @@
                 return;
             }
 
-            scanStatus.textContent = result.supported
-                ? t('scanNinuNotFound')
-                : t('scanNinuUnsupported');
-        }).catch(function () {
+            scanStatus.textContent = t('scanNinuNotFound');
+        }).catch(function (error) {
             scanButton.disabled = false;
-            scanStatus.textContent = t('fileUnreadable');
+            scanStatus.textContent = error.scanMessage || t('fileUnreadable');
         });
     });
 
-    function detectNinu(source) {
-        var supported = false;
-        var barcode = Promise.resolve([]);
-
-        if ('BarcodeDetector' in window) {
-            try {
-                supported = true;
-                barcode = new window.BarcodeDetector().detect(source)
-                    .catch(function () { return []; });
-            } catch (error) {
-                supported = false;
+    function scanCardOnServer(blob) {
+        return new Promise(function (resolve, reject) {
+            var data = new FormData();
+            var token = csrfField();
+            if (token) { data.append(token.name, token.value); }
+            data.append('card', blob, 'card.jpg');
+            var request = new XMLHttpRequest();
+            request.open('POST', '/inscription/' + encodeURIComponent(slug) + '/carte/lire');
+            request.setRequestHeader('Accept', 'application/json');
+            request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            request.timeout = 30000;
+            function fail(message) {
+                var error = new Error('scan_failed');
+                error.scanMessage = message || t('scanBusy');
+                reject(error);
             }
-        }
-
-        return barcode.then(function (codes) {
-            var result = identityFromDetections(codes);
-
-            if (result.ninu || !('TextDetector' in window)) {
-                result.supported = supported;
-                return result;
-            }
-
-            try {
-                supported = true;
-                return new window.TextDetector().detect(source)
-                    .catch(function () { return []; })
-                    .then(function (lines) {
-                        var details = identityFromDetections(lines);
-                        details.supported = supported;
-                        return details;
-                    });
-            } catch (error) {
-                return {
-                    ninu: '',
-                    firstName: '',
-                    lastName: '',
-                    supported: supported
-                };
-            }
+            request.onload = function () {
+                var payload;
+                try { payload = JSON.parse(request.responseText); } catch (error) { fail(); return; }
+                updateCsrf(payload);
+                if (request.status === 200 && payload.ok && payload.fields) {
+                    resolve(payload.fields);
+                } else { fail(payload.message); }
+            };
+            request.onerror = function () { fail(t('networkError')); };
+            request.ontimeout = function () { fail(t('scanBusy')); };
+            request.send(data);
         });
-    }
-
-    function identityFromDetections(detections) {
-        var lines = (detections || []).map(function (item) {
-            return String(item.rawValue || item.text || '');
-        }).filter(Boolean);
-        var text = lines.join(' ');
-        var match = text.match(/(?:^|\D)(\d{10})(?:\D|$)/);
-
-        return {
-            ninu: match ? match[1] : '',
-            firstName: labelledName(lines, /(?:PR[ÉE]NOM|GIVEN\s+NAMES?|FIRST\s+NAME)/i),
-            lastName: labelledName(lines, /(?:NOM|SURNAME|LAST\s+NAME)/i)
-        };
-    }
-
-    function labelledName(lines, label) {
-        for (var index = 0; index < lines.length; index += 1) {
-            var current = lines[index].replace(label, '').replace(/^\s*[:\-]\s*/, '').trim();
-
-            if (label.test(lines[index]) && validDetectedName(current)) {
-                return current;
-            }
-
-            if (
-                label.test(lines[index])
-                && lines[index + 1]
-                && validDetectedName(lines[index + 1].trim())
-            ) {
-                return lines[index + 1].trim();
-            }
-        }
-
-        return '';
-    }
-
-    function validDetectedName(value) {
-        return value.length > 1
-            && value.length <= 100
-            && /^[\p{L}\p{M}][\p{L}\p{M} .'’\-]*$/u.test(value);
     }
 
     var departmentInput = document.getElementById('department-code');
@@ -866,7 +810,7 @@
         });
     });
 
-    function compress(file) {
+    function compress(file, quality) {
         return loadBitmap(file).then(function (source) {
             var width = source.width;
             var height = source.height;
@@ -917,7 +861,7 @@
                     }
 
                     resolve(blob);
-                }, 'image/jpeg', JPEG_QUALITY);
+                }, 'image/jpeg', quality || JPEG_QUALITY);
             });
         });
     }
