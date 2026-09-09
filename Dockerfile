@@ -117,6 +117,11 @@ COPY docker/nginx/default.conf \
 
 COPY public /var/www/html/public
 
+# Git updates performed under a restrictive umask must not make static
+# assets unreadable by the unprivileged Nginx workers. Public files only.
+RUN find /var/www/html/public -type d -exec chmod 755 {} + \
+    && find /var/www/html/public -type f -exec chmod 644 {} +
+
 EXPOSE 80
 
 
