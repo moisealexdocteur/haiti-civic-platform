@@ -24,11 +24,21 @@ final class IdentityVerificationStateMachineTest
         $this->assertSame(
             [
                 'pending',
+                'auto_accepted',
                 'verified',
                 'rejected',
             ],
             $this->machine->statuses()
         );
+    }
+
+    public function testAutomaticAcceptanceCanBeReviewedButCannotBeForgedByTransition(): void
+    {
+        $this->assertFalse($this->machine->canTransition('pending', 'auto_accepted'));
+        $this->assertTrue($this->machine->canTransition('auto_accepted', 'pending'));
+        $this->assertTrue($this->machine->requiresReason('auto_accepted', 'pending'));
+        $this->assertTrue($this->machine->canTransition('auto_accepted', 'verified'));
+        $this->assertTrue($this->machine->canTransition('auto_accepted', 'rejected'));
     }
 
     public function testPendingCanBecomeVerified(): void
