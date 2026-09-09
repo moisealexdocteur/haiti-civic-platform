@@ -120,7 +120,9 @@ def ocr(image, mode, deadline):
             conf=float(parts[10])
         except ValueError:
             continue
-        rows.append({'text':parts[11].strip(),'confidence':conf,'line':parts[1:5]})
+        rows.append({'text':parts[11].strip(),'confidence':conf,'line':parts[1:5],
+                     'x':int(parts[6])/image.width,'y':int(parts[7])/image.height,
+                     'w':int(parts[8])/image.width,'h':int(parts[9])/image.height})
     return rows
 
 
@@ -142,8 +144,68 @@ def number_candidates(rows):
     return found
 
 
-def card(gray, deadline):
+def label_distance(left, right):
+    previous = list(range(len(right) + 1))
+    for i, a in enumerate(left, 1):
+        current = [i]
+        for j, b in enumerate(right, 1):
+            current.append(min(current[-1]+1, previous[j]+1, previous[j-1]+(a != b)))
+        previous = current
+    return previous[-1]
+
+
+def scan_names(rows):
+    """Use labels and spatial alignment, not the OCR reading order across columns."""
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(tuple(row['line']), []).append(row)
+    lines = []
+    for words in grouped.values():
+        lines.append({'text': ' '.join(w['text'] for w in words).strip(),
+                      'confidence': min(w['confidence'] for w in words),
+                      'x': min(w['x'] for w in words), 'y': min(w['y'] for w in words),
+                      'bottom': max(w['y'] + w['h'] for w in words)})
+    result = {'firstName': '', 'lastName': ''}
+    for key in result:
+        anchors = []
+        for line in lines:
+            label = ''.join(c for c in unicodedata.normalize('NFD', line['text'].upper())
+                            if unicodedata.category(c) != 'Mn')
+            tokens = re.findall(r'[A-Z]+', label)
+            fuzzy_first = bool(tokens and 4 <= len(tokens[0]) <= 8
+                               and label_distance(tokens[0], 'PRENOM') <= 2
+                               and (line['text'] != line['text'].upper() or '/' in label))
+            first = bool(re.search(r'\bPRENOM\b|/\s*NON\b', label)) or fuzzy_first
+            last = bool(re.search(r'^NOM(?:\s|/|$)', label)) and not first
+            if (key == 'firstName' and first) or (key == 'lastName' and last):
+                anchors.append(line)
+        found = set()
+        for anchor in anchors:
+            # Never read past the next field label in the same column.
+            boundaries = [line['y'] for line in lines
+                          if line['y'] > anchor['bottom'] and abs(line['x']-anchor['x']) < .10
+                          and re.search(r'^(?:NOM|LIEU|DATE|PR[EÉ]NOM)\b', line['text'].upper())]
+            bottom = min(boundaries) if boundaries else anchor['bottom'] + .12
+            candidates = []
+            for line in lines:
+                value = line['text']
+                dy = line['y'] - anchor['bottom']
+                dx = abs(line['x'] - anchor['x'])
+                if (-.012 <= dy < .12 and line['y'] > anchor['y'] + .008 and line['y'] < bottom and dx < .075 and line['confidence'] >= 70
+                        and 2 <= len(value) <= 100 and value == value.upper()
+                        and all(c.isalpha() or c in " -'’" for c in value)
+                        and not re.search(r'\b(?:SEXE|NATIONALIT[EÉ]|HTI|NAISSANCE|NOM|NON|SIYATI|STYATI|NATIONALE|NASYONAL|NASYONALITE)\b', value)):
+                    candidates.append((dy + dx, value))
+            if candidates:
+                found.add(min(candidates)[1])
+        if len(found) == 1:
+            result[key] = found.pop()
+    return result
+
+
+def card(gray, deadline, include_fields=False):
     recognized = False
+    scan_fallback = None
     for k in range(4):
         if time.monotonic()>deadline:
             break
@@ -163,6 +225,16 @@ def card(gray, deadline):
             if not detected:
                 continue
             recognized = True
+            fields = scan_names(rows) if include_fields else {}
+            if include_fields:
+                h, w = candidate.shape
+                column = candidate[:, int(w*.32):int(w*.69)]
+                extra = scan_names(ocr(column, 6, deadline))
+                for key, value in extra.items():
+                    if value:
+                        fields[key] = value if not fields[key] or fields[key] == value else ''
+            if include_fields and scan_fallback is None:
+                scan_fallback = {'card_detected': True, 'numbers': [], 'fields': fields}
             numbers=[dict(n, source='front') for n in number_candidates(rows)]
             height,width=candidate.shape
             roi=candidate[int(height*.63):int(height*.99),int(width*.48):]
@@ -173,8 +245,8 @@ def card(gray, deadline):
             numbers.extend(dict(n, source='sharp') for n in number_candidates(ocr(sharp,6,deadline)))
             # Return evidence from ONE recognized card, never combine different documents.
             if any(n['confidence'] >= 65 for n in numbers):
-                return {'card_detected':True,'numbers':numbers}
-    return {'card_detected':recognized,'numbers':[]}
+                return {'card_detected':True,'numbers':numbers, **({'fields': fields} if include_fields else {})}
+    return scan_fallback or {'card_detected':recognized,'numbers':[]}
 
 
 def read(front, portrait_path=None):
