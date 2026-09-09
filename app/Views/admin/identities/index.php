@@ -5,6 +5,7 @@
 $labels = [
     'all' => lang('Admin.statusAll'),
     'pending' => lang('Admin.statusPending'),
+    'auto_accepted' => lang('Admin.statusAutoAccepted'),
     'verified' => lang('Admin.statusVerified'),
     'rejected' => lang('Admin.statusRejected'),
 ];
