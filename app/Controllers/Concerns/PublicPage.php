@@ -119,7 +119,7 @@ trait PublicPage
     protected function themeUrls(string $locale): array
     {
         $path = '/' . ltrim($this->request->getUri()->getPath(), '/');
-        $query = 'lang=' . rawurlencode($locale) . '&theme=';
+        $query = \App\Services\NavigationLinks::query(array_merge($this->request->getGet() ?? [], ['lang' => $locale])) . '&theme=';
 
         return [
             'auto' => $path . '?' . $query . 'auto',
@@ -139,8 +139,25 @@ trait PublicPage
         array $langUrls,
         array $extra = []
     ): array {
+        $adminAvailable = false;
+        $session = service('session');
+        if ((int) $session->get('admin_user_id') > 0) {
+            $this->response->setHeader('Cache-Control', 'no-store, private');
+            try {
+                $adminAvailable = (new \App\Services\AdminAuthService())->sessionIsActive(
+                    (int) $session->get('admin_user_id'),
+                    (int) $session->get('admin_tenant_id'),
+                    (string) $session->get('admin_tenant_slug'),
+                    (int) $session->get('admin_session_version')
+                );
+            } catch (\Throwable) {
+                $adminAvailable = false;
+            }
+        }
         return array_merge(
             [
+                'adminAvailable' => $adminAvailable,
+                'navigationPath' => '/' . ltrim($this->request->getUri()->getPath(), '/'),
                 'locale' => $locale,
                 'pageTitle' => $pageTitle,
                 'theme' => $this->resolveTheme(),
