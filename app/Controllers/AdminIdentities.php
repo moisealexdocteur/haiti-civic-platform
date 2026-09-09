@@ -117,6 +117,7 @@ final class AdminIdentities extends BaseController
 
         $statuses = [
             'pending' => lang('Admin.statusPending'),
+    'auto_accepted' => lang('Admin.statusAutoAccepted'),
             'verified' => lang('Admin.statusVerified'),
             'rejected' => lang('Admin.statusRejected'),
         ];
@@ -194,6 +195,7 @@ final class AdminIdentities extends BaseController
         );
 
         return view('admin/identities/confirmation', [
+            'navigationBackUrl' => $this->returnToList($context, '/admin/identites'),
             'locale' => $context['locale'],
             'tenantName' => (string) $context['session']->get('admin_tenant_name'),
             'reference' => (string) $identity['public_reference'],
@@ -279,6 +281,26 @@ final class AdminIdentities extends BaseController
                 ->options($context['locale']),
             ]
         ));
+    }
+
+    public function documentPreview(string $identityUuid, string $documentUuid)
+    {
+        $this->noStore();
+        $context = $this->adminContext();
+        try {
+            $document = (new AdminIdentityReadService($context['tenantContext']))
+                ->documentForActor($context['userId'], rawurldecode($identityUuid), rawurldecode($documentUuid));
+        } catch (RuntimeException | InvalidArgumentException) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+        if ($document === null) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+        return view('admin/identities/document', $this->adminPageData($context, 'Admin.documents', 'identities', [
+            'documentUrl' => '/admin/identites/' . rawurlencode($identityUuid) . '/documents/' . rawurlencode($documentUuid),
+            'identityUrl' => '/admin/identites/' . rawurlencode($identityUuid),
+            'documentIsPdf' => $document['content_type'] === 'application/pdf',
+        ]));
     }
 
     public function document(string $identityUuid, string $documentUuid)
