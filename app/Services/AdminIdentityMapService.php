@@ -55,6 +55,7 @@ final class AdminIdentityMapService
                 . "THEN 1 ELSE 0 END) AS rejected",
                 false
             )
+            ->select("SUM(CASE WHEN verification_status = 'auto_accepted' THEN 1 ELSE 0 END) AS auto_accepted", false)
             ->where('tenant_id', $this->tenantContext->id())
             ->where('department_code IS NOT NULL', null, false)
             ->groupBy('department_code')
@@ -73,6 +74,7 @@ final class AdminIdentityMapService
             $counts = $byCode[$code] ?? [];
             $rows[] = array_merge($point, [
                 'total' => (int) ($counts['total'] ?? 0),
+                'auto_accepted' => (int) ($counts['auto_accepted'] ?? 0),
                 'pending' => (int) ($counts['pending'] ?? 0),
                 'verified' => (int) ($counts['verified'] ?? 0),
                 'rejected' => (int) ($counts['rejected'] ?? 0),
