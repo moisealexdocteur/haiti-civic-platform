@@ -75,6 +75,6 @@ final class AdminNotifications extends BaseController
         } catch (Throwable $exception) {
             session()->setFlashdata('notification_error', lang('Admin.notificationActionFailed'));
         }
-        return redirect()->to('/admin/notifications');
+        return redirect()->to($this->returnToList($context, '/admin/notifications'));
     }
 }
