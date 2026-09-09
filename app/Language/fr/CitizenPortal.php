@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'scanServerConsent' => 'Pour lire la carte, cette photo sera envoyée à notre serveur puis supprimée après le traitement. Continuer ?',
+    'scanBusy' => 'La lecture est momentanément indisponible. Réessayez dans une minute ou saisissez les informations.',
     // --- coquille ---
     'brand' => 'Portail de vérification citoyenne',
     'languageSwitch' => 'Langue',
@@ -71,14 +73,14 @@ return [
     'ninuHint' => 'Les 10 chiffres inscrits sur votre carte.',
     'ninuRequired' => 'Entrez exactement les 10 chiffres inscrits sur votre carte.',
     'scanNinuTitle' => 'Lire le numéro sur la carte',
-    'scanNinuLead' => 'Sur un téléphone compatible, photographiez le devant de la carte pour remplir les 10 chiffres.',
+    'scanNinuLead' => 'Photographiez le devant de la carte pour proposer le NINU, le prénom et le nom.',
     'scanNinuAction' => 'Scanner le devant de la carte',
-    'scanNinuInlineHelp' => 'Touchez l’icône de l’appareil photo pour lire la carte, ou saisissez les informations. La photo reste sur cet appareil.',
-    'scanNinuPrivacy' => 'Cette photo sert uniquement à lire le numéro sur cet appareil. Elle n’est pas envoyée.',
+    'scanNinuInlineHelp' => 'Touchez l’appareil photo pour lire la carte. La photo est envoyée à notre serveur pour cette lecture, puis supprimée après le traitement. Vérifiez les champs proposés.',
+    'scanNinuPrivacy' => 'Cette lecture utilise notre serveur, sans service OCR externe. La photo temporaire est supprimée après le traitement.',
     'scanNinuReading' => 'Lecture de la carte en cours…',
     'scanNinuSuccess' => 'Les 10 chiffres ont été lus. Vérifiez-les avant de continuer.',
     'scanNinuNotFound' => 'Le numéro n’a pas pu être lu. Placez la carte à plat, sans reflet, ou entrez les 10 chiffres.',
-    'scanNinuUnsupported' => 'La lecture automatique n’est pas disponible sur ce téléphone. Entrez les 10 chiffres.',
+    'scanNinuUnsupported' => 'Cette photo ne peut pas être lue. Choisissez une photo JPEG ou PNG, ou saisissez les informations.',
     'scanIdentitySuccess' => 'Les informations détectées ont été préremplies. Vérifiez attentivement chaque champ.',
     'firstNameLabel' => 'Prénom',
     'lastNameLabel' => 'Nom',
