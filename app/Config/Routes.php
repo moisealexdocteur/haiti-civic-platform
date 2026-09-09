@@ -177,6 +177,11 @@ $routes->get(
     ['filter' => ['adminauth', 'adminperm:identity.view']]
 );
 $routes->get(
+    'admin/identites/(:segment)/documents/(:segment)/voir',
+    'AdminIdentities::documentPreview/$1/$2',
+    ['filter' => ['adminauth', 'adminperm:identity.view']]
+);
+$routes->get(
     'admin/identites/(:segment)/documents/(:segment)',
     'AdminIdentities::document/$1/$2',
     ['filter' => ['adminauth', 'adminperm:identity.view']]
