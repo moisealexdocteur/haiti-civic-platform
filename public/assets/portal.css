@@ -665,3 +665,5 @@ details > summary {
 }
 
 details[open] > summary { margin-bottom: 10px; }
+
+.page-navigation{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;align-items:center}.page-navigation:empty{display:none}.page-navigation a{display:inline-flex;align-items:center;min-height:44px;font-size:.875rem}
