@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test mobile scan transport without native detectors
+        run: node --test tests/frontend/*.test.cjs
       - name: Reject long dashes and emoji
         run: |
           python3 - <<'PY'
