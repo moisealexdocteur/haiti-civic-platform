@@ -53,7 +53,7 @@ final class NotificationDigestService
             $message = $queue->enqueue(
                 'report.daily.administrator', 'adminDigest', 'administrator', $locale,
                 ['email' => (string) $user['email'], 'phone' => $this->phone($context, $user)],
-                [$date, $counts['pending'], $counts['verified'], $counts['rejected'], $failed, $this->url('admin')],
+                [$date, $counts['pending'], $counts['verified'], $counts['rejected'], $failed, $this->url('admin'), $counts['auto_accepted']],
                 'digest:' . $date . ':administrator:' . (int) $user['id'], $this->channel($user),
                 recipientUserId: (int) $user['id'], entityType: 'daily_report', priority: 30
             );
@@ -86,7 +86,7 @@ final class NotificationDigestService
 
     private function identityCounts(int $tenantId): array
     {
-        $counts = ['pending' => 0, 'verified' => 0, 'rejected' => 0];
+        $counts = ['pending' => 0, 'auto_accepted' => 0, 'verified' => 0, 'rejected' => 0];
         foreach ($this->db->table('citizen_identities')->select('verification_status, COUNT(*) AS total')
             ->where('tenant_id', $tenantId)->groupBy('verification_status')->get()->getResultArray() as $row) {
             $counts[(string) $row['verification_status']] = (int) $row['total'];
