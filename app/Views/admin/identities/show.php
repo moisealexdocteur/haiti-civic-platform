@@ -11,13 +11,14 @@
         <button class="btn btn-ghost" type="submit"><?= esc(lang('Admin.resendConfirmation')) ?></button>
     </form>
 <?php endif; ?>
-<a class="btn btn-ghost" href="/admin/identites"><?= esc(lang('Admin.backToQueue')) ?></a>
+<a class="btn btn-ghost" href="<?= esc($navigationBackUrl, 'attr') ?>"><?= esc(lang('Admin.backToQueue')) ?></a>
 <?= $this->endSection() ?>
 
 <?= $this->section('main') ?>
 <?php
 $statusLabels = [
     'pending' => lang('Admin.statusPending'),
+    'auto_accepted' => lang('Admin.statusAutoAccepted'),
     'verified' => lang('Admin.statusVerified'),
     'rejected' => lang('Admin.statusRejected'),
 ];
@@ -129,7 +130,7 @@ $contactStatus = (string) $identity['contact_verification_status'];
                         loading="lazy"
                     >
                     <a
-                        href="/admin/identites/<?= $uuid ?>/documents/<?= rawurlencode((string) $byType[$type]['uuid']) ?>"
+                        href="/admin/identites/<?= $uuid ?>/documents/<?= rawurlencode((string) $byType[$type]['uuid']) ?>/voir"
                         target="_blank"
                         rel="noopener"
                     ><?= esc(lang('Admin.openLarge')) ?></a>
@@ -314,13 +315,27 @@ $contactStatus = (string) $identity['contact_verification_status'];
         </dl>
     </section>
 
+    <?php if (is_array($identity['document_conformity'] ?? null)): ?>
+        <section class="panel">
+            <h2><?= esc(lang('Admin.automaticChecks')) ?></h2>
+            <p><?= esc(lang($identity['document_conformity']['status'] === 'conformant' ? 'Admin.automaticPass' : 'Admin.automaticManual')) ?></p>
+            <p class="panel-note"><?= esc(lang('Admin.automaticScope')) ?></p>
+            <ul>
+                <?php foreach ($identity['document_conformity']['reason_codes'] ?? [] as $reason): ?>
+                    <?php $reasonKey = in_array($reason, ['card_not_recognized', 'portrait_not_detected', 'portrait_is_card', 'ninu_ambiguous', 'ninu_unreadable', 'ninu_mismatch', 'ocr_disabled'], true) ? $reason : 'analysis_unavailable'; ?>
+                    <li><?= esc(lang('Admin.automatic_' . $reasonKey)) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    <?php endif; ?>
+
     <section class="panel">
         <h2><?= esc(lang('Admin.decisionTitle')) ?></h2>
         <p class="panel-note"><?= esc(lang('Admin.authorityCheckRequired')) ?></p>
 
         <?php if (! $canManage): ?>
             <p class="empty"><?= esc(lang('Admin.viewOnly')) ?></p>
-        <?php elseif ($status === 'pending'): ?>
+        <?php elseif (in_array($status, ['pending', 'auto_accepted'], true)): ?>
             <form method="post" action="/admin/identites/<?= $uuid ?>/statut" class="decision">
                 <?= csrf_field() ?>
 
@@ -331,6 +346,13 @@ $contactStatus = (string) $identity['contact_verification_status'];
                         <input type="radio" name="to_status" value="verified" required>
                         <span><?= esc(lang('Admin.approveDecision')) ?></span>
                     </label>
+
+                    <?php if ($status === 'auto_accepted'): ?>
+                        <label class="choice">
+                            <input type="radio" name="to_status" value="pending">
+                            <span><?= esc(lang('Admin.returnToManualReview')) ?></span>
+                        </label>
+                    <?php endif; ?>
 
                     <label class="choice">
                         <input type="radio" name="to_status" value="rejected">
@@ -346,7 +368,7 @@ $contactStatus = (string) $identity['contact_verification_status'];
                             <option value="<?= esc($code, 'attr') ?>"><?= esc($label) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <p class="hint"><?= esc(lang('Admin.reasonOnlyForReject')) ?></p>
+                    <p class="hint"><?= esc(lang($status === 'auto_accepted' ? 'Admin.reasonForReview' : 'Admin.reasonOnlyForReject')) ?></p>
                 </div>
 
                 <label class="confirm">
