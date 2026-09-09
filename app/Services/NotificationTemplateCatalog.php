@@ -7,6 +7,7 @@ use InvalidArgumentException;
 final class NotificationTemplateCatalog
 {
     private const TEMPLATES = [
+        'automaticCitizen', 'automaticAdmin',
         'otpRedacted', 'submissionCitizen', 'newSubmissionAdmin', 'newSubmissionField',
         'manualReviewAdmin', 'decisionVerifiedCitizen',
         'decisionRejectedCitizen', 'decisionPendingCitizen',
