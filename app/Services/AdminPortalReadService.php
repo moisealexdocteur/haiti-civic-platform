@@ -28,7 +28,7 @@ final class AdminPortalReadService
     {
         $permissions = $this->permissions($actorUserId);
         $tenantId = $this->tenantContext->id();
-        $identityCounts = ['pending' => 0, 'verified' => 0, 'rejected' => 0];
+        $identityCounts = ['pending' => 0, 'auto_accepted' => 0, 'verified' => 0, 'rejected' => 0];
 
         if (in_array('identity.view', $permissions, true)) {
             $rows = $this->db->table('citizen_identities')
