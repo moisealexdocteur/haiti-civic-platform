@@ -41,6 +41,15 @@ trait AdminPage
             ->setHeader('Referrer-Policy', 'same-origin');
 
         $session = $context['session'];
+        $path = '/' . ltrim($this->request->getUri()->getPath(), '/');
+        $list = \App\Services\NavigationLinks::listPath($path);
+        $key = 'admin_list_' . $context['tenantId'] . '_' . $context['userId'] . '_' . $list;
+        if ($list !== null && $path === $list) {
+            parse_str(\App\Services\NavigationLinks::query($this->request->getGet() ?? []), $saved);
+            $session->set($key, $saved);
+        }
+        $saved = $list === null ? [] : (array) $session->get($key);
+        $backUrl = \App\Services\NavigationLinks::listUrl($path, $saved, $context['locale']);
 
         return $this->pageData(
             $context['locale'],
@@ -51,6 +60,7 @@ trait AdminPage
                 'displayName' => (string) $session->get('admin_display_name'),
                 'permissions' => $context['permissions'],
                 'activeNav' => $activeNav,
+                'navigationBackUrl' => $backUrl,
             ], $extra)
         );
     }
@@ -60,9 +70,16 @@ trait AdminPage
         $path = '/' . ltrim($this->request->getUri()->getPath(), '/');
 
         return [
-            'fr' => $path . '?lang=fr',
-            'ht' => $path . '?lang=ht',
+            'fr' => $path . '?' . \App\Services\NavigationLinks::query(array_merge($this->request->getGet() ?? [], ['lang' => 'fr'])),
+            'ht' => $path . '?' . \App\Services\NavigationLinks::query(array_merge($this->request->getGet() ?? [], ['lang' => 'ht'])),
         ];
+    }
+
+    protected function returnToList(array $context, string $path): string
+    {
+        $list = \App\Services\NavigationLinks::listPath($path);
+        $key = 'admin_list_' . $context['tenantId'] . '_' . $context['userId'] . '_' . $list;
+        return \App\Services\NavigationLinks::listUrl($path, (array) $context['session']->get($key), $context['locale']);
     }
 
     protected function hasPermission(array $context, string $permission): bool
