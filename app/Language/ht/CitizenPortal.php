@@ -4,6 +4,8 @@
 // pa tradui mo pa mo depi franse a.
 
 return [
+    'scanServerConsent' => 'Pou li kat la, foto sa a pral sou sèvè nou epi nou pral efase li apre tretman an. Ou vle kontinye ?',
+    'scanBusy' => 'Nou pa ka li kat la kounye a. Eseye ankò nan yon minit oswa antre enfòmasyon yo.',
     // --- koki ---
     'brand' => 'Pòtal verifikasyon sitwayen',
     'languageSwitch' => 'Lang',
@@ -74,14 +76,14 @@ return [
     'ninuHint' => '10 chif ki make sou kat ou a.',
     'ninuRequired' => 'Antre 10 chif ki make sou kat ou a.',
     'scanNinuTitle' => 'Li nimewo ki sou kat la',
-    'scanNinuLead' => 'Sou yon telefòn ki ka fè sa, pran foto devan kat la pou ranpli 10 chif yo.',
+    'scanNinuLead' => 'Pran foto devan kat la pou sistèm nan pwopoze NINU a, non ak siyati a.',
     'scanNinuAction' => 'Eskane devan kat la',
-    'scanNinuInlineHelp' => 'Peze ikòn kamera a pou li kat la, oswa antre enfòmasyon yo. Foto a rete sou aparèy sa a.',
-    'scanNinuPrivacy' => 'Foto sa a sèvi sèlman pou li nimewo a sou aparèy sa a. Nou pa voye li.',
+    'scanNinuInlineHelp' => 'Peze kamera a pou li kat la. Foto a ale sou sèvè nou pou lekti a, epi nou efase li apre tretman an. Verifye enfòmasyon ki parèt yo.',
+    'scanNinuPrivacy' => 'Se sèvè nou ki li foto a, san sèvis OCR deyò. Nou efase foto tanporè a apre tretman an.',
     'scanNinuReading' => 'N ap li kat la…',
     'scanNinuSuccess' => 'Nou li 10 chif yo. Tcheke yo anvan ou kontinye.',
     'scanNinuNotFound' => 'Nou pa rive li nimewo a. Mete kat la plat, san reflè, oswa antre 10 chif yo.',
-    'scanNinuUnsupported' => 'Telefòn sa a pa ka li nimewo a otomatikman. Antre 10 chif yo.',
+    'scanNinuUnsupported' => 'Nou pa ka li foto sa a. Chwazi yon foto JPEG oswa PNG, oswa antre enfòmasyon yo.',
     'scanIdentitySuccess' => 'Nou ranpli enfòmasyon nou detekte yo. Tcheke chak chan ak anpil atansyon.',
     'firstNameLabel' => 'Prenon',
     'lastNameLabel' => 'Siyati',
