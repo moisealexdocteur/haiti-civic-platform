@@ -33,13 +33,16 @@ final class PublicIdentitySubmissionService
 
     private PublicDocumentStorageService $storage;
 
+    private OniDocumentConformityService $conformity;
+
     public function __construct(
         TenantContext $tenantContext,
         ?BaseConnection $db = null,
         ?IdentityInputNormalizer $normalizer = null,
         ?IdentityCryptoService $crypto = null,
         ?AuditService $audit = null,
-        ?PublicDocumentStorageService $storage = null
+        ?PublicDocumentStorageService $storage = null,
+        ?OniDocumentConformityService $conformity = null
     ) {
         $this->tenantContext = $tenantContext;
         $this->db = $db ?? Database::connect();
@@ -51,6 +54,7 @@ final class PublicIdentitySubmissionService
             $audit ?? new AuditService($tenantContext, $this->db);
         $this->storage =
             $storage ?? new PublicDocumentStorageService();
+        $this->conformity = $conformity ?? new OniDocumentConformityService();
     }
 
     public function submit(
@@ -94,6 +98,21 @@ final class PublicIdentitySubmissionService
             $preferredNotificationChannel = 'auto';
         }
 
+        // OCR runs before the tenant audit lock and database transaction.
+        // Its failure never prevents an otherwise valid submission.
+        $normalizedNinu = $this->normalizer->normalizeNinu($ninu);
+        $documentConformity = $this->conformity->assess(
+            $documents[VerificationDocumentWriteService::CIN_FRONT],
+            $normalizedNinu,
+            $normalizedFirstName,
+            $normalizedLastName,
+            $documents[VerificationDocumentWriteService::PORTRAIT]
+        );
+
+        $initialStatus = $documentConformity['status'] === 'conformant'
+            ? IdentityVerificationStateMachine::AUTO_ACCEPTED
+            : self::INITIAL_STATUS;
+
         $lockName = $this->auditLockName($tenantId);
         $storedPaths = [];
 
@@ -107,9 +126,6 @@ final class PublicIdentitySubmissionService
             }
 
             $tenant = $this->activeTenantForUpdate($tenantId);
-
-            $normalizedNinu =
-                $this->normalizer->normalizeNinu($ninu);
 
             $normalizedPhone =
                 $this->normalizer->normalizeHaitiPhone($phone);
@@ -176,7 +192,7 @@ final class PublicIdentitySubmissionService
                     'contact_verification_status' =>
                         $contactVerificationStatus,
                     'department_code' => $departmentCode,
-                    'verification_status' => self::INITIAL_STATUS,
+                    'verification_status' => $initialStatus,
                     'consent_version' => $consentVersion,
                     'consented_at' => $consentedAt,
                 ]);
@@ -209,6 +225,9 @@ final class PublicIdentitySubmissionService
             }
 
             $context = [
+                'decision_method' => $initialStatus === IdentityVerificationStateMachine::AUTO_ACCEPTED
+                    ? 'automatic_document_checks' : 'manual_review_required',
+                'document_conformity' => $documentConformity,
                 'phone_present' => $normalizedPhone !== null,
                 'email_present' => $normalizedEmail !== null,
                 'name_present' => $normalizedFirstName !== null
@@ -225,7 +244,7 @@ final class PublicIdentitySubmissionService
                 $tenantId,
                 $identityId,
                 'identity.public_submitted',
-                self::INITIAL_STATUS,
+                $initialStatus,
                 $context
             );
 
@@ -238,7 +257,8 @@ final class PublicIdentitySubmissionService
                 $requestId,
                 null,
                 [
-                    'verification_status' => self::INITIAL_STATUS,
+                    'document_conformity' => $documentConformity,
+                    'verification_status' => $initialStatus,
                     'phone_present' => $normalizedPhone !== null,
                     'email_present' => $normalizedEmail !== null,
                     'name_present' => $normalizedFirstName !== null
@@ -263,10 +283,11 @@ final class PublicIdentitySubmissionService
             }
 
             return [
+                'document_conformity' => $documentConformity,
                 'id' => $identityId,
                 'uuid' => $uuid,
                 'public_reference' => $publicReference,
-                'verification_status' => self::INITIAL_STATUS,
+                'verification_status' => $initialStatus,
                 'contact_verification_status' =>
                     $contactVerificationStatus,
                 'department_code' => $departmentCode,
