@@ -52,6 +52,14 @@ $installedAppName = 'Portail de vérification citoyenne';
         </nav>
     </header>
 
+    <nav class="page-navigation" aria-label="<?= esc(lang('CitizenPortal.navigationLabel'), 'attr') ?>">
+        <?php if (($navigationPath ?? '/') !== '/'): ?>
+            <a href="/?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.backHome')) ?></a>
+        <?php endif; ?>
+        <?php if ($adminAvailable ?? false): ?>
+            <a href="/admin?lang=<?= esc($locale, 'attr') ?>"><?= esc(lang('CitizenPortal.backAdmin')) ?></a>
+        <?php endif; ?>
+    </nav>
     <?= $this->renderSection('main') ?>
 
     <footer class="foot">
