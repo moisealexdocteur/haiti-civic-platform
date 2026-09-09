@@ -52,6 +52,7 @@ $mapped = count(array_filter(
                 <th><?= esc(lang('Admin.department')) ?></th>
                 <th><?= esc(lang('Admin.mapFiles')) ?></th>
                 <th><?= esc(lang('Admin.statusPending')) ?></th>
+                <th><?= esc(lang('Admin.statusAutoAccepted')) ?></th>
                 <th><?= esc(lang('Admin.statusVerified')) ?></th>
                 <th><?= esc(lang('Admin.statusRejected')) ?></th>
             </tr>
@@ -62,6 +63,7 @@ $mapped = count(array_filter(
                     <td><?= esc((string) $row['name']) ?></td>
                     <td class="num"><?= esc((string) $row['total']) ?></td>
                     <td class="num"><?= esc((string) $row['pending']) ?></td>
+                    <td class="num"><?= esc((string) $row['auto_accepted']) ?></td>
                     <td class="num"><?= esc((string) $row['verified']) ?></td>
                     <td class="num"><?= esc((string) $row['rejected']) ?></td>
                 </tr>
@@ -74,6 +76,7 @@ $mapped = count(array_filter(
 <script type="application/json" id="map-data"><?= json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 <script type="application/json" id="map-strings"><?= json_encode([
     'files' => lang('Admin.mapFiles'),
+    'auto_accepted' => lang('Admin.statusAutoAccepted'),
     'pending' => lang('Admin.statusPending'),
     'verified' => lang('Admin.statusVerified'),
     'rejected' => lang('Admin.statusRejected'),
